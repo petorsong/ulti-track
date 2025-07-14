@@ -1,0 +1,17 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - POSTGRES_USER=$POSTGRES_USER
+      - POSTGRES_PASSWORD=$POSTGRES_ROOT_PASSWORD
+      - POSTGRES_DB=$POSTGRES_DATABASE
+    ports:
+      - $POSTGRES_LOCAL_PORT:$POSTGRES_DOCKER_PORT
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/src/database/migrations:/docker-entrypoint-initdb.d # TODO: do i need this?
+
+volumes:
+  postgres_data:
