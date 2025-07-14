@@ -7,9 +7,11 @@ const router = Router();
 
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    console.log(process.env.DATABASE_URL)
-    const result = await db.query.players.findMany();
-    console.log(result);
+    const result = await db.query.players.findMany({
+      with: {
+        team: true
+      }
+    });
     const response: ApiResponse<typeof players.$inferSelect[]> = {
       success: true,
       data: result
