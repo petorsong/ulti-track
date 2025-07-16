@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import playerRoutes from './routes/players';
+import playerRoutes from './routes';
 import { db } from './database/drizzle';
 import { errorHandler } from './middleware/errorHandler';
 

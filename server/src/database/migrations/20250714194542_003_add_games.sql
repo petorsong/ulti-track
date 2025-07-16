@@ -15,10 +15,11 @@ CREATE TABLE IF NOT EXISTS "points" (
 	"id" uuid PRIMARY KEY NOT NULL,
   "game_id" uuid REFERENCES "games"(id) NOT NULL,
   "player_ids" uuid[7] NOT NULL,
+  "is_first_half" boolean DEFAULT true NOT NULL,
   "created_at" timestamp DEFAULT NOW() NOT NULL
 );
 
-CREATE TYPE eventtype AS ENUM ('VS_SCORE', 'SCORE', 'D', 'TA', 'DROP', 'PASS', 'CALLAHAN', 'SUBSTITUTION');
+CREATE TYPE eventtype AS ENUM ('VS_SCORE', 'SCORE', 'D', 'TA', 'DROP', 'PASS', 'CALLAHAN', 'SUBSTITUTION', 'TIMEOUT', 'VS_TIMEOUT');
 
 CREATE TABLE IF NOT EXISTS "point_events" (
 	"id" uuid PRIMARY KEY NOT NULL,

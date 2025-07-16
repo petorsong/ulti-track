@@ -55,6 +55,7 @@ export const points = pgTable('points', {
   id: uuid('id').primaryKey().defaultRandom(),
   gameId: uuid('game_id').references(() => games.id),
   playerIds: uuid('player_ids').array(7).notNull(), // references prolly doesn't work here
+  isFirstHalf: boolean('is_first_half').default(true).notNull(),
   createdAt: timestamp('created_at')//, { mode: 'string' })
     .notNull()
     .default(sql`now()`),
@@ -67,7 +68,10 @@ export const pointsRelations = relations(points, ({ one }) => ({
   })
 }));
 
-export const EventType = ['VS_SCORE', 'SCORE', 'D', 'TA', 'DROP', 'PASS', 'CALLAHAN', 'SUBSTITUTION'] as const;
+export const EventType = [
+  'VS_SCORE', 'SCORE', 'D', 'TA', 'DROP',
+  'PASS', 'CALLAHAN', 'SUBSTITUTION', 'TIMEOUT', 'VS_TIMEOUT'
+] as const;
 export const EventTypeEnum = pgEnum('eventtype', EventType);
 
 export const pointEvents = pgTable('point_events', {
