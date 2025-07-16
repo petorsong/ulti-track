@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS "games" (
-	"id" uuid PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
   "team_id" uuid REFERENCES "teams"(id) NOT NULL,
   "vs_team_name" varchar(255) NOT NULL,
   "start_on_o" boolean DEFAULT false NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS "games" (
 );
 
 CREATE TABLE IF NOT EXISTS "points" (
-	"id" uuid PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
   "game_id" uuid REFERENCES "games"(id) NOT NULL,
   "player_ids" uuid[7] NOT NULL,
   "is_first_half" boolean DEFAULT true NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS "points" (
 CREATE TYPE eventtype AS ENUM ('VS_SCORE', 'SCORE', 'D', 'TA', 'DROP', 'PASS', 'CALLAHAN', 'SUBSTITUTION', 'TIMEOUT', 'VS_TIMEOUT');
 
 CREATE TABLE IF NOT EXISTS "point_events" (
-	"id" uuid PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
   "point_id" uuid REFERENCES "points"(id) NOT NULL,
   "type" eventtype NOT NULL,
   "playerOneId" uuid REFERENCES "players"(id),

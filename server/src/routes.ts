@@ -1,9 +1,31 @@
-import { Request, Response, NextFunction, Router } from 'express';
+import { Request as Req, Response as Res, NextFunction as Next, Router } from 'express';
 import { ApiResponse } from './types';
 import { db } from './database/drizzle';
-import { players } from './database/schema';
+import { games, players } from './database/schema';
 
 const router = Router();
+
+router.post('/teams/:teamId/game', async (req: Req, res: Res, next: Next) => {
+  try {
+    const { vsTeamName }: typeof games.$inferInsert = req.body;
+
+    if (!vsTeamName) {
+      return res.status(400).json({
+        success: false,
+        error: 'Opponent team name required'
+      });
+    }
+
+    const [result] = await db.insert(games).values(req.body).returning({gameId: games.id});
+    const response: ApiResponse<String> = {
+      success: true,
+      data: result.gameId
+    };
+    res.json(response);
+  } catch (error) {
+    next(error);
+  }
+});
 
 // GET  /teams/:id/players
 // POST /teams/:id/game
@@ -13,7 +35,7 @@ const router = Router();
 
 // clear this/current point
 
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', async (req: Req, res: Res, next: Next) => {
   try {
     const result = await db.query.players.findMany({
       with: {

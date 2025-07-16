@@ -3,9 +3,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import playerRoutes from './routes';
 import { db } from './database/drizzle';
 import { errorHandler } from './middleware/errorHandler';
+import routes from './routes';
 
 dotenv.config();
 
@@ -20,7 +20,7 @@ app.use(morgan('combined'));
 app.use(express.json());
 
 // Routes
-app.use('/api/players', playerRoutes);
+app.use('/api', routes);
 
 app.get('/api/health', async(req, res) => {
   const testResult = await db.execute(`SELECT 1 as test`);
