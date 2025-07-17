@@ -1,9 +1,9 @@
-import { useState } from 'react';
+// import { useState } from 'react';
 import type { InferGetStaticPropsType, GetStaticProps, GetStaticPaths } from 'next'
-import { useRouter } from 'next/router';
+// import { useRouter } from 'next/router';
 import { db } from '@/database/drizzle';
-import { games, PlayerType, points } from '@/database/schema'
-import { Button, Stack, Typography } from '@mui/joy';
+import { PlayerType, points } from '@/database/schema'
+import { Stack, Typography } from '@mui/joy';
 import PlayerButton from '@/components/PlayerButton';
 import PointCard from '@/components/PointCard';
 import { calculatePointInfo, colStackStyles, splitPlayersByGenderMatch } from '@/utils';
@@ -35,12 +35,12 @@ export const getStaticProps = (async ({ params }) => {
 export default function GamePage({
   pointData, playersData,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
-  const router = useRouter();
+  // const router = useRouter();
   const gameData = pointData!.game!;
   const { vsTeamName, teamScore, vsTeamScore } = gameData;
   const { genderRatio, oOrD, fieldSide } = calculatePointInfo(gameData);
   const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
-  const [selectedPlayer, setSelectedPlayer] = useState({});
+  // const [selectedPlayer, setSelectedPlayer] = useState({});
 
   return (
     <Stack
