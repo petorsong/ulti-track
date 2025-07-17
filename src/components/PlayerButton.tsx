@@ -17,7 +17,7 @@ export default function PlayerButton({
   isFemaleMatching: boolean;
   variant: 'plain' | 'outlined' | 'soft' | 'solid';
   disabled?: boolean;
-  onClick: (event: React.MouseEvent<HTMLElement>) => void; // TODO: maybe don't need event at all
+  onClick: () => void;
 }) {
   const name = nickname ?? firstName;
   const roleIcon = isHandler

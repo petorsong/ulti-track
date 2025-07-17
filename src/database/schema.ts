@@ -76,6 +76,8 @@ export const EventType = [
   'PASS', 'CALLAHAN', 'SUBSTITUTION', 'TIMEOUT', 'VS_TIMEOUT'
 ] as const;
 export const EventTypeEnum = pgEnum('eventtype', EventType);
+export type EventTypeTS =   'VS_SCORE' | 'SCORE' | 'D' | 'TA' | 'DROP' |
+  'PASS' | 'CALLAHAN' | 'SUBSTITUTION' | 'TIMEOUT' | 'VS_TIMEOUT';
 
 export const pointEvents = pgTable('point_events', {
   id: uuid('id').primaryKey().defaultRandom(),
