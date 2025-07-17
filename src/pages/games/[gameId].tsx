@@ -62,7 +62,7 @@ export default function GamePage({
     // TODO LATER: consider making this work? doesn't like something about drizzle inserts
     // const [result] = await db.insert(points).values(pointData).returning({ pointId: points.id });
 
-    const res = await fetch(`http://localhost:3000/api/games/${gameId}/point`, {
+    const res = await fetch(`/api/games/${gameId}/point`, {
       method: 'POST',
       body: JSON.stringify({
         gameId,

@@ -116,7 +116,7 @@ export default function NewGamePage({
     // }).returning({ gameId: games.id });
 
     const teamId = teamData.id;
-    const res = await fetch(`http://localhost:3000/api/teams/${teamId}/game`, {
+    const res = await fetch(`/api/teams/${teamId}/game`, {
       method: 'POST',
       body: JSON.stringify({
         ...formData, activePlayerIds, teamId,
