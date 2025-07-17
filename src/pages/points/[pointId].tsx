@@ -12,7 +12,7 @@ export const getStaticPaths = (async () => {
   const pointsData = await db.query.points.findMany();
   return {
     paths: pointsData.map((point) => ({ params: { pointId: point.id}})),
-    fallback: true, // false or "blocking"
+    fallback: false,
   }
 }) satisfies GetStaticPaths;
 
