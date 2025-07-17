@@ -8,6 +8,7 @@ export default function PlayerButton({
   isHandler,
   isFemaleMatching,
   variant,
+  disabled,
   onClick,
 }: {
   firstName: string;
@@ -15,7 +16,8 @@ export default function PlayerButton({
   isHandler: boolean;
   isFemaleMatching: boolean;
   variant: 'plain' | 'outlined' | 'soft' | 'solid';
-  onClick: (event: React.MouseEvent<HTMLElement>) => void; // TODO LATER: maybe don't need event at all
+  disabled?: boolean;
+  onClick: (event: React.MouseEvent<HTMLElement>) => void; // TODO: maybe don't need event at all
 }) {
   const name = nickname ?? firstName;
   const roleIcon = isHandler
@@ -28,6 +30,7 @@ export default function PlayerButton({
       onClick={onClick}
       size="lg"
       variant={variant}
+      disabled={disabled}
       endDecorator={roleIcon}
       color={colour}
       sx={{

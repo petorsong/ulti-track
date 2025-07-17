@@ -29,6 +29,8 @@ export const playersRelations = relations(players, ({ one }) => ({
   })
 }));
 
+export type PlayerType = typeof players.$inferSelect;
+
 export const games = pgTable('games', {
   id: uuid('id').primaryKey().defaultRandom(),
   teamId: uuid('team_id').references(() => teams.id),
@@ -39,7 +41,8 @@ export const games = pgTable('games', {
   teamScore: integer('team_score').default(0),
   vsTeamScore: integer('vs_team_score').default(0),
   isComplete: boolean('is_complete').default(false),
-  createdAt: timestamp('created_at')//, { mode: 'string' })
+  activePlayerIds: uuid('active_player_ids').array().notNull(),
+  createdAt: timestamp('created_at', { mode: 'string' })
     .notNull()
     .default(sql`now()`),
 });
@@ -56,13 +59,13 @@ export const points = pgTable('points', {
   gameId: uuid('game_id').references(() => games.id),
   playerIds: uuid('player_ids').array(7).notNull(), // references prolly doesn't work here
   isFirstHalf: boolean('is_first_half').default(true).notNull(), // TODO: replace with halftimeAt (point #) on game
-  createdAt: timestamp('created_at')//, { mode: 'string' })
+  createdAt: timestamp('created_at', { mode: 'string' })
     .notNull()
     .default(sql`now()`),
 });
 
 export const pointsRelations = relations(points, ({ one }) => ({
-  games: one(games, {
+  game: one(games, {
     fields: [points.gameId],
     references: [games.id],
   })
@@ -81,7 +84,7 @@ export const pointEvents = pgTable('point_events', {
   playerOneId: uuid('player_one_id').references(() => players.id),
   playerTwoId: uuid('player_two_id').references(() => players.id),
   playerThreeId: uuid('player_three_id').references(() => players.id),
-  createdAt: timestamp('created_at')//, { mode: 'string' })
+  createdAt: timestamp('created_at', { mode: 'string' })
     .notNull()
     .default(sql`now()`),
 });

@@ -9,8 +9,9 @@ import {
 } from '@mui/joy';
 
 export default function PointCard({
-  teamScore, vsTeamScore, oOrD, genderRatio, fieldSide
+  vsTeamName, teamScore, vsTeamScore, oOrD, genderRatio, fieldSide
 }: {
+  vsTeamName: string;
   teamScore: number;
   vsTeamScore: number;
   oOrD: string;
@@ -24,7 +25,7 @@ export default function PointCard({
       sx={{
         height: 100,
         display: 'flex',
-        flexDirection: 'row'
+        flexDirection: 'row',
       }}
     >
       <CardContent sx={{
@@ -43,13 +44,6 @@ export default function PointCard({
           textAlign: 'center'
         }}>
           <Typography
-            level="body-sm"
-            color="neutral"
-            sx={{ mb: 1 }}
-          >
-            Score
-          </Typography>
-          <Typography
             level="h1"
             sx={{
               fontSize: '2.5rem',
@@ -58,6 +52,12 @@ export default function PointCard({
             }}
           >
             {teamScore}-{vsTeamScore}
+          </Typography>
+          <Typography
+            level="body-sm"
+            color="neutral"
+          >
+            vs {vsTeamName}
           </Typography>
         </Box>
         <Box sx={{
