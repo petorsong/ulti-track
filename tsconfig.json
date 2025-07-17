@@ -14,7 +14,8 @@
     "jsx": "preserve",
     "incremental": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@mui/material": ["./node_modules/@mui/joy"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],

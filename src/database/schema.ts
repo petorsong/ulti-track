@@ -55,7 +55,7 @@ export const points = pgTable('points', {
   id: uuid('id').primaryKey().defaultRandom(),
   gameId: uuid('game_id').references(() => games.id),
   playerIds: uuid('player_ids').array(7).notNull(), // references prolly doesn't work here
-  isFirstHalf: boolean('is_first_half').default(true).notNull(),
+  isFirstHalf: boolean('is_first_half').default(true).notNull(), // TODO: replace with halftimeAt (point #) on game
   createdAt: timestamp('created_at')//, { mode: 'string' })
     .notNull()
     .default(sql`now()`),

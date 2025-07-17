@@ -73,14 +73,15 @@ export default function NewGameForm() {
     router.push(`/games/${gameId}`);
   }
 
+  // TODO: add dropdown for ACTIVE PLAYERS, hardcode ppl going to nobo for now
+
   return (
-    <Box sx={{ maxWidth: 400, mx: 'auto', mt: 4 }}>
+    <Box sx={{ mx: 'auto', mt: 4 }}>
       <Card variant="outlined">
         <CardContent>
           <Typography level="title-lg" sx={{ mb: 3 }}>
             Devs: New Game
           </Typography>
-          
           <Stack spacing={3}>
             <FormControl error={!!errors.vsTeamName}>
               <FormLabel>Opponent Name</FormLabel>
@@ -100,7 +101,6 @@ export default function NewGameForm() {
               <Typography level="title-sm" sx={{ mb: 2 }}>
                 Starting:
               </Typography>
-              
               <Stack spacing={3}>
                 <FormControl orientation="horizontal" /*sx={{ justifyContent: 'space-between' }}*/>
                   <FormLabel>On offence</FormLabel>
