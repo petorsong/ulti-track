@@ -8,6 +8,7 @@ export default async function handler(
   res: Res<{redirectRoute: string}>,
 ) {
   const parsedBody: typeof pointEvents.$inferInsert[] = JSON.parse(req.body);
+  console.log(req.body);
   
   const redirectRoute = await db.transaction(async (tx) => {
     await tx.insert(pointEvents).values(parsedBody);

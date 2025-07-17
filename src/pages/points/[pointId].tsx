@@ -79,7 +79,7 @@ export default function GamePage({
 
   const handleScoreClick = async (e: React.MouseEvent<HTMLElement>, type: EventTypeTS) => {
     e.preventDefault();
-    const scoreEvent = { type } as typeof pointEvents.$inferInsert;
+    const scoreEvent = { pointId, type } as typeof pointEvents.$inferInsert;
     if (type == 'SCORE') {
       scoreEvent.playerOneId = selectedPlayerId;
     }

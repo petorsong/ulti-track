@@ -108,7 +108,7 @@ export default function GamePage({
             return (
               <PlayerButton
                 key={player.id}
-                variant={playerSelected ? 'solid' : 'outlined'}
+                variant={playerSelected ? 'solid' : 'soft'}
                 disabled={selectedPlayersL.length >= playerLimitL && !playerSelected}
                 onClick={() => {
                   setSelectedPlayersL(playerSelected
@@ -130,7 +130,7 @@ export default function GamePage({
             return (
               <PlayerButton
                 key={player.id}
-                variant={playerSelected ? 'solid' : 'outlined'}
+                variant={playerSelected ? 'solid' : 'soft'}
                 disabled={selectedPlayersR.length >= playerLimitR && !playerSelected}
                 onClick={() => {
                   setSelectedPlayersR(playerSelected
