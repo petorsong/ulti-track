@@ -44,7 +44,7 @@ export const getStaticPaths = (async () => {
   const teamsData = await db.query.teams.findMany();
   return {
     paths: teamsData.map((team) => ({ params: { teamId: team.id}})),
-    fallback: false,
+    fallback: 'blocking',
   }
 }) satisfies GetStaticPaths;
 

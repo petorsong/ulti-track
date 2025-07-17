@@ -12,7 +12,7 @@ export const getStaticPaths = (async () => {
   const gamesData = await db.query.games.findMany();
   return {
     paths: gamesData.map((game) => ({ params: { gameId: game.id}})),
-    fallback: false,
+    fallback: 'blocking',
   }
 }) satisfies GetStaticPaths;
 
