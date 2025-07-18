@@ -28,7 +28,7 @@ type ErrorType = {
 const inactiveDevsForNobo = [ // TODO LATER: remove
   '9bd3c78a-e892-4da7-87a3-a2b70121c4c3', // evelyn
   '58f21f02-dc1c-4c28-9227-94b7d245fbee', // mika
-  '24c2aceb-8eea-47f8-9f96-78098f593214', // qiqi
+  '3ba58f1e-8bf6-4270-aadf-4f124e71cf59', // yi
   '1c48cabc-4d49-45cb-ba66-2f3fac430911', // jorin
   '2070f5ac-fad8-4820-bb20-1d0642fb6aaa', // sophia
 

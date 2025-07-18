@@ -1,50 +1,55 @@
-import { useState } from 'react';
-import type { InferGetStaticPropsType, GetStaticProps, GetStaticPaths } from 'next'
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { db } from '@/database/drizzle';
-import { games, PlayerType } from '@/database/schema'
+import { games, players } from '@/database/schema'
 import { Button, Stack, Typography } from '@mui/joy';
 import PlayerButton from '@/components/PlayerButton';
 import PointCard from '@/components/PointCard';
 import { calculatePointInfo, colStackStyles, splitPlayersByGenderMatch } from '@/utils';
 
-export const getStaticPaths = (async () => {
-  const gamesData = await db.query.games.findMany();
-  return {
-    paths: gamesData.map((game) => ({ params: { gameId: game.id}})),
-    fallback: 'blocking',
-  }
-}) satisfies GetStaticPaths;
-
-export const getStaticProps = (async ({ params }) => {
-  const gameData = await db.query.games.findFirst({
-    where: (games, { eq }) => eq(games.id, `${params!.gameId}`),
-  });
-  const playersData = await db.query.players.findMany({
-    where: (players, { inArray }) => inArray(players.id, gameData!.activePlayerIds), 
-  });
-  return { props: { gameData: gameData!, playersData } }
-}) satisfies GetStaticProps<{
-  gameData: typeof games.$inferSelect;
-  playersData: PlayerType[];
-}>
-
-export default function GamePage({
-  gameData, playersData,
-}: InferGetStaticPropsType<typeof getStaticProps>) {
+export default function GamePage() {
   const router = useRouter();
-  const { id: gameId, vsTeamName, teamScore, vsTeamScore } = gameData;
-  const {
-    genderRatio,
-    playerLimitL,
-    playerLimitR,
-    oOrD,
-    fieldSide,
-  } = calculatePointInfo(gameData);
-
+  const { gameId } = router.query;
+  const [isLoading, setIsLoading] = useState(true);
+  const [pointInfo, setPointInfo] = useState({
+    vsTeamName: '',
+    teamScore: 0,
+    vsTeamScore: 0,
+    oOrD: '',
+    genderRatio: '',
+    fieldSide: '',
+  });
+  const [playersL, setPlayersL] = useState([] as typeof players.$inferSelect[]);
+  const [playersR, setPlayersR] = useState([] as typeof players.$inferSelect[]);
+  const [playerLimitL, setPlayerLimitL] = useState(0);
+  const [playerLimitR, setPlayerLimitR] = useState(0);
   const [selectedPlayersL, setSelectedPlayersL] = useState([] as string[]);
   const [selectedPlayersR, setSelectedPlayersR] = useState([] as string[]);
-  const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
+
+  useEffect(() => {
+    fetch(`/api/games/${gameId}`)
+      .then(res => res.json())
+      .then((data) => {
+        const gameData = data.gameData as typeof games.$inferSelect;
+        const playersData = data.playersData as typeof players.$inferSelect[];
+        const { vsTeamName, teamScore, vsTeamScore, activePlayerIds } = gameData;
+        const {
+          genderRatio,
+          playerLimitL,
+          playerLimitR,
+          oOrD,
+          fieldSide,
+        } = calculatePointInfo(gameData);
+        
+        setPointInfo({ vsTeamName: vsTeamName!, teamScore: teamScore!, vsTeamScore: vsTeamScore!, genderRatio, oOrD, fieldSide });
+        setPlayerLimitL(playerLimitL);
+        setPlayerLimitR(playerLimitR);
+
+        const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
+        setPlayersL(playersL);
+        setPlayersR(playersR);
+        setIsLoading(false);
+      });
+  }, [gameId]);
 
   const handleClearButtonClick = () => {
     setSelectedPlayersL([]);
@@ -73,20 +78,13 @@ export default function GamePage({
     router.push(`/points/${pointId}`);
   }
 
-  return (
+  return !isLoading && (
     <Stack
       direction="column"
       spacing={1}
       sx={{ ...colStackStyles, mt: 1 }}
     >
-      <PointCard {...{
-        vsTeamName: vsTeamName!,
-        teamScore: teamScore!,
-        vsTeamScore: vsTeamScore!,
-        genderRatio,
-        oOrD,
-        fieldSide,
-      }} />
+      <PointCard {...pointInfo} />
       <Typography level="title-sm" sx={{ mb: 2 }}>
         Select players for this line:
       </Typography>

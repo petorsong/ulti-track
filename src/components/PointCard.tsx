@@ -17,8 +17,7 @@ export default function PointCard({
   oOrD: string;
   genderRatio: string;
   fieldSide: string;
-}
-) {
+}) {
   return (
     <Card
       variant="outlined"
