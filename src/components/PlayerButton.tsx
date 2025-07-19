@@ -1,4 +1,4 @@
-import { Button } from '@mui/joy';
+import { Badge, Button } from '@mui/joy';
 import FrontHandOutlinedIcon from '@mui/icons-material/FrontHandOutlined';
 import DirectionsRunOutlinedIcon from '@mui/icons-material/DirectionsRunOutlined';
 
@@ -9,6 +9,7 @@ export default function PlayerButton({
   isFemaleMatching,
   variant,
   disabled,
+  lineCount,
   onClick,
 }: {
   firstName: string;
@@ -17,6 +18,7 @@ export default function PlayerButton({
   isFemaleMatching: boolean;
   variant: 'plain' | 'outlined' | 'soft' | 'solid';
   disabled?: boolean;
+  lineCount?: number;
   onClick: () => void;
 }) {
   const name = nickname ?? firstName;
@@ -26,19 +28,29 @@ export default function PlayerButton({
   const colour = isFemaleMatching ? 'primary' : 'success';
 
   return (
-    <Button
-      onClick={onClick}
-      size="lg"
-      variant={variant}
-      disabled={disabled}
-      endDecorator={roleIcon}
-      color={colour}
-      sx={{
-        justifyContent: "space-between",
-        width: '90%'
-      }}
+    <Badge
+      size='sm'
+      color='neutral'
+      variant='solid'
+      anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+      invisible={!lineCount}
+      badgeContent={lineCount}
+      sx={{ width: '90%' }}
     >
-      {name}
-    </Button>
+      <Button
+        onClick={onClick}
+        size="lg"
+        variant={variant}
+        disabled={disabled}
+        endDecorator={roleIcon}
+        color={colour}
+        sx={{
+          justifyContent: "space-between",
+        }}
+        fullWidth
+      >
+        {name}
+      </Button>
+    </Badge>
   );
 }

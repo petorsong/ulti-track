@@ -109,11 +109,6 @@ export default function NewGamePage({
       setErrors(newErrors);
       return;
     }
-    
-    // TODO LATER: consider making this work? doesn't like something about drizzle inserts
-    // const [result] = await db.insert(games).values({
-    //    ...formData, activePlayerIds, teamId: teamData.id,
-    // }).returning({ gameId: games.id });
 
     const teamId = teamData.id;
     const res = await fetch(`/api/teams/${teamId}/game`, {

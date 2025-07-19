@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { games, players } from '@/database/schema'
+import { games, players, PlayerWithLineCountType } from '@/database/schema'
 import { Button, Stack, Typography } from '@mui/joy';
 import PlayerButton from '@/components/PlayerButton';
 import PointCard from '@/components/PointCard';
@@ -30,8 +30,8 @@ export default function GamePage() {
       .then(res => res.json())
       .then((data) => {
         const gameData = data.gameData as typeof games.$inferSelect;
-        const playersData = data.playersData as typeof players.$inferSelect[];
-        const { vsTeamName, teamScore, vsTeamScore, activePlayerIds } = gameData;
+        const playersData = data.playersData as PlayerWithLineCountType[];
+        const { vsTeamName, teamScore, vsTeamScore } = gameData;
         const {
           genderRatio,
           playerLimitL,
@@ -58,14 +58,6 @@ export default function GamePage() {
 
   const handleSubmitButtonClick = async (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
-
-    // const pointData = {
-    //   gameId,
-    //   playerIds: selectedPlayersL.concat(selectedPlayersR),
-    // } satisfies typeof points.$inferInsert;
-      
-    // TODO LATER: consider making this work? doesn't like something about drizzle inserts
-    // const [result] = await db.insert(points).values(pointData).returning({ pointId: points.id });
 
     const res = await fetch(`/api/games/${gameId}/point`, {
       method: 'POST',

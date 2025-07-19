@@ -1,10 +1,10 @@
 import type { NextApiRequest as Req, NextApiResponse as Res } from "next";
 import { db } from "@/database/drizzle";
-import { games, players } from "@/database/schema";
+import { games, PlayerWithLineCountType } from "@/database/schema";
 
 export default async function handler(
   req: Req,
-  res: Res<{ gameData: typeof games.$inferSelect; playersData: typeof players.$inferSelect[] }>,
+  res: Res<{ gameData: typeof games.$inferSelect; playersData: PlayerWithLineCountType[] }>,
 ) {
   const { gameId } = req.query;
   // if (typeof gameId !== 'string') {
@@ -15,10 +15,21 @@ export default async function handler(
 
   const gameData = await db.query.games.findFirst({
     where: (games, { eq }) => eq(games.id, `${gameId}`),
+    with: { points: true },
   });
 
-  const playersData = await db.query.players.findMany({
+  const rawPlayers = await db.query.players.findMany({
     where: (players, { inArray }) => inArray(players.id, gameData!.activePlayerIds), 
+  });
+
+  const playersData: PlayerWithLineCountType[] = rawPlayers.map(player => ({ ...player, lineCount: 0 }));
+  gameData!.points.forEach((point) => {
+    point.playerIds.forEach((playerId) => {
+      const foundPlayer = playersData.find(player => player.id == playerId);
+      if (foundPlayer) {
+        foundPlayer.lineCount += 1;
+      }
+    })
   });
 
   // if (result == null) {

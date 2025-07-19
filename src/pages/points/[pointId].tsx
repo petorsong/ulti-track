@@ -33,7 +33,7 @@ export const getStaticProps = (async ({ params }) => {
   playersData: PlayerType[];
 }>
 
-export default function GamePage({
+export default function PointPage({
   pointData, playersData,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
   const router = useRouter();

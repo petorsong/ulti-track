@@ -11,6 +11,8 @@ export const teamsRelations = relations(teams, ({ many }) => ({
   games: many(games),
 }));
 
+export type PlayerWithLineCountType = typeof players.$inferSelect & { lineCount: number };
+
 export const players = pgTable('players', {
   id: uuid('id').primaryKey().defaultRandom(),
   firstName: varchar('first_name', { length: 255 }).notNull(),
@@ -47,11 +49,12 @@ export const games = pgTable('games', {
     .default(sql`now()`),
 });
 
-export const gamesRelations = relations(games, ({ one }) => ({
+export const gamesRelations = relations(games, ({ many, one }) => ({
   team: one(teams, {
     fields: [games.teamId],
     references: [teams.id],
-  })
+  }),
+  points: many(points),
 }));
 
 export const points = pgTable('points', {
@@ -76,7 +79,7 @@ export const EventType = [
   'PASS', 'CALLAHAN', 'SUBSTITUTION', 'TIMEOUT', 'VS_TIMEOUT'
 ] as const;
 export const EventTypeEnum = pgEnum('eventtype', EventType);
-export type EventTypeTS =   'VS_SCORE' | 'SCORE' | 'D' | 'TA' | 'DROP' |
+export type EventTypeTS = 'VS_SCORE' | 'SCORE' | 'D' | 'TA' | 'DROP' |
   'PASS' | 'CALLAHAN' | 'SUBSTITUTION' | 'TIMEOUT' | 'VS_TIMEOUT';
 
 export const pointEvents = pgTable('point_events', {
