@@ -44,6 +44,7 @@ export const games = pgTable('games', {
   vsTeamScore: integer('vs_team_score').default(0),
   isComplete: boolean('is_complete').default(false),
   activePlayerIds: uuid('active_player_ids').array().notNull(),
+  halftimeAt: integer('halftime_at'),
   createdAt: timestamp('created_at', { mode: 'string' })
     .notNull()
     .default(sql`now()`),
@@ -61,7 +62,6 @@ export const points = pgTable('points', {
   id: uuid('id').primaryKey().defaultRandom(),
   gameId: uuid('game_id').references(() => games.id),
   playerIds: uuid('player_ids').array(7).notNull(), // references prolly doesn't work here
-  isFirstHalf: boolean('is_first_half').default(true).notNull(), // TODO: replace with halftimeAt (point #) on game
   createdAt: timestamp('created_at', { mode: 'string' })
     .notNull()
     .default(sql`now()`),

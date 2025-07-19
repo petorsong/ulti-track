@@ -15,18 +15,28 @@ export function splitPlayersByGenderMatch(playersData: PlayerType[])
   }, { playersL: [] as PlayerType[], playersR: [] as PlayerType[]});
 }
 
-export function calculatePointInfo({ teamScore, vsTeamScore, startOnO, startFRatio, startLeft }: typeof games.$inferSelect) {
+export function calculatePointInfo({
+  teamScore,
+  vsTeamScore,
+  startOnO,
+  startFRatio,
+  startLeft,
+  halftimeAt
+}: typeof games.$inferSelect) {
   const totalPoints = teamScore! + vsTeamScore!;
   const ratioStrs = startFRatio! ? ['Female', 'Open'] : ['Open', 'Female'];
   const ratio = totalPoints == 0 ? (startFRatio! ? 'Female' : 'Open') : ratioStrs[(((totalPoints+1) % 4) < 2) ? 0 : 1];
   const genderRatio = `${ratio} ${totalPoints % 2 === 0 ? '2' : '1'}`;
   const [playerLimitL, playerLimitR] = ratio[0] === 'F' ? [4, 3] : [3, 4];
 
-  // TODO: deal with halftime for oOrD & fieldSide
-  const startOnOStrs = startOnO! ? ['Offence', 'Defence'] : ['Defence', 'Offence'];
-  const oOrD = startOnOStrs[totalPoints % 2];
-  const sideStr = startLeft! ? ['Left', 'Right'] : ['Right', 'Left'];
-  const fieldSide = sideStr[totalPoints % 2];
+  const startOnOStrs = startOnO!
+    ? (!halftimeAt ? ['Offence', 'Defence'] : ['Defence', 'Offence'])
+    : (!halftimeAt ? ['Defence', 'Offence'] : ['Offence', 'Defence']);
+  const oOrD = startOnOStrs[(totalPoints - (halftimeAt ?? 0)) % 2];
+  const sideStr = startLeft!
+    ? (!halftimeAt ? ['Left', 'Right'] : ['Right', 'Left'])
+    : (!halftimeAt ? ['Right', 'Left'] : ['Left', 'Right']);
+  const fieldSide = sideStr[(totalPoints - (halftimeAt ?? 0)) % 2];
   
   return {
     genderRatio,

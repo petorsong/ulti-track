@@ -18,6 +18,7 @@ export default function GamePage() {
     genderRatio: '',
     fieldSide: '',
   });
+  const [halftimeAt, setHalftimeAt] = useState(null as number | null);
   const [playersL, setPlayersL] = useState([] as typeof players.$inferSelect[]);
   const [playersR, setPlayersR] = useState([] as typeof players.$inferSelect[]);
   const [playerLimitL, setPlayerLimitL] = useState(0);
@@ -31,6 +32,7 @@ export default function GamePage() {
       .then((data) => {
         const gameData = data.gameData as typeof games.$inferSelect;
         const playersData = data.playersData as PlayerWithLineCountType[];
+        setHalftimeAt(gameData.halftimeAt);
 
         const { vsTeamName, teamScore, vsTeamScore } = gameData;
         const {
@@ -51,6 +53,23 @@ export default function GamePage() {
         setIsLoading(false);
       });
   }, [gameId]);
+
+  const handleHalfOrEndButtonClick = async (e: React.MouseEvent<HTMLElement>) => {
+    e.preventDefault();
+
+    fetch(`/api/games/${gameId}/end-half`, { method: 'POST' })
+      .then(res => res.json())
+      .then((data) => {
+        const gameData = data.gameData as typeof games.$inferSelect;
+        if (gameData.isComplete) {
+          router.push(`/games/${gameId}/summary`);
+        } else {
+          const { vsTeamName, teamScore, vsTeamScore } = gameData;
+          const { genderRatio, oOrD, fieldSide } = calculatePointInfo(gameData);        
+          setPointInfo({ vsTeamName: vsTeamName!, teamScore: teamScore!, vsTeamScore: vsTeamScore!, genderRatio, oOrD, fieldSide });
+        }
+      });
+  }
 
   const handleClearButtonClick = () => {
     setSelectedPlayersL([]);
@@ -141,7 +160,13 @@ export default function GamePage() {
           width: "95%",
         }}
       >
-        <Button disabled>Halftime</Button>
+        <Button
+          variant="soft"
+          color='neutral'
+          onClick={(e) => handleHalfOrEndButtonClick(e)}
+        >
+          {halftimeAt ? 'End Game' : 'Halftime'}
+        </Button>
         <Stack
           direction="row"
           spacing={1}

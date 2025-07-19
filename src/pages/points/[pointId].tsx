@@ -21,6 +21,8 @@ export default function PointPage() {
     genderRatio: '',
     fieldSide: '',
   });
+  const [halftimeAt, setHalftimeAt] = useState(null as number | null);
+  const [gameId, setGameId] = useState('');
 
   // same as [gameId] but renamed
   const [isLoading, setIsLoading] = useState(true);
@@ -48,9 +50,10 @@ export default function PointPage() {
         const activePlayerIds = data.pointData.playerIds as string[];
 
         const { vsTeamName, teamScore, vsTeamScore } = gameData;
-        const { genderRatio, oOrD, fieldSide } = calculatePointInfo(gameData);
-        
+        const { genderRatio, oOrD, fieldSide } = calculatePointInfo(gameData);        
         setCurrentPointInfo({ vsTeamName: vsTeamName!, teamScore: teamScore!, vsTeamScore: vsTeamScore!, genderRatio, oOrD, fieldSide });
+        setHalftimeAt(gameData.halftimeAt);
+        setGameId(gameData.id);
 
         const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
         setNextPlayersL(playersL);
@@ -121,6 +124,23 @@ export default function PointPage() {
 
     const { redirectRoute } = await res.json();
     router.push(redirectRoute);
+  }
+
+  const handleHalfOrEndButtonClick = async (e: React.MouseEvent<HTMLElement>) => {
+    e.preventDefault();
+
+    fetch(`/api/games/${gameId}/end-half`, { method: 'POST' })
+      .then(res => res.json())
+      .then((data) => {
+        const gameData = data.gameData as typeof games.$inferSelect;
+        if (gameData.isComplete) {
+          router.push(`/games/${gameId}/summary`);
+        } else {
+          const { vsTeamName, teamScore, vsTeamScore } = gameData;
+          const { genderRatio, oOrD, fieldSide } = calculatePointInfo(gameData);        
+          setCurrentPointInfo({ vsTeamName: vsTeamName!, teamScore: teamScore!, vsTeamScore: vsTeamScore!, genderRatio, oOrD, fieldSide });
+        }
+      });
   }
 
   return !isLoading && (
@@ -405,6 +425,14 @@ export default function PointPage() {
           THEY scored
         </Button>
       </Stack>
+      <Button
+        variant="soft"
+        color='neutral'
+        sx={{ width:'95%' }}
+        onClick={(e) => handleHalfOrEndButtonClick(e)}
+      >
+        {halftimeAt ? 'End Game' : 'Halftime'}
+      </Button>
     </Stack>
   )
 };
