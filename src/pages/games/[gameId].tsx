@@ -31,6 +31,7 @@ export default function GamePage() {
       .then((data) => {
         const gameData = data.gameData as typeof games.$inferSelect;
         const playersData = data.playersData as PlayerWithLineCountType[];
+
         const { vsTeamName, teamScore, vsTeamScore } = gameData;
         const {
           genderRatio,
@@ -39,11 +40,11 @@ export default function GamePage() {
           oOrD,
           fieldSide,
         } = calculatePointInfo(gameData);
-        
         setPointInfo({ vsTeamName: vsTeamName!, teamScore: teamScore!, vsTeamScore: vsTeamScore!, genderRatio, oOrD, fieldSide });
         setPlayerLimitL(playerLimitL);
         setPlayerLimitR(playerLimitR);
 
+         // TODO later: lineCount is being passed silently, match types perhaps
         const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
         setPlayersL(playersL);
         setPlayersR(playersR);

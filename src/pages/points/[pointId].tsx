@@ -1,70 +1,97 @@
-import { useState } from 'react';
-import type { InferGetStaticPropsType, GetStaticProps, GetStaticPaths } from 'next'
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { db } from '@/database/drizzle';
-import { EventTypeTS, PlayerType, pointEvents, points } from '@/database/schema'
-import { Accordion, AccordionDetails, AccordionSummary, Button, Divider, Stack, Typography } from '@mui/joy';
+import { EventTypeTS, games, players, PlayerWithLineCountType, pointEvents } from '@/database/schema'
+import { Accordion, AccordionDetails, AccordionGroup, AccordionSummary, Button, Chip, Divider, Stack, Typography } from '@mui/joy';
 import PlayerButton from '@/components/PlayerButton';
 import PointCard from '@/components/PointCard';
 import { calculatePointInfo, colStackStyles, splitPlayersByGenderMatch } from '@/utils';
 import { Undo } from '@mui/icons-material';
 
-export const getStaticPaths = (async () => {
-  const pointsData = await db.query.points.findMany();
-  return {
-    paths: pointsData.map((point) => ({ params: { pointId: point.id}})),
-    fallback: 'blocking',
-  }
-}) satisfies GetStaticPaths;
-
-export const getStaticProps = (async ({ params }) => {
-  const pointData = await db.query.points.findFirst({
-    where: (points, { eq }) => eq(points.id, `${params!.pointId}`),
-    with: {
-      game: true,
-    }
-  });
-  const playersData = await db.query.players.findMany({
-    where: (players, { inArray }) => inArray(players.id, pointData!.playerIds), 
-  });
-  return { props: { pointData: pointData!, playersData } }
-}) satisfies GetStaticProps<{
-  pointData: typeof points.$inferSelect;
-  playersData: PlayerType[];
-}>
-
-export default function PointPage({
-  pointData, playersData,
-}: InferGetStaticPropsType<typeof getStaticProps>) {
+export default function PointPage() {
   const router = useRouter();
-  const pointId = pointData!.id;
-  const gameData = pointData!.game!;
-  const { vsTeamName, teamScore, vsTeamScore } = gameData;
-  const { genderRatio, oOrD, fieldSide } = calculatePointInfo(gameData);
-  const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
-  const [selectedPlayerId, setSelectedPlayer] = useState('');
+  const { pointId: rawPointId } = router.query;
+  const pointId = `${rawPointId}`;
+
+  const [currentPlayersL, setcurrentPlayersL] = useState([] as typeof players.$inferSelect[]);
+  const [currentPlayersR, setcurrentPlayersR] = useState([] as typeof players.$inferSelect[]);
+  const [selectedCurrentPlayerId, setSelectedCurrentPlayerId] = useState('');
   const [events, setEvents] = useState([] as typeof pointEvents.$inferInsert[]);
+  const [nextPointInfo, setNextPointInfo] = useState({
+    oOrD: '',
+    genderRatio: '',
+    fieldSide: '',
+  });
+
+  // same as [gameId] but renamed
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentPointInfo, setCurrentPointInfo] = useState({
+    vsTeamName: '',
+    teamScore: 0,
+    vsTeamScore: 0,
+    oOrD: '',
+    genderRatio: '',
+    fieldSide: '',
+  });
+  const [nextPlayersL, setNextPlayersL] = useState([] as typeof players.$inferSelect[]);
+  const [nextPlayersR, setNextPlayersR] = useState([] as typeof players.$inferSelect[]);
+  const [nextPlayerLimitL, setNextPlayerLimitL] = useState(0);
+  const [nextPlayerLimitR, setNextPlayerLimitR] = useState(0);
+  const [selectedNextPlayersL, setSelectedNextPlayersL] = useState([] as string[]);
+  const [selectedNextPlayersR, setSelectedNextPlayersR] = useState([] as string[]);
+
+  useEffect(() => {
+    fetch(`/api/points/${pointId}`)
+      .then(res => res.json())
+      .then((data) => {
+        const gameData = data.gameData as typeof games.$inferSelect;
+        const playersData = data.playersData as PlayerWithLineCountType[];
+        const activePlayerIds = data.pointData.playerIds as string[];
+
+        const { vsTeamName, teamScore, vsTeamScore } = gameData;
+        const { genderRatio, oOrD, fieldSide } = calculatePointInfo(gameData);
+        
+        setCurrentPointInfo({ vsTeamName: vsTeamName!, teamScore: teamScore!, vsTeamScore: vsTeamScore!, genderRatio, oOrD, fieldSide });
+
+        const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
+        setNextPlayersL(playersL);
+        setNextPlayersR(playersR);
+        setcurrentPlayersL(playersL.filter(player => activePlayerIds.includes(player.id)));
+        setcurrentPlayersR(playersR.filter(player => activePlayerIds.includes(player.id)));
+
+        const nextPointInfo = calculatePointInfo({...gameData, teamScore: teamScore!+1});
+        setNextPointInfo(nextPointInfo);
+        setNextPlayerLimitL(nextPointInfo.playerLimitL);
+        setNextPlayerLimitR(nextPointInfo.playerLimitR);
+
+        setIsLoading(false);
+      });
+  }, [pointId]);
+
+  const handleClearButtonClick = () => {
+    setSelectedNextPlayersL([]);
+    setSelectedNextPlayersR([]);
+  }
 
   const handlePlayerClick = (playerId: string) => {
-    if (!selectedPlayerId) {
-      setSelectedPlayer(playerId);
-    } else if (playerId == selectedPlayerId) {
-      setSelectedPlayer('');
+    if (!selectedCurrentPlayerId) {
+      setSelectedCurrentPlayerId(playerId);
+    } else if (playerId == selectedCurrentPlayerId) {
+      setSelectedCurrentPlayerId('');
     } else {
       setEvents(events.concat({
         pointId,
         type: 'PASS',
-        playerOneId: selectedPlayerId,
+        playerOneId: selectedCurrentPlayerId,
         playerTwoId: playerId,
       }));
-      setSelectedPlayer(playerId);
+      setSelectedCurrentPlayerId(playerId);
     }
   }
 
   const handleUndoClick = () => {
     const lastIndex = events.length-1;
     const lastEvent = events[lastIndex];
-    setSelectedPlayer(lastEvent.playerOneId ?? '');
+    setSelectedCurrentPlayerId(lastEvent.playerOneId ?? '');
     setEvents(events.slice(0, lastIndex));
   }
 
@@ -72,41 +99,37 @@ export default function PointPage({
     setEvents(events.concat({
       pointId,
       type,
-      playerOneId: selectedPlayerId,
+      playerOneId: selectedCurrentPlayerId,
     }));
-    setSelectedPlayer('');
+    setSelectedCurrentPlayerId('');
   }
 
   const handleScoreClick = async (e: React.MouseEvent<HTMLElement>, type: EventTypeTS) => {
     e.preventDefault();
     const scoreEvent = { pointId, type } as typeof pointEvents.$inferInsert;
     if (type == 'SCORE') {
-      scoreEvent.playerOneId = selectedPlayerId;
+      scoreEvent.playerOneId = selectedCurrentPlayerId;
     }
 
     const res = await fetch(`/api/points/${pointId}/events`, {
       method: 'POST',
-      body: JSON.stringify(events.concat(scoreEvent)),
+      body: JSON.stringify({
+        events: events.concat(scoreEvent),
+        nextPlayerIds: selectedNextPlayersL.concat(selectedNextPlayersR),
+      }),
     });
 
     const { redirectRoute } = await res.json();
     router.push(redirectRoute);
   }
 
-  return (
+  return !isLoading && (
     <Stack
       direction="column"
       spacing={2}
       sx={{...colStackStyles, mt: 1}}
     >
-      <PointCard {...{
-        vsTeamName: vsTeamName!,
-        teamScore: teamScore!,
-        vsTeamScore: vsTeamScore!,
-        genderRatio,
-        oOrD,
-        fieldSide,
-      }} />
+      <PointCard {...currentPointInfo} />
       <Typography level="title-sm">
         Track player stats for point (let em cook):
       </Typography>
@@ -123,11 +146,11 @@ export default function PointPage({
           spacing={1}
           sx={colStackStyles}
         >
-          {playersL.map(player => {
+          {currentPlayersL.map(player => {
             return (
               <PlayerButton
                 key={player.id}
-                variant={selectedPlayerId == player.id ? 'solid' : 'outlined'}
+                variant={selectedCurrentPlayerId == player.id ? 'solid' : 'outlined'}
                 onClick={() => handlePlayerClick(player.id)}
                 {...player}
               />
@@ -139,11 +162,11 @@ export default function PointPage({
           spacing={1}
           sx={colStackStyles}
         >
-          {playersR.map(player => {
+          {currentPlayersR.map(player => {
             return (
               <PlayerButton
                 key={player.id}
-                variant={selectedPlayerId == player.id ? 'solid' : 'outlined'}
+                variant={selectedCurrentPlayerId == player.id ? 'solid' : 'outlined'}
                 onClick={() => handlePlayerClick(player.id)}
                 {...player}
               />
@@ -165,7 +188,7 @@ export default function PointPage({
           size='lg'
           color='danger'
           fullWidth
-          disabled={!selectedPlayerId}
+          disabled={!selectedCurrentPlayerId}
           onClick={() => handleDiscActionClick('TA')}
         >
           Throwaway
@@ -175,7 +198,7 @@ export default function PointPage({
           size='lg'
           color='danger'
           fullWidth
-          disabled={!selectedPlayerId}
+          disabled={!selectedCurrentPlayerId}
           onClick={() => handleDiscActionClick('DROP')}
         >
           Drop
@@ -194,7 +217,7 @@ export default function PointPage({
           size='lg'
           color='success'
           fullWidth
-          disabled={!selectedPlayerId}
+          disabled={!selectedCurrentPlayerId}
           onClick={() => handleDiscActionClick('D')}
         >
           D
@@ -211,7 +234,7 @@ export default function PointPage({
           Undo Last
         </Button>
       </Stack>
-      <Accordion>
+      {/* <Accordion>
         <AccordionSummary>Last: </AccordionSummary>
         <AccordionDetails>
           <Stack
@@ -246,7 +269,114 @@ export default function PointPage({
             </Button>
           </Stack>
         </AccordionDetails>
-      </Accordion>
+      </Accordion> */}
+      <AccordionGroup size='lg' sx={{ width: '100%' }}>
+        <Accordion>
+          <AccordionSummary>Next Line</AccordionSummary>
+          <AccordionDetails>
+            <Stack
+              direction="column"
+              spacing={0.5}
+              sx={colStackStyles}
+            >
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{
+                  justifyContent: "space-between",
+                  width: "95%",
+                }}
+              >
+                <Chip
+                  variant="soft"
+                  color={nextPointInfo.oOrD == 'Offence' ? 'success' : 'danger'}
+                  size="lg"
+                  sx={{ justifyContent: 'center' }}
+                >
+                  {nextPointInfo.oOrD}
+                </Chip>
+                <Chip
+                  variant="soft"
+                  color={nextPointInfo.genderRatio[0] == 'F' ? 'primary' : 'warning'}
+                  size="lg"
+                  sx={{ justifyContent: 'center' }}
+                >
+                  {nextPointInfo.genderRatio}
+                </Chip>
+                <Chip
+                  variant="soft"
+                  size="lg"
+                  sx={{ justifyContent: 'center' }}
+                >
+                  {nextPointInfo.fieldSide}
+                </Chip>
+              </Stack>
+              <Stack
+                direction="row"
+                sx={{
+                  justifyContent: "flex-start",
+                  alignItems: "flex-start",
+                  width: "100%",
+                }}
+              >
+                <Stack
+                  direction="column"
+                  spacing={1}
+                  sx={colStackStyles}
+                >
+                  {nextPlayersL.map(player => {
+                    const playerSelected = selectedNextPlayersL.includes(player.id);
+                    return (
+                      <PlayerButton
+                        key={player.id}
+                        variant={playerSelected ? 'solid' : 'soft'}
+                        disabled={selectedNextPlayersL.length >= nextPlayerLimitL && !playerSelected}
+                        onClick={() => {
+                          setSelectedNextPlayersL(playerSelected
+                            ? selectedNextPlayersL.filter((p) => p != player.id)
+                            : selectedNextPlayersL.concat(player.id));
+                        }}
+                        {...player}
+                      />
+                    );
+                  })}
+                </Stack>
+                <Stack
+                  direction="column"
+                  spacing={1}
+                  sx={colStackStyles}
+                >
+                  {nextPlayersR.map(player => {
+                    const playerSelected = selectedNextPlayersR.includes(player.id);
+                    return (
+                      <PlayerButton
+                        key={player.id}
+                        variant={playerSelected ? 'solid' : 'soft'}
+                        disabled={selectedNextPlayersR.length >= nextPlayerLimitR && !playerSelected}
+                        onClick={() => {
+                          setSelectedNextPlayersR(playerSelected
+                            ? selectedNextPlayersR.filter((p) => p != player.id)
+                            : selectedNextPlayersR.concat(player.id));
+                        }}
+                        {...player}
+                      />
+                    );
+                  })}
+                </Stack>
+              </Stack>
+              <Button
+                variant="soft"
+                color='neutral'
+                sx={{ width:'100%' }}
+                disabled={selectedNextPlayersL.length + selectedNextPlayersR.length == 0}
+                onClick={handleClearButtonClick}
+              >
+                Clear Line
+              </Button>
+            </Stack>
+          </AccordionDetails>
+        </Accordion>
+      </AccordionGroup>
       <Stack
         direction="row"
         spacing={1}
@@ -260,7 +390,7 @@ export default function PointPage({
           size='lg'
           color='success'
           fullWidth
-          disabled={!selectedPlayerId}
+          disabled={!selectedCurrentPlayerId}
           onClick={(e) => handleScoreClick(e, 'SCORE')}
         >
           WE scored
