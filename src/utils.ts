@@ -18,10 +18,10 @@ export function splitPlayersByGenderMatch(playersData: PlayerType[])
 export function calculatePointInfo({
   teamScore,
   vsTeamScore,
-  startOnO,
   startFRatio,
   startLeft,
-  halftimeAt
+  halftimeAt,
+  wasLastScoreUs
 }: typeof games.$inferSelect) {
   const totalPoints = teamScore! + vsTeamScore!;
   const ratioStrs = startFRatio! ? ['Female', 'Open'] : ['Open', 'Female'];
@@ -29,10 +29,7 @@ export function calculatePointInfo({
   const genderRatio = `${ratio} ${totalPoints % 2 === 0 ? '2' : '1'}`;
   const [playerLimitL, playerLimitR] = ratio[0] === 'F' ? [4, 3] : [3, 4];
 
-  const startOnOStrs = startOnO!
-    ? (!halftimeAt ? ['Offence', 'Defence'] : ['Defence', 'Offence'])
-    : (!halftimeAt ? ['Defence', 'Offence'] : ['Offence', 'Defence']);
-  const oOrD = startOnOStrs[(totalPoints - (halftimeAt ?? 0)) % 2];
+  const oOrD = wasLastScoreUs ? 'Defence' : 'Offence';
   const sideStr = startLeft!
     ? (!halftimeAt ? ['Left', 'Right'] : ['Right', 'Left'])
     : (!halftimeAt ? ['Right', 'Left'] : ['Left', 'Right']);

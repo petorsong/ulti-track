@@ -37,7 +37,7 @@ export const games = pgTable('games', {
   id: uuid('id').primaryKey().defaultRandom(),
   teamId: uuid('team_id').references(() => teams.id),
   vsTeamName: varchar('vs_team_name', { length: 255 }),
-  startOnO: boolean('start_on_o').default(false),
+  startOnO: boolean('start_on_o').default(false), // TODO LATER: deprecate this, use wasLastScoreUs
   startFRatio: boolean('start_f_ratio').default(false),
   startLeft: boolean('start_left').default(false),
   teamScore: integer('team_score').default(0),
@@ -45,6 +45,7 @@ export const games = pgTable('games', {
   isComplete: boolean('is_complete').default(false),
   activePlayerIds: uuid('active_player_ids').array().notNull(),
   halftimeAt: integer('halftime_at'),
+  wasLastScoreUs: boolean('was_last_score_us'),
   createdAt: timestamp('created_at', { mode: 'string' })
     .notNull()
     .default(sql`now()`),

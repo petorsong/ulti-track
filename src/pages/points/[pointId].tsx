@@ -290,6 +290,42 @@ export default function PointPage() {
           </Stack>
         </AccordionDetails>
       </Accordion> */}
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{
+          justifyContent: "space-between",
+          width: "95%",
+        }}
+      >
+        <Button
+          variant='solid'
+          size='lg'
+          color='success'
+          fullWidth
+          disabled={!selectedCurrentPlayerId}
+          onClick={(e) => handleScoreClick(e, 'SCORE')}
+        >
+          WE scored
+        </Button>
+        <Button
+          variant='solid'
+          size='lg'
+          color='danger'
+          fullWidth
+          onClick={(e) => handleScoreClick(e, 'VS_SCORE')}
+        >
+          THEY scored
+        </Button>
+      </Stack>
+      <Button
+        variant="soft"
+        color='neutral'
+        sx={{ width:'95%' }}
+        onClick={(e) => handleHalfOrEndButtonClick(e)}
+      >
+        {halftimeAt ? 'End Game' : 'Halftime'}
+      </Button>
       <AccordionGroup size='lg' sx={{ width: '100%' }}>
         <Accordion>
           <AccordionSummary>Next Line</AccordionSummary>
@@ -307,14 +343,6 @@ export default function PointPage() {
                   width: "95%",
                 }}
               >
-                <Chip
-                  variant="soft"
-                  color={nextPointInfo.oOrD == 'Offence' ? 'success' : 'danger'}
-                  size="lg"
-                  sx={{ justifyContent: 'center' }}
-                >
-                  {nextPointInfo.oOrD}
-                </Chip>
                 <Chip
                   variant="soft"
                   color={nextPointInfo.genderRatio[0] == 'F' ? 'primary' : 'warning'}
@@ -397,42 +425,6 @@ export default function PointPage() {
           </AccordionDetails>
         </Accordion>
       </AccordionGroup>
-      <Stack
-        direction="row"
-        spacing={1}
-        sx={{
-          justifyContent: "space-between",
-          width: "95%",
-        }}
-      >
-        <Button
-          variant='solid'
-          size='lg'
-          color='success'
-          fullWidth
-          disabled={!selectedCurrentPlayerId}
-          onClick={(e) => handleScoreClick(e, 'SCORE')}
-        >
-          WE scored
-        </Button>
-        <Button
-          variant='solid'
-          size='lg'
-          color='danger'
-          fullWidth
-          onClick={(e) => handleScoreClick(e, 'VS_SCORE')}
-        >
-          THEY scored
-        </Button>
-      </Stack>
-      <Button
-        variant="soft"
-        color='neutral'
-        sx={{ width:'95%' }}
-        onClick={(e) => handleHalfOrEndButtonClick(e)}
-      >
-        {halftimeAt ? 'End Game' : 'Halftime'}
-      </Button>
     </Stack>
   )
 };

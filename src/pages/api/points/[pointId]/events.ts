@@ -25,13 +25,13 @@ export default async function handler(
     const { id: gameId, teamScore, vsTeamScore } = point!.game!;
     if (scoreEvent.type == 'SCORE') {
       const newTeamScore = teamScore! + 1;
-      await tx.update(games).set({ teamScore: newTeamScore }).where(eq(games.id, gameId));
+      await tx.update(games).set({ teamScore: newTeamScore, wasLastScoreUs: true }).where(eq(games.id, gameId));
       if (newTeamScore >= 15) {
         return `/games/${gameId}/summary`;
       }
     } else if (scoreEvent.type == 'VS_SCORE') {
       const newVsTeamScore = vsTeamScore! + 1;
-      await tx.update(games).set({ vsTeamScore: newVsTeamScore }).where(eq(games.id, gameId));
+      await tx.update(games).set({ vsTeamScore: newVsTeamScore, wasLastScoreUs: false }).where(eq(games.id, gameId));
       if (newVsTeamScore >= 15) {
         return `/games/${gameId}/summary`;
       }
