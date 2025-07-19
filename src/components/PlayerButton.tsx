@@ -1,6 +1,5 @@
 import { Badge, Button } from '@mui/joy';
-import FrontHandOutlinedIcon from '@mui/icons-material/FrontHandOutlined';
-import DirectionsRunOutlinedIcon from '@mui/icons-material/DirectionsRunOutlined';
+import { DirectionsRunOutlined, FrontHandOutlined } from '@mui/icons-material';
 
 export default function PlayerButton({
   firstName,
@@ -22,9 +21,7 @@ export default function PlayerButton({
   onClick: () => void;
 }) {
   const name = nickname ?? firstName;
-  const roleIcon = isHandler
-    ? <FrontHandOutlinedIcon />
-    : <DirectionsRunOutlinedIcon />;
+  const roleIcon = isHandler ? <FrontHandOutlined /> : <DirectionsRunOutlined />;
   const colour = isFemaleMatching ? 'primary' : 'success';
 
   return (

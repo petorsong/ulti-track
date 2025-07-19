@@ -5,6 +5,7 @@ import { Button, Stack, Typography } from '@mui/joy';
 import PlayerButton from '@/components/PlayerButton';
 import PointCard from '@/components/PointCard';
 import { calculatePointInfo, colStackStyles, splitPlayersByGenderMatch } from '@/utils';
+import { GroupRemove, PlayCircleFilledOutlined } from '@mui/icons-material';
 
 export default function GamePage() {
   const router = useRouter();
@@ -46,10 +47,11 @@ export default function GamePage() {
         setPlayerLimitL(playerLimitL);
         setPlayerLimitR(playerLimitR);
 
-         // TODO later: lineCount is being passed silently, match types perhaps
+        // TODO later: lineCount is being passed silently, match types perhaps
         const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
         setPlayersL(playersL);
         setPlayersR(playersR);
+
         setIsLoading(false);
       });
   }, [gameId]);
@@ -67,6 +69,7 @@ export default function GamePage() {
           const { vsTeamName, teamScore, vsTeamScore } = gameData;
           const { genderRatio, oOrD, fieldSide } = calculatePointInfo(gameData);        
           setPointInfo({ vsTeamName: vsTeamName!, teamScore: teamScore!, vsTeamScore: vsTeamScore!, genderRatio, oOrD, fieldSide });
+          router.reload();
         }
       });
   }
@@ -173,11 +176,13 @@ export default function GamePage() {
         >
           <Button
             variant="outlined"
+            endDecorator={<GroupRemove />}
             onClick={handleClearButtonClick}
           >
             Clear Line
           </Button>
           <Button
+            endDecorator={<PlayCircleFilledOutlined />}
             disabled={selectedPlayersL.length + selectedPlayersR.length < 7}
             onClick={handleSubmitButtonClick}
           >

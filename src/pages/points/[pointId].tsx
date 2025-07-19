@@ -5,7 +5,8 @@ import { Accordion, AccordionDetails, AccordionGroup, AccordionSummary, Button, 
 import PlayerButton from '@/components/PlayerButton';
 import PointCard from '@/components/PointCard';
 import { calculatePointInfo, colStackStyles, splitPlayersByGenderMatch } from '@/utils';
-import { Undo } from '@mui/icons-material';
+import { GroupRemove, Undo } from '@mui/icons-material';
+// import GroupRemoveIcon from '@mui/icons-material/GroupRemove';
 
 export default function PointPage() {
   const router = useRouter();
@@ -139,6 +140,7 @@ export default function PointPage() {
           const { vsTeamName, teamScore, vsTeamScore } = gameData;
           const { genderRatio, oOrD, fieldSide } = calculatePointInfo(gameData);        
           setCurrentPointInfo({ vsTeamName: vsTeamName!, teamScore: teamScore!, vsTeamScore: vsTeamScore!, genderRatio, oOrD, fieldSide });
+          router.reload();
         }
       });
   }
@@ -337,27 +339,38 @@ export default function PointPage() {
             >
               <Stack
                 direction="row"
-                spacing={1}
                 sx={{
                   justifyContent: "space-between",
                   width: "95%",
                 }}
               >
-                <Chip
+                <Stack direction="row" spacing={1}>
+                  <Chip
+                    variant="soft"
+                    color={nextPointInfo.genderRatio[0] == 'F' ? 'primary' : 'warning'}
+                    size="lg"
+                    sx={{ justifyContent: 'center' }}
+                  >
+                    {nextPointInfo.genderRatio}
+                  </Chip>
+                  <Chip
+                    variant="soft"
+                    size="lg"
+                    sx={{ justifyContent: 'center' }}
+                  >
+                    {nextPointInfo.fieldSide}
+                  </Chip>
+                </Stack>
+                <Button
                   variant="soft"
-                  color={nextPointInfo.genderRatio[0] == 'F' ? 'primary' : 'warning'}
-                  size="lg"
-                  sx={{ justifyContent: 'center' }}
+                  color='neutral'
+                  sx={{ width: '47.5%' }}
+                  endDecorator={<GroupRemove />}
+                  disabled={selectedNextPlayersL.length + selectedNextPlayersR.length == 0}
+                  onClick={handleClearButtonClick}
                 >
-                  {nextPointInfo.genderRatio}
-                </Chip>
-                <Chip
-                  variant="soft"
-                  size="lg"
-                  sx={{ justifyContent: 'center' }}
-                >
-                  {nextPointInfo.fieldSide}
-                </Chip>
+                  Clear Line
+                </Button>
               </Stack>
               <Stack
                 direction="row"
@@ -412,15 +425,6 @@ export default function PointPage() {
                   })}
                 </Stack>
               </Stack>
-              <Button
-                variant="soft"
-                color='neutral'
-                sx={{ width:'100%' }}
-                disabled={selectedNextPlayersL.length + selectedNextPlayersR.length == 0}
-                onClick={handleClearButtonClick}
-              >
-                Clear Line
-              </Button>
             </Stack>
           </AccordionDetails>
         </Accordion>
