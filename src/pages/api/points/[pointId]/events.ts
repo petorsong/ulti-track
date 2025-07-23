@@ -19,18 +19,18 @@ export default async function handler(
 
     const scoreEvent = events[events.length-1];
     const point = await db.query.points.findFirst({
-      where: (points, { eq }) => eq(points.id, scoreEvent.pointId!),
+      where: (points, { eq }) => eq(points.id, scoreEvent.pointId),
       with: { game : true },
     });
-    const { id: gameId, teamScore, vsTeamScore } = point!.game!;
+    const { id: gameId, teamScore, vsTeamScore } = point!.game;
     if (scoreEvent.type == 'SCORE') {
-      const newTeamScore = teamScore! + 1;
+      const newTeamScore = teamScore + 1;
       await tx.update(games).set({ teamScore: newTeamScore, wasLastScoreUs: true }).where(eq(games.id, gameId));
       if (newTeamScore >= 15) {
         return `/games/${gameId}/summary`;
       }
     } else if (scoreEvent.type == 'VS_SCORE') {
-      const newVsTeamScore = vsTeamScore! + 1;
+      const newVsTeamScore = vsTeamScore + 1;
       await tx.update(games).set({ vsTeamScore: newVsTeamScore, wasLastScoreUs: false }).where(eq(games.id, gameId));
       if (newVsTeamScore >= 15) {
         return `/games/${gameId}/summary`;

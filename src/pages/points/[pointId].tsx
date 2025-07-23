@@ -50,9 +50,8 @@ export default function PointPage() {
         const playersData = data.playersData as PlayerWithLineCountType[];
         const activePlayerIds = data.pointData.playerIds as string[];
 
-        const { vsTeamName, teamScore, vsTeamScore } = gameData;
         const { genderRatio, oOrD, fieldSide } = calculatePointInfo(gameData);        
-        setCurrentPointInfo({ vsTeamName: vsTeamName!, teamScore: teamScore!, vsTeamScore: vsTeamScore!, genderRatio, oOrD, fieldSide });
+        setCurrentPointInfo({ ...gameData, genderRatio, oOrD, fieldSide });
         setHalftimeAt(gameData.halftimeAt);
         setGameId(gameData.id);
 
@@ -62,7 +61,7 @@ export default function PointPage() {
         setcurrentPlayersL(playersL.filter(player => activePlayerIds.includes(player.id)));
         setcurrentPlayersR(playersR.filter(player => activePlayerIds.includes(player.id)));
 
-        const nextPointInfo = calculatePointInfo({...gameData, teamScore: teamScore!+1});
+        const nextPointInfo = calculatePointInfo({...gameData, teamScore: gameData.teamScore+1});
         setNextPointInfo(nextPointInfo);
         setNextPlayerLimitL(nextPointInfo.playerLimitL);
         setNextPlayerLimitR(nextPointInfo.playerLimitR);
@@ -137,9 +136,8 @@ export default function PointPage() {
         if (gameData.isComplete) {
           router.push(`/games/${gameId}/summary`);
         } else {
-          const { vsTeamName, teamScore, vsTeamScore } = gameData;
           const { genderRatio, oOrD, fieldSide } = calculatePointInfo(gameData);        
-          setCurrentPointInfo({ vsTeamName: vsTeamName!, teamScore: teamScore!, vsTeamScore: vsTeamScore!, genderRatio, oOrD, fieldSide });
+          setCurrentPointInfo({ ...gameData, genderRatio, oOrD, fieldSide });
           router.reload();
         }
       });

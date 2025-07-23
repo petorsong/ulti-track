@@ -22,7 +22,7 @@ export default function GameSummaryPage() {
         const playersData = data.playersData as PlayerWithLineCountType[];
 
         const { vsTeamName, teamScore, vsTeamScore } = gameData;
-        setScoreInfo({ vsTeamName: vsTeamName!, teamScore: teamScore!, vsTeamScore: vsTeamScore! });
+        setScoreInfo({ vsTeamName, teamScore, vsTeamScore });
         
         // TODO later: lineCount is being passed silently, match types perhaps
         const { playersL, playersR } = splitPlayersByGenderMatch(playersData);

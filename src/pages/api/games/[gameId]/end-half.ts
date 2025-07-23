@@ -18,7 +18,7 @@ export default async function handler(
   const [result] = await db.update(games).set(halftimeAt ? {
     isComplete: true
   } : {
-    halftimeAt: teamScore! + vsTeamScore!,
+    halftimeAt: teamScore + vsTeamScore,
   }).where(eq(games.id, `${gameId}`)).returning();
 
   res.status(200).json({ gameData: result });

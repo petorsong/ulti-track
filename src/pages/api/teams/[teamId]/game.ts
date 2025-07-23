@@ -16,7 +16,7 @@ export default async function handler(
   }
 
   const [result] = await db.insert(games).values({
-    ...parsedBody, wasLastScoreUs: !parsedBody.startOnO!
+    ...parsedBody, wasLastScoreUs: !parsedBody.startOnO
   }).returning({gameId: games.id});
   res.status(200).json(result);
 }

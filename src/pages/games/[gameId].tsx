@@ -43,7 +43,7 @@ export default function GamePage() {
           oOrD,
           fieldSide,
         } = calculatePointInfo(gameData);
-        setPointInfo({ vsTeamName: vsTeamName!, teamScore: teamScore!, vsTeamScore: vsTeamScore!, genderRatio, oOrD, fieldSide });
+        setPointInfo({ vsTeamName, teamScore, vsTeamScore, genderRatio, oOrD, fieldSide });
         setPlayerLimitL(playerLimitL);
         setPlayerLimitR(playerLimitR);
 
@@ -68,7 +68,7 @@ export default function GamePage() {
         } else {
           const { vsTeamName, teamScore, vsTeamScore } = gameData;
           const { genderRatio, oOrD, fieldSide } = calculatePointInfo(gameData);        
-          setPointInfo({ vsTeamName: vsTeamName!, teamScore: teamScore!, vsTeamScore: vsTeamScore!, genderRatio, oOrD, fieldSide });
+          setPointInfo({ vsTeamName, teamScore, vsTeamScore, genderRatio, oOrD, fieldSide });
           router.reload();
         }
       });

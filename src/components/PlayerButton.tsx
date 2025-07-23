@@ -5,7 +5,7 @@ export default function PlayerButton({
   firstName,
   nickname,
   isHandler,
-  isFemaleMatching,
+  isFMP,
   variant,
   disabled,
   lineCount,
@@ -14,7 +14,7 @@ export default function PlayerButton({
   firstName: string;
   nickname: string | null;
   isHandler: boolean;
-  isFemaleMatching: boolean;
+  isFMP: boolean;
   variant: 'plain' | 'outlined' | 'soft' | 'solid';
   disabled?: boolean;
   lineCount?: number;
@@ -22,7 +22,7 @@ export default function PlayerButton({
 }) {
   const name = nickname ?? firstName;
   const roleIcon = isHandler ? <FrontHandOutlined /> : <DirectionsRunOutlined />;
-  const colour = isFemaleMatching ? 'primary' : 'success';
+  const colour = isFMP ? 'primary' : 'success';
 
   return (
     <Badge

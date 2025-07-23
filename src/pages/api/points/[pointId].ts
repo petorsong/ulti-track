@@ -23,7 +23,7 @@ export default async function handler(
   });
 
   const gameData = await db.query.games.findFirst({
-    where: (games, { eq }) => eq(games.id, `${pointData!.game!.id}`),
+    where: (games, { eq }) => eq(games.id, `${pointData!.game.id}`),
     with: { points: true },
   });
 
