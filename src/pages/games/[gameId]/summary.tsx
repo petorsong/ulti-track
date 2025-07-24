@@ -1,29 +1,33 @@
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 import { Box, Stack, Typography } from '@mui/joy';
-import { games, players, PlayerWithLineCountType } from "@/database/schema";
-import { colStackStyles, splitPlayersByGenderMatch } from "@/utils";
-import PlayerButton from "@/components/PlayerButton";
+import { games, players, PlayerWithLineCountType } from '@/database/schema';
+import { colStackStyles, splitPlayersByGenderMatch } from '@/utils';
+import PlayerButton from '@/components/PlayerButton';
 
 // TODO LATER: this can be a static server rendered page
 export default function GameSummaryPage() {
   const router = useRouter();
   const { gameId } = router.query;
   const [isLoading, setIsLoading] = useState(true);
-  const [scoreInfo, setScoreInfo] = useState({ vsTeamName: '', teamScore: 0, vsTeamScore: 0 });
-  const [playersL, setPlayersL] = useState([] as typeof players.$inferSelect[]);
-  const [playersR, setPlayersR] = useState([] as typeof players.$inferSelect[]);
+  const [scoreInfo, setScoreInfo] = useState({
+    vsTeamName: '',
+    teamScore: 0,
+    vsTeamScore: 0,
+  });
+  const [playersL, setPlayersL] = useState([] as (typeof players.$inferSelect)[]);
+  const [playersR, setPlayersR] = useState([] as (typeof players.$inferSelect)[]);
 
   useEffect(() => {
     fetch(`/api/games/${gameId}`)
-      .then(res => res.json())
+      .then((res) => res.json())
       .then((data) => {
         const gameData = data.gameData as typeof games.$inferSelect;
         const playersData = data.playersData as PlayerWithLineCountType[];
 
         const { vsTeamName, teamScore, vsTeamScore } = gameData;
         setScoreInfo({ vsTeamName, teamScore, vsTeamScore });
-        
+
         // TODO later: lineCount is being passed silently, match types perhaps
         const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
         setPlayersL(playersL);
@@ -31,79 +35,57 @@ export default function GameSummaryPage() {
 
         setIsLoading(false);
       });
-    }, [gameId]);
-  
+  }, [gameId]);
 
-  return !isLoading && (
-    <Stack
-      direction="column"
-      spacing={1}
-      sx={{ ...colStackStyles, mt: 1 }}
-    >
-      <Box sx={{
-        flex: 2,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        textAlign: 'center'
-      }}>
-        <Typography
-          level="body-sm"
-          color="neutral"
-        >
-          Final Score vs {scoreInfo.vsTeamName}
-        </Typography>
-        <Typography
-          level="h1"
+  return (
+    !isLoading && (
+      <Stack direction="column" spacing={1} sx={{ ...colStackStyles, mt: 1 }}>
+        <Box
           sx={{
-            fontSize: '2.5rem',
-            fontWeight: 'bold',
-            lineHeight: 1
+            flex: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            textAlign: 'center',
           }}
         >
-          {scoreInfo.teamScore}-{scoreInfo.vsTeamScore}
-        </Typography>
-      </Box>
-      <Stack
-        direction="row"
-        sx={{
-          justifyContent: "flex-start",
-          alignItems: "flex-start",
-          width: "100%",
-        }}
-      >
+          <Typography level="body-sm" color="neutral">
+            Final Score vs {scoreInfo.vsTeamName}
+          </Typography>
+          <Typography
+            level="h1"
+            sx={{
+              fontSize: '2.5rem',
+              fontWeight: 'bold',
+              lineHeight: 1,
+            }}
+          >
+            {scoreInfo.teamScore}-{scoreInfo.vsTeamScore}
+          </Typography>
+        </Box>
         <Stack
-          direction="column"
-          spacing={1}
-          sx={colStackStyles}
+          direction="row"
+          sx={{
+            justifyContent: 'flex-start',
+            alignItems: 'flex-start',
+            width: '100%',
+          }}
         >
-          {/* .toSorted((a, b) => b.lineCount - a.lineCount) */}
-          {playersL.map(player => ( 
-            <PlayerButton
-              key={player.id}
-              variant='soft'
-              onClick={() => {}}
-              {...player}
-            />
-          ))}
-        </Stack>
-        <Stack
-          direction="column"
-          spacing={1}
-          sx={colStackStyles}
-        >
-          {/* .toSorted((a, b) => b.lineCount - a.lineCount) */}
-          {playersR.map(player => (
-            <PlayerButton
-              key={player.id}
-              variant='soft'
-              onClick={() => {}}
-              {...player}
-            />
-          ))}
+          <Stack direction="column" spacing={1} sx={colStackStyles}>
+            {/* .toSorted((a, b) => b.lineCount - a.lineCount) */}
+            {playersL.map((player) => (
+              <PlayerButton key={player.id} variant="soft" onClick={() => {}} {...player} />
+            ))}
+          </Stack>
+          <Stack direction="column" spacing={1} sx={colStackStyles}>
+            {/* .toSorted((a, b) => b.lineCount - a.lineCount) */}
+            {playersR.map((player) => (
+              <PlayerButton key={player.id} variant="soft" onClick={() => {}} {...player} />
+            ))}
+          </Stack>
         </Stack>
       </Stack>
-    </Stack>
-  )
+    )
+  );
 }

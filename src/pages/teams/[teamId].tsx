@@ -12,7 +12,7 @@ import {
   Stack,
   Accordion,
   AccordionSummary,
-  AccordionDetails
+  AccordionDetails,
 } from '@mui/joy';
 import { GetStaticPaths, GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useRouter } from 'next/router';
@@ -22,10 +22,11 @@ import { colStackStyles, splitPlayersByGenderMatch } from '@/utils';
 import PlayerButton from '@/components/PlayerButton';
 
 type ErrorType = {
-  [field: string]: string
+  [field: string]: string;
 };
 
-const inactiveDevsForNobo = [ // TODO LATER: remove
+const inactiveDevsForNobo = [
+  // TODO LATER: remove
   '9bd3c78a-e892-4da7-87a3-a2b70121c4c3', // evelyn
   '58f21f02-dc1c-4c28-9227-94b7d245fbee', // mika
   '3ba58f1e-8bf6-4270-aadf-4f124e71cf59', // yi
@@ -43,9 +44,9 @@ const inactiveDevsForNobo = [ // TODO LATER: remove
 export const getStaticPaths = (async () => {
   const teamsData = await db.query.teams.findMany();
   return {
-    paths: teamsData.map((team) => ({ params: { teamId: team.id}})),
+    paths: teamsData.map((team) => ({ params: { teamId: team.id } })),
     fallback: 'blocking',
-  }
+  };
 }) satisfies GetStaticPaths;
 
 export const getStaticProps = (async ({ params }) => {
@@ -56,55 +57,53 @@ export const getStaticProps = (async ({ params }) => {
   const playersData = await db.query.players.findMany({
     where: (players, { eq }) => eq(players.teamId, teamId),
   });
-  return { props: { teamData: teamData!, playersData }}
+  return { props: { teamData: teamData!, playersData } };
 }) satisfies GetStaticProps<{
   teamData: typeof teams.$inferSelect;
   playersData: PlayerType[];
-}>
+}>;
 
-export default function NewGamePage({
-  teamData, playersData
-}:InferGetStaticPropsType<typeof getStaticProps>) {
+export default function NewGamePage({ teamData, playersData }: InferGetStaticPropsType<typeof getStaticProps>) {
   const router = useRouter();
   const [formData, setFormData] = useState({
     vsTeamName: '',
     startOnO: false,
     startFRatio: false,
-    startLeft: false
+    startLeft: false,
   });
   const [errors, setErrors] = useState({
-    vsTeamName: ''
+    vsTeamName: '',
   } as ErrorType);
 
-  const [activePlayerIds, setActivePlayerIds] = useState(playersData.filter(
-    (p) => !inactiveDevsForNobo.includes(p.id)
-  ).map((p) => p.id));
+  const [activePlayerIds, setActivePlayerIds] = useState(
+    playersData.filter((p) => !inactiveDevsForNobo.includes(p.id)).map((p) => p.id)
+  );
   const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
 
-  const handleInputChange = (field: string, value: boolean|string) => {
-    setFormData(prev => ({
+  const handleInputChange = (field: string, value: boolean | string) => {
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
-    
+
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [field]: ''
+        [field]: '',
       }));
     }
   };
 
   const handleSubmitButtonClick = async (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
-    
+
     // Validate required fields
     const newErrors = {} as ErrorType;
     if (!formData.vsTeamName.trim()) {
       newErrors.vsTeamName = 'Opponent name is required';
     }
-    
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -114,12 +113,14 @@ export default function NewGamePage({
     const res = await fetch(`/api/teams/${teamId}/game`, {
       method: 'POST',
       body: JSON.stringify({
-        ...formData, activePlayerIds, teamId,
+        ...formData,
+        activePlayerIds,
+        teamId,
       }),
     });
     const { gameId } = await res.json();
     router.push(`/games/${gameId}`);
-  }
+  };
 
   return (
     <Box sx={{ m: 0.5 }}>
@@ -182,48 +183,44 @@ export default function NewGamePage({
                 <Stack
                   direction="row"
                   sx={{
-                    justifyContent: "flex-start",
-                    alignItems: "flex-start",
-                    width: "100%",
+                    justifyContent: 'flex-start',
+                    alignItems: 'flex-start',
+                    width: '100%',
                     mt: 1,
                   }}
                 >
-                  <Stack
-                    direction="column"
-                    spacing={1}
-                    sx={colStackStyles}
-                  >
-                    {playersL.map(player => {
+                  <Stack direction="column" spacing={1} sx={colStackStyles}>
+                    {playersL.map((player) => {
                       const playerSelected = activePlayerIds.includes(player.id);
                       return (
                         <PlayerButton
                           key={player.id}
                           variant={playerSelected ? 'solid' : 'outlined'}
                           onClick={() => {
-                            setActivePlayerIds(playerSelected
-                              ? activePlayerIds.filter((p) => p != player.id)
-                              : activePlayerIds.concat(player.id));
+                            setActivePlayerIds(
+                              playerSelected
+                                ? activePlayerIds.filter((p) => p != player.id)
+                                : activePlayerIds.concat(player.id)
+                            );
                           }}
                           {...player}
                         />
                       );
                     })}
                   </Stack>
-                  <Stack
-                    direction="column"
-                    spacing={1}
-                    sx={colStackStyles}
-                  >
-                    {playersR.map(player => {
+                  <Stack direction="column" spacing={1} sx={colStackStyles}>
+                    {playersR.map((player) => {
                       const playerSelected = activePlayerIds.includes(player.id);
                       return (
                         <PlayerButton
                           key={player.id}
                           variant={playerSelected ? 'solid' : 'outlined'}
                           onClick={() => {
-                            setActivePlayerIds(playerSelected
-                              ? activePlayerIds.filter((p) => p != player.id)
-                              : activePlayerIds.concat(player.id));
+                            setActivePlayerIds(
+                              playerSelected
+                                ? activePlayerIds.filter((p) => p != player.id)
+                                : activePlayerIds.concat(player.id)
+                            );
                           }}
                           {...player}
                         />

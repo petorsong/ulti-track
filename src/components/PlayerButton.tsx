@@ -26,9 +26,9 @@ export default function PlayerButton({
 
   return (
     <Badge
-      size='sm'
-      color='neutral'
-      variant='solid'
+      size="sm"
+      color="neutral"
+      variant="solid"
       anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
       invisible={!lineCount}
       badgeContent={lineCount}
@@ -42,7 +42,7 @@ export default function PlayerButton({
         endDecorator={roleIcon}
         color={colour}
         sx={{
-          justifyContent: "space-between",
+          justifyContent: 'space-between',
         }}
         fullWidth
       >
