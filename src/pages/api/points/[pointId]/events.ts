@@ -13,9 +13,23 @@ export default async function handler(req: Req, res: Res<{ redirectRoute: string
   } = JSON.parse(req.body);
 
   const redirectRoute = await db.transaction(async (tx) => {
+    const scoreEvent = events[events.length - 1];
+    if (scoreEvent.type == 'SCORE') {
+      const secondLastEvent = events[events.length - 2];
+      if (secondLastEvent && secondLastEvent.type == 'PASS') {
+        secondLastEvent.eventJson = {
+          assistType: 'ASSIST',
+        };
+      }
+      const thirdLastEvent = events[events.length - 3];
+      if (thirdLastEvent && thirdLastEvent.type == 'PASS') {
+        thirdLastEvent.eventJson = {
+          assistType: 'HOCKEY_ASSIST',
+        };
+      }
+    }
     await tx.insert(pointEvents).values(events);
 
-    const scoreEvent = events[events.length - 1];
     const point = await db.query.points.findFirst({
       where: (points, { eq }) => eq(points.id, scoreEvent.pointId),
       with: { game: true },
