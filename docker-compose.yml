@@ -11,7 +11,7 @@ services:
       - $POSTGRES_LOCAL_PORT:$POSTGRES_DOCKER_PORT
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./server/src/database/migrations:/docker-entrypoint-initdb.d # TODO LATER: do i need this?
+      - ./server/src/database/migrations:/docker-entrypoint-initdb.d
 
 volumes:
   postgres_data:

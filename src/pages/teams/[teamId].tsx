@@ -25,22 +25,6 @@ type ErrorType = {
   [field: string]: string;
 };
 
-const inactiveDevsForNobo = [
-  // TODO LATER: remove
-  '9bd3c78a-e892-4da7-87a3-a2b70121c4c3', // evelyn
-  '58f21f02-dc1c-4c28-9227-94b7d245fbee', // mika
-  '3ba58f1e-8bf6-4270-aadf-4f124e71cf59', // yi
-  '1c48cabc-4d49-45cb-ba66-2f3fac430911', // jorin
-  '2070f5ac-fad8-4820-bb20-1d0642fb6aaa', // sophia
-
-  '31f6f02d-a209-46b1-a233-352ca0acbdf5', // darren
-  'eb775ded-a08e-4946-8d2c-f6c0f55289c9', // alec
-  '0d259b14-63b8-41dc-8885-5f9f476a7fbb', // kevin
-  'e340f1a3-f353-4dc2-b0a7-dc58ce40227b', // tomas
-  '0156c785-1e06-40e5-b35c-72f58068362f', // nick
-  '1b95da1c-e094-4a06-8a7f-993ee7f43a90', // hosie
-];
-
 export const getStaticPaths = (async () => {
   const teamsData = await db.query.teams.findMany();
   return {
@@ -75,9 +59,7 @@ export default function NewGamePage({ teamData, playersData }: InferGetStaticPro
     vsTeamName: '',
   } as ErrorType);
 
-  const [activePlayerIds, setActivePlayerIds] = useState(
-    playersData.filter((p) => !inactiveDevsForNobo.includes(p.id)).map((p) => p.id)
-  );
+  const [activePlayerIds, setActivePlayerIds] = useState(playersData.filter((p) => !p.isPR).map((p) => p.id));
   const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
 
   const handleInputChange = (field: string, value: boolean | string) => {
@@ -127,11 +109,11 @@ export default function NewGamePage({ teamData, playersData }: InferGetStaticPro
       <Card variant="outlined">
         <CardContent>
           <Typography level="title-lg" sx={{ mb: 3 }}>
-            New Game: {teamData.name}
+            New game: {teamData.name}
           </Typography>
           <Stack spacing={3}>
             <FormControl error={!!errors.vsTeamName}>
-              <FormLabel>Opponent Name</FormLabel>
+              <FormLabel>Opponent name:</FormLabel>
               <Input
                 placeholder="Enter opponent team name"
                 value={formData.vsTeamName}
@@ -178,7 +160,7 @@ export default function NewGamePage({ teamData, playersData }: InferGetStaticPro
               </Stack>
             </Box>
             <Accordion>
-              <AccordionSummary>Active Players</AccordionSummary>
+              <AccordionSummary>Active players</AccordionSummary>
               <AccordionDetails>
                 <Stack
                   direction="row"
@@ -231,7 +213,7 @@ export default function NewGamePage({ teamData, playersData }: InferGetStaticPro
               </AccordionDetails>
             </Accordion>
             <Button onClick={handleSubmitButtonClick} size="lg" sx={{ mt: 2 }}>
-              Start Game
+              Start game
             </Button>
           </Stack>
         </CardContent>

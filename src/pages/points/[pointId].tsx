@@ -16,13 +16,13 @@ import PlayerButton from '@/components/PlayerButton';
 import PointCard from '@/components/PointCard';
 import { calculatePointInfo, colStackStyles, splitPlayersByGenderMatch } from '@/utils';
 import { GroupRemove, Undo } from '@mui/icons-material';
-// import GroupRemoveIcon from '@mui/icons-material/GroupRemove';
+import LastEventAccordion from '@/components/LastEventAccordion';
 
 export default function PointPage() {
   const router = useRouter();
   const { pointId: rawPointId } = router.query;
-  const pointId = `${rawPointId}`;
 
+  const [pointId, setPointId] = useState('');
   const [currentPlayersL, setcurrentPlayersL] = useState([] as (typeof players.$inferSelect)[]);
   const [currentPlayersR, setcurrentPlayersR] = useState([] as (typeof players.$inferSelect)[]);
   const [selectedCurrentPlayerId, setSelectedCurrentPlayerId] = useState('');
@@ -53,35 +53,38 @@ export default function PointPage() {
   const [selectedNextPlayersR, setSelectedNextPlayersR] = useState([] as string[]);
 
   useEffect(() => {
-    fetch(`/api/points/${pointId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        const gameData = data.gameData as typeof games.$inferSelect;
-        const playersData = data.playersData as PlayerWithLineCountType[];
-        const activePlayerIds = data.pointData.playerIds as string[];
+    if (rawPointId) {
+      fetch(`/api/points/${rawPointId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          const gameData = data.gameData as typeof games.$inferSelect;
+          const playersData = data.playersData as PlayerWithLineCountType[];
+          const activePlayerIds = data.pointData.playerIds as string[];
 
-        const { genderRatio, oOrD, fieldSide } = calculatePointInfo(gameData);
-        setCurrentPointInfo({ ...gameData, genderRatio, oOrD, fieldSide });
-        setHalftimeAt(gameData.halftimeAt);
-        setGameId(gameData.id);
+          const { genderRatio, oOrD, fieldSide } = calculatePointInfo(gameData);
+          setCurrentPointInfo({ ...gameData, genderRatio, oOrD, fieldSide });
+          setHalftimeAt(gameData.halftimeAt);
+          setGameId(gameData.id);
 
-        const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
-        setNextPlayersL(playersL);
-        setNextPlayersR(playersR);
-        setcurrentPlayersL(playersL.filter((player) => activePlayerIds.includes(player.id)));
-        setcurrentPlayersR(playersR.filter((player) => activePlayerIds.includes(player.id)));
+          const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
+          setNextPlayersL(playersL);
+          setNextPlayersR(playersR);
+          setcurrentPlayersL(playersL.filter((player) => activePlayerIds.includes(player.id)));
+          setcurrentPlayersR(playersR.filter((player) => activePlayerIds.includes(player.id)));
 
-        const nextPointInfo = calculatePointInfo({
-          ...gameData,
-          teamScore: gameData.teamScore + 1,
+          const nextPointInfo = calculatePointInfo({
+            ...gameData,
+            teamScore: gameData.teamScore + 1,
+          });
+          setNextPointInfo(nextPointInfo);
+          setNextPlayerLimitL(nextPointInfo.playerLimitL);
+          setNextPlayerLimitR(nextPointInfo.playerLimitR);
+
+          setPointId(`${rawPointId}`);
+          setIsLoading(false);
         });
-        setNextPointInfo(nextPointInfo);
-        setNextPlayerLimitL(nextPointInfo.playerLimitL);
-        setNextPlayerLimitR(nextPointInfo.playerLimitR);
-
-        setIsLoading(false);
-      });
-  }, [pointId]);
+    }
+  }, [rawPointId]);
 
   const handleClearButtonClick = () => {
     setSelectedNextPlayersL([]);
@@ -90,6 +93,7 @@ export default function PointPage() {
 
   const handlePlayerClick = (playerId: string) => {
     if (!selectedCurrentPlayerId) {
+      // TODO: only toggle for pickup
       setSelectedCurrentPlayerId(playerId);
     } else if (playerId == selectedCurrentPlayerId) {
       setSelectedCurrentPlayerId('');
@@ -258,42 +262,7 @@ export default function PointPage() {
             Undo Last
           </Button>
         </Stack>
-        {/* <Accordion>
-        <AccordionSummary>Last: </AccordionSummary>
-        <AccordionDetails>
-          <Stack
-            direction="column"
-            spacing={0.5}
-            sx={colStackStyles}
-          >
-            {events.toReversed().map((e, i) => (
-              <Typography key={i} level="title-sm">
-                {JSON.stringify(e)}
-              </Typography>
-            ))}
-          </Stack>
-        </AccordionDetails>
-      </Accordion>
-      <Accordion>
-        <AccordionSummary>More events</AccordionSummary>
-        <AccordionDetails>
-          <Stack
-            direction="row"
-            spacing={1}
-            sx={{
-              justifyContent: "space-between",
-              width: "95%",
-            }}
-          >
-            <Button variant='outlined' size='lg' color='neutral' fullWidth>
-              OUR timeout
-            </Button>
-            <Button variant='outlined' size='lg' color='warning' fullWidth>
-              THEIR timeout
-            </Button>
-          </Stack>
-        </AccordionDetails>
-      </Accordion> */}
+        <LastEventAccordion {...{ events, players: currentPlayersL.concat(currentPlayersR) }} />
         <Stack
           direction="row"
           spacing={1}

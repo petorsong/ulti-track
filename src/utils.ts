@@ -1,9 +1,8 @@
-import { games, PlayerType } from './database/schema';
+import { games, PlayerType, PlayerWithLineCountType } from './database/schema';
 
-export function splitPlayersByGenderMatch(playersData: PlayerType[]): {
-  playersL: PlayerType[];
-  playersR: PlayerType[];
-} {
+export function splitPlayersByGenderMatch<PT extends PlayerType | PlayerWithLineCountType>(
+  playersData: PT[]
+): { playersL: PT[]; playersR: PT[] } {
   return playersData
     .sort((a, b) => (a.isPR === b.isPR ? 0 : b.isPR ? -1 : 1))
     .sort((a, b) => (a.isHandler === b.isHandler ? 0 : b.isHandler ? 1 : -1))
@@ -16,7 +15,7 @@ export function splitPlayersByGenderMatch(playersData: PlayerType[]): {
         }
         return result;
       },
-      { playersL: [] as PlayerType[], playersR: [] as PlayerType[] }
+      { playersL: [] as PT[], playersR: [] as PT[] }
     );
 }
 

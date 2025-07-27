@@ -48,7 +48,6 @@ export default function GamePage() {
         setPlayerLimitL(playerLimitL);
         setPlayerLimitR(playerLimitR);
 
-        // TODO later: lineCount is being passed silently, match types perhaps
         const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
         setPlayersL(playersL);
         setPlayersR(playersR);

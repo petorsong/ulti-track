@@ -5,7 +5,7 @@ import { games, players, PlayerWithLineCountType } from '@/database/schema';
 import { colStackStyles, splitPlayersByGenderMatch } from '@/utils';
 import PlayerButton from '@/components/PlayerButton';
 
-// TODO LATER: this can be a static server rendered page
+// TODO LATER: this can be a static server rendered page (for COMPLETED games)
 export default function GameSummaryPage() {
   const router = useRouter();
   const { gameId } = router.query;
@@ -28,7 +28,6 @@ export default function GameSummaryPage() {
         const { vsTeamName, teamScore, vsTeamScore } = gameData;
         setScoreInfo({ vsTeamName, teamScore, vsTeamScore });
 
-        // TODO later: lineCount is being passed silently, match types perhaps
         const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
         setPlayersL(playersL);
         setPlayersR(playersR);
