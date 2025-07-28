@@ -8,7 +8,7 @@ import PlayerButton from '@/components/PlayerButton';
 // TODO LATER: this can be a static server rendered page (for COMPLETED games)
 export default function GameSummaryPage() {
   const router = useRouter();
-  const { gameId } = router.query;
+  const gameId = router.query.gameId as string;
   const [isLoading, setIsLoading] = useState(true);
   const [scoreInfo, setScoreInfo] = useState({
     vsTeamName: '',
@@ -19,6 +19,8 @@ export default function GameSummaryPage() {
   const [playersR, setPlayersR] = useState([] as (typeof players.$inferSelect)[]);
 
   useEffect(() => {
+    if (!router.isReady) return;
+
     fetch(`/api/games/${gameId}`)
       .then((res) => res.json())
       .then((data) => {
@@ -34,7 +36,7 @@ export default function GameSummaryPage() {
 
         setIsLoading(false);
       });
-  }, [gameId]);
+  }, [gameId, router.isReady]);
 
   return (
     !isLoading && (

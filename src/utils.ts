@@ -1,3 +1,5 @@
+import type { NextRouter } from 'next/router';
+import type { Dispatch, SetStateAction } from 'react';
 import { games, PlayerType, PlayerWithLineCountType } from './database/schema';
 
 export function splitPlayersByGenderMatch<PT extends PlayerType | PlayerWithLineCountType>(
@@ -26,30 +28,64 @@ export function calculatePointInfo({
   startLeft,
   halftimeAt,
   wasLastScoreUs,
+  startOnO,
 }: typeof games.$inferSelect) {
   const totalPoints = teamScore + vsTeamScore;
-  const ratioStrs = startFRatio ? ['Female', 'Open'] : ['Open', 'Female'];
-  const ratio = totalPoints == 0 ? (startFRatio ? 'Female' : 'Open') : ratioStrs[(totalPoints + 1) % 4 < 2 ? 0 : 1];
-  const genderRatio = `${ratio} ${totalPoints % 2 === 0 ? '2' : '1'}`;
-  const [playerLimitL, playerLimitR] = ratio[0] === 'F' ? [4, 3] : [3, 4];
+  const isFirstHalf = halftimeAt == null;
 
-  const oOrD = wasLastScoreUs ? 'Defence' : 'Offence';
-  const sideStr = startLeft
-    ? !halftimeAt
-      ? ['Left', 'Right']
-      : ['Right', 'Left']
-    : !halftimeAt
-      ? ['Right', 'Left']
-      : ['Left', 'Right'];
-  const fieldSide = sideStr[(totalPoints - (halftimeAt ?? 0)) % 2];
+  // deal with ABBA for gender ratios
+  const shouldBeFemale = totalPoints === 0 ? startFRatio : (totalPoints + 1) % 4 < 2 === startFRatio;
+  const genderRatio = `${shouldBeFemale ? 'Female' : 'Open'} ${totalPoints % 2 === 0 ? '2' : '1'}`;
+  const [playerLimitL, playerLimitR] = shouldBeFemale ? [4, 3] : [3, 4];
+
+  // flip oOrD for halftime, otherwise just flip last score
+  const isOnO = halftimeAt === totalPoints ? !startOnO : !wasLastScoreUs;
+  const oOrD = isOnO ? 'Offence' : 'Defence';
+
+  // flip side at half, otherwise switch sides every time
+  const isOddPoint = (totalPoints - (halftimeAt ?? 0)) % 2 === 1;
+  const isLeft = (startLeft !== !!halftimeAt) !== isOddPoint;
+  const fieldSide = isLeft ? 'Left' : 'Right';
 
   return {
     genderRatio,
-    playerLimitL,
-    playerLimitR,
     oOrD,
     fieldSide,
+    isFirstHalf,
+    playerLimitL,
+    playerLimitR,
   };
+}
+
+export function handleEndHalfButtonClick(
+  e: React.MouseEvent<HTMLElement>,
+  gameId: string,
+  router: NextRouter,
+  setPointInfo: Dispatch<
+    SetStateAction<{
+      vsTeamName: string;
+      teamScore: number;
+      vsTeamScore: number;
+      oOrD: string;
+      genderRatio: string;
+      fieldSide: string;
+      isFirstHalf: boolean;
+    }>
+  >
+) {
+  e.preventDefault();
+
+  fetch(`/api/games/${gameId}/end-half`, { method: 'POST' })
+    .then((res) => res.json())
+    .then((data) => {
+      const gameData = data.gameData as typeof games.$inferSelect;
+      if (gameData.isComplete) {
+        router.push(`/games/${gameId}/summary`);
+      } else {
+        setPointInfo({ ...gameData, ...calculatePointInfo(gameData) });
+        router.reload();
+      }
+    });
 }
 
 export const colStackStyles = {

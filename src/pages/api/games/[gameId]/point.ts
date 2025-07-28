@@ -5,6 +5,7 @@ import { points } from '@/database/schema';
 export default async function handler(req: Req, res: Res<{ pointId: string }>) {
   const parsedBody: typeof points.$inferInsert = JSON.parse(req.body);
 
+  // TODO: save oOrD, side, ratio to points (maybe also score + vsScore?)
   const [result] = await db.insert(points).values(parsedBody).returning({ pointId: points.id });
   res.status(200).json(result);
 }

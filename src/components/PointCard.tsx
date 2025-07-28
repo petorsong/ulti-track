@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, Typography, Chip, Stack, Box } from '@mui/joy';
+import { Card, CardContent, Typography, Chip, Stack } from '@mui/joy';
 
 export default function PointCard({
   vsTeamName,
@@ -8,6 +8,7 @@ export default function PointCard({
   oOrD,
   genderRatio,
   fieldSide,
+  isFirstHalf,
 }: {
   vsTeamName: string;
   teamScore: number;
@@ -15,80 +16,39 @@ export default function PointCard({
   oOrD: string;
   genderRatio: string;
   fieldSide: string;
+  isFirstHalf: boolean;
 }) {
   return (
-    <Card
-      variant="outlined"
-      sx={{
-        height: 100,
-        display: 'flex',
-        flexDirection: 'row',
-      }}
-    >
-      <CardContent
-        sx={{
-          display: 'flex',
-          flexDirection: 'row',
-          width: '100%',
-          height: '100%',
-          p: 2,
-        }}
-      >
-        <Box
-          sx={{
-            flex: 2,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            textAlign: 'center',
-          }}
-        >
-          <Typography
-            level="h1"
-            sx={{
-              fontSize: '2.5rem',
-              fontWeight: 'bold',
-              lineHeight: 1,
-            }}
-          >
-            {teamScore}-{vsTeamScore}
-          </Typography>
-          <Typography level="body-sm" color="neutral">
+    <Card size="sm" sx={{ height: 125, width: '65%' }}>
+      <CardContent>
+        <Stack spacing={1}>
+          <Typography level="body-sm" color="neutral" textAlign="center">
             vs {vsTeamName}
           </Typography>
-        </Box>
-        <Box
-          sx={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <Stack spacing={1} sx={{ width: '100%' }}>
-            <Chip
-              variant="soft"
-              color={oOrD == 'Offence' ? 'success' : 'danger'}
-              size="sm"
-              sx={{ justifyContent: 'center' }}
-            >
-              {oOrD}
-            </Chip>
-            <Chip
-              variant="soft"
-              color={genderRatio[0] == 'F' ? 'primary' : 'warning'}
-              size="sm"
-              sx={{ justifyContent: 'center' }}
-            >
-              {genderRatio}
-            </Chip>
-            <Chip variant="soft" size="sm" sx={{ justifyContent: 'center' }}>
-              {fieldSide}
-            </Chip>
+
+          <Stack direction="row">
+            <Stack spacing={0.5} alignItems="center" flex="3">
+              <Typography level="h1" lineHeight="1">
+                {teamScore}-{vsTeamScore}
+              </Typography>
+              <Chip size="sm" variant="outlined" color={isFirstHalf ? 'neutral' : 'warning'}>
+                {isFirstHalf ? '1st half' : '2nd half'}
+              </Chip>
+            </Stack>
+
+            <Stack spacing={0.5} justifyContent="center" flex="2">
+              <Chip size="sm" color={oOrD == 'Offence' ? 'success' : 'danger'}>
+                {oOrD}
+              </Chip>
+              <Chip size="sm" color={genderRatio[0] == 'F' ? 'primary' : 'warning'}>
+                {genderRatio}
+              </Chip>
+              <Chip size="sm" variant="outlined" color={fieldSide == 'L' ? 'neutral' : 'warning'}>
+                {fieldSide}
+              </Chip>
+            </Stack>
           </Stack>
-        </Box>
+        </Stack>
       </CardContent>
     </Card>
   );

@@ -9,7 +9,7 @@ export default async function handler(
     playersData: PlayerWithLineCountType[];
   }>
 ) {
-  const { gameId } = req.query;
+  const gameId = req.query.gameId as string;
   // if (typeof gameId !== 'string') {
   //   return res.status(400).json({
   //     error: 'Invalid game ID'
@@ -17,7 +17,7 @@ export default async function handler(
   // }
 
   const gameData = await db.query.games.findFirst({
-    where: (games, { eq }) => eq(games.id, `${gameId}`),
+    where: (games, { eq }) => eq(games.id, gameId),
     with: { points: true },
   });
 

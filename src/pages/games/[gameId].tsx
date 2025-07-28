@@ -4,12 +4,13 @@ import { games, players, PlayerWithLineCountType } from '@/database/schema';
 import { Button, Stack, Typography } from '@mui/joy';
 import PlayerButton from '@/components/PlayerButton';
 import PointCard from '@/components/PointCard';
-import { calculatePointInfo, colStackStyles, splitPlayersByGenderMatch } from '@/utils';
+import { calculatePointInfo, colStackStyles, handleEndHalfButtonClick, splitPlayersByGenderMatch } from '@/utils';
 import { GroupRemove, PlayCircleFilledOutlined } from '@mui/icons-material';
 
 export default function GamePage() {
   const router = useRouter();
-  const { gameId } = router.query;
+  const gameId = router.query.gameId as string;
+
   const [isLoading, setIsLoading] = useState(true);
   const [pointInfo, setPointInfo] = useState({
     vsTeamName: '',
@@ -18,6 +19,7 @@ export default function GamePage() {
     oOrD: '',
     genderRatio: '',
     fieldSide: '',
+    isFirstHalf: true,
   });
   const [halftimeAt, setHalftimeAt] = useState(null as number | null);
   const [playersL, setPlayersL] = useState([] as (typeof players.$inferSelect)[]);
@@ -28,6 +30,8 @@ export default function GamePage() {
   const [selectedPlayersR, setSelectedPlayersR] = useState([] as string[]);
 
   useEffect(() => {
+    if (!router.isReady) return;
+
     fetch(`/api/games/${gameId}`)
       .then((res) => res.json())
       .then((data) => {
@@ -35,18 +39,10 @@ export default function GamePage() {
         const playersData = data.playersData as PlayerWithLineCountType[];
         setHalftimeAt(gameData.halftimeAt);
 
-        const { vsTeamName, teamScore, vsTeamScore } = gameData;
-        const { genderRatio, playerLimitL, playerLimitR, oOrD, fieldSide } = calculatePointInfo(gameData);
-        setPointInfo({
-          vsTeamName,
-          teamScore,
-          vsTeamScore,
-          genderRatio,
-          oOrD,
-          fieldSide,
-        });
-        setPlayerLimitL(playerLimitL);
-        setPlayerLimitR(playerLimitR);
+        const pointInfo = calculatePointInfo(gameData);
+        setPointInfo({ ...gameData, ...pointInfo });
+        setPlayerLimitL(pointInfo.playerLimitL);
+        setPlayerLimitR(pointInfo.playerLimitR);
 
         const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
         setPlayersL(playersL);
@@ -54,32 +50,7 @@ export default function GamePage() {
 
         setIsLoading(false);
       });
-  }, [gameId]);
-
-  const handleHalfOrEndButtonClick = async (e: React.MouseEvent<HTMLElement>) => {
-    e.preventDefault();
-
-    fetch(`/api/games/${gameId}/end-half`, { method: 'POST' })
-      .then((res) => res.json())
-      .then((data) => {
-        const gameData = data.gameData as typeof games.$inferSelect;
-        if (gameData.isComplete) {
-          router.push(`/games/${gameId}/summary`);
-        } else {
-          const { vsTeamName, teamScore, vsTeamScore } = gameData;
-          const { genderRatio, oOrD, fieldSide } = calculatePointInfo(gameData);
-          setPointInfo({
-            vsTeamName,
-            teamScore,
-            vsTeamScore,
-            genderRatio,
-            oOrD,
-            fieldSide,
-          });
-          router.reload();
-        }
-      });
-  };
+  }, [gameId, router.isReady]);
 
   const handleClearButtonClick = () => {
     setSelectedPlayersL([]);
@@ -163,7 +134,11 @@ export default function GamePage() {
             width: '95%',
           }}
         >
-          <Button variant="soft" color="neutral" onClick={(e) => handleHalfOrEndButtonClick(e)}>
+          <Button
+            variant="soft"
+            color="neutral"
+            onClick={(e) => handleEndHalfButtonClick(e, gameId, router, setPointInfo)}
+          >
             {halftimeAt ? 'End Game' : 'Halftime'}
           </Button>
           <Stack direction="row" spacing={1}>

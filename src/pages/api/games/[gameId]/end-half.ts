@@ -4,10 +4,10 @@ import { games } from '@/database/schema';
 import { eq } from 'drizzle-orm';
 
 export default async function handler(req: Req, res: Res<{ gameData: typeof games.$inferSelect }>) {
-  const { gameId } = req.query;
+  const gameId = req.query.gameId as string;
 
   const gameData = await db.query.games.findFirst({
-    where: (games, { eq }) => eq(games.id, `${gameId}`),
+    where: (games, { eq }) => eq(games.id, gameId),
   });
 
   const { halftimeAt, teamScore, vsTeamScore } = gameData!;
@@ -23,7 +23,7 @@ export default async function handler(req: Req, res: Res<{ gameData: typeof game
             halftimeAt: teamScore + vsTeamScore,
           }
     )
-    .where(eq(games.id, `${gameId}`))
+    .where(eq(games.id, gameId))
     .returning();
 
   res.status(200).json({ gameData: result });

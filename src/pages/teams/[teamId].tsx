@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  Box,
   Button,
   Card,
   CardContent,
@@ -14,41 +13,22 @@ import {
   AccordionSummary,
   AccordionDetails,
 } from '@mui/joy';
-import { GetStaticPaths, GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useRouter } from 'next/router';
-import { db } from '@/database/drizzle';
-import { PlayerType, teams } from '@/database/schema';
+import { PlayerType, games as gamesDb, players, teams } from '@/database/schema';
 import { colStackStyles, splitPlayersByGenderMatch } from '@/utils';
 import PlayerButton from '@/components/PlayerButton';
+import GamesList from '@/components/GamesList';
 
 type ErrorType = {
   [field: string]: string;
 };
 
-export const getStaticPaths = (async () => {
-  const teamsData = await db.query.teams.findMany();
-  return {
-    paths: teamsData.map((team) => ({ params: { teamId: team.id } })),
-    fallback: 'blocking',
-  };
-}) satisfies GetStaticPaths;
-
-export const getStaticProps = (async ({ params }) => {
-  const teamId = params!.teamId as string;
-  const teamData = await db.query.teams.findFirst({
-    where: (teams, { eq }) => eq(teams.id, teamId),
-  });
-  const playersData = await db.query.players.findMany({
-    where: (players, { eq }) => eq(players.teamId, teamId),
-  });
-  return { props: { teamData: teamData!, playersData } };
-}) satisfies GetStaticProps<{
-  teamData: typeof teams.$inferSelect;
-  playersData: PlayerType[];
-}>;
-
-export default function NewGamePage({ teamData, playersData }: InferGetStaticPropsType<typeof getStaticProps>) {
+export default function TeamPage() {
   const router = useRouter();
+  const teamId = router.query.teamId as string;
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [teamData, setTeamData] = useState({} as typeof teams.$inferSelect);
   const [formData, setFormData] = useState({
     vsTeamName: '',
     startOnO: false,
@@ -58,9 +38,30 @@ export default function NewGamePage({ teamData, playersData }: InferGetStaticPro
   const [errors, setErrors] = useState({
     vsTeamName: '',
   } as ErrorType);
+  const [playersL, setPlayersL] = useState([] as (typeof players.$inferSelect)[]);
+  const [playersR, setPlayersR] = useState([] as (typeof players.$inferSelect)[]);
+  const [activePlayerIds, setActivePlayerIds] = useState([] as string[]);
+  const [games, setGames] = useState([] as (typeof gamesDb.$inferSelect)[]);
 
-  const [activePlayerIds, setActivePlayerIds] = useState(playersData.filter((p) => !p.isPR).map((p) => p.id));
-  const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    fetch(`/api/teams/${teamId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        const teamData = data.teamData as typeof teams.$inferSelect;
+        const playersData = data.teamData.players as PlayerType[];
+        const gamesData = data.teamData.games as (typeof gamesDb.$inferSelect)[];
+
+        setTeamData(teamData);
+        const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
+        setPlayersL(playersL);
+        setPlayersR(playersR);
+        setActivePlayerIds(playersData.filter((p) => !p.isPR).map((p) => p.id));
+        setGames(gamesData);
+        setIsLoading(false);
+      });
+  }, [teamId, router.isReady]);
 
   const handleInputChange = (field: string, value: boolean | string) => {
     setFormData((prev) => ({
@@ -105,119 +106,118 @@ export default function NewGamePage({ teamData, playersData }: InferGetStaticPro
   };
 
   return (
-    <Box sx={{ m: 0.5 }}>
-      <Card variant="outlined">
-        <CardContent>
-          <Typography level="title-lg" sx={{ mb: 3 }}>
-            New game: {teamData.name}
-          </Typography>
-          <Stack spacing={3}>
-            <FormControl error={!!errors.vsTeamName}>
-              <FormLabel>Opponent name:</FormLabel>
-              <Input
-                placeholder="Enter opponent team name"
-                value={formData.vsTeamName}
-                onChange={(e) => handleInputChange('vsTeamName', e.target.value)}
-              />
-              {errors.vsTeamName && (
-                <Typography level="body-sm" color="danger">
-                  {errors.vsTeamName}
-                </Typography>
-              )}
-            </FormControl>
-            <Box>
+    !isLoading && (
+      <Stack {...colStackStyles}>
+        <Card variant="outlined" sx={{ width: '95%', m: 0.5 }}>
+          <CardContent>
+            <Typography level="title-lg" sx={{ mb: 2 }}>
+              New game: {teamData.name}
+            </Typography>
+            <Stack spacing={2}>
+              <FormControl error={!!errors.vsTeamName}>
+                <FormLabel>Opponent name:</FormLabel>
+                <Input
+                  placeholder="Enter opponent team name"
+                  value={formData.vsTeamName}
+                  onChange={(e) => handleInputChange('vsTeamName', e.target.value)}
+                />
+                {errors.vsTeamName && (
+                  <Typography level="body-sm" color="danger">
+                    {errors.vsTeamName}
+                  </Typography>
+                )}
+              </FormControl>
               <Typography level="title-sm" sx={{ mb: 2 }}>
                 Starting:
               </Typography>
-              <Stack spacing={3}>
-                <FormControl orientation="horizontal">
-                  <FormLabel>On offence</FormLabel>
-                  <Switch
-                    checked={!formData.startOnO}
-                    onChange={(e) => handleInputChange('startOnO', !e.target.checked)}
-                    startDecorator="O"
-                    endDecorator="D"
-                  />
-                </FormControl>
-                <FormControl orientation="horizontal">
-                  <FormLabel>Gender ratio</FormLabel>
-                  <Switch
-                    checked={!formData.startFRatio}
-                    onChange={(e) => handleInputChange('startFRatio', !e.target.checked)}
-                    startDecorator="F"
-                    endDecorator="O"
-                  />
-                </FormControl>
-                <FormControl orientation="horizontal">
-                  <FormLabel>Side</FormLabel>
-                  <Switch
-                    checked={!formData.startLeft}
-                    onChange={(e) => handleInputChange('startLeft', !e.target.checked)}
-                    startDecorator="L"
-                    endDecorator="R"
-                  />
-                </FormControl>
-              </Stack>
-            </Box>
-            <Accordion>
-              <AccordionSummary>Active players</AccordionSummary>
-              <AccordionDetails>
-                <Stack
-                  direction="row"
-                  sx={{
-                    justifyContent: 'flex-start',
-                    alignItems: 'flex-start',
-                    width: '100%',
-                    mt: 1,
-                  }}
-                >
-                  <Stack direction="column" spacing={1} sx={colStackStyles}>
-                    {playersL.map((player) => {
-                      const playerSelected = activePlayerIds.includes(player.id);
-                      return (
-                        <PlayerButton
-                          key={player.id}
-                          variant={playerSelected ? 'solid' : 'outlined'}
-                          onClick={() => {
-                            setActivePlayerIds(
-                              playerSelected
-                                ? activePlayerIds.filter((p) => p != player.id)
-                                : activePlayerIds.concat(player.id)
-                            );
-                          }}
-                          {...player}
-                        />
-                      );
-                    })}
+              <FormControl orientation="horizontal">
+                <FormLabel>On offence</FormLabel>
+                <Switch
+                  checked={!formData.startOnO}
+                  onChange={(e) => handleInputChange('startOnO', !e.target.checked)}
+                  startDecorator="O"
+                  endDecorator="D"
+                />
+              </FormControl>
+              <FormControl orientation="horizontal">
+                <FormLabel>Gender ratio</FormLabel>
+                <Switch
+                  checked={!formData.startFRatio}
+                  onChange={(e) => handleInputChange('startFRatio', !e.target.checked)}
+                  startDecorator="F"
+                  endDecorator="O"
+                />
+              </FormControl>
+              <FormControl orientation="horizontal">
+                <FormLabel>Side</FormLabel>
+                <Switch
+                  checked={!formData.startLeft}
+                  onChange={(e) => handleInputChange('startLeft', !e.target.checked)}
+                  startDecorator="L"
+                  endDecorator="R"
+                />
+              </FormControl>
+              <Accordion>
+                <AccordionSummary>Active players</AccordionSummary>
+                <AccordionDetails>
+                  <Stack
+                    direction="row"
+                    sx={{
+                      justifyContent: 'flex-start',
+                      alignItems: 'flex-start',
+                      width: '100%',
+                      mt: 1,
+                    }}
+                  >
+                    <Stack direction="column" spacing={1} sx={colStackStyles}>
+                      {playersL.map((player) => {
+                        const playerSelected = activePlayerIds.includes(player.id);
+                        return (
+                          <PlayerButton
+                            key={player.id}
+                            variant={playerSelected ? 'solid' : 'outlined'}
+                            onClick={() => {
+                              setActivePlayerIds(
+                                playerSelected
+                                  ? activePlayerIds.filter((p) => p != player.id)
+                                  : activePlayerIds.concat(player.id)
+                              );
+                            }}
+                            {...player}
+                          />
+                        );
+                      })}
+                    </Stack>
+                    <Stack direction="column" spacing={1} sx={colStackStyles}>
+                      {playersR.map((player) => {
+                        const playerSelected = activePlayerIds.includes(player.id);
+                        return (
+                          <PlayerButton
+                            key={player.id}
+                            variant={playerSelected ? 'solid' : 'outlined'}
+                            onClick={() => {
+                              setActivePlayerIds(
+                                playerSelected
+                                  ? activePlayerIds.filter((p) => p != player.id)
+                                  : activePlayerIds.concat(player.id)
+                              );
+                            }}
+                            {...player}
+                          />
+                        );
+                      })}
+                    </Stack>
                   </Stack>
-                  <Stack direction="column" spacing={1} sx={colStackStyles}>
-                    {playersR.map((player) => {
-                      const playerSelected = activePlayerIds.includes(player.id);
-                      return (
-                        <PlayerButton
-                          key={player.id}
-                          variant={playerSelected ? 'solid' : 'outlined'}
-                          onClick={() => {
-                            setActivePlayerIds(
-                              playerSelected
-                                ? activePlayerIds.filter((p) => p != player.id)
-                                : activePlayerIds.concat(player.id)
-                            );
-                          }}
-                          {...player}
-                        />
-                      );
-                    })}
-                  </Stack>
-                </Stack>
-              </AccordionDetails>
-            </Accordion>
-            <Button onClick={handleSubmitButtonClick} size="lg" sx={{ mt: 2 }}>
-              Start game
-            </Button>
-          </Stack>
-        </CardContent>
-      </Card>
-    </Box>
+                </AccordionDetails>
+              </Accordion>
+              <Button onClick={handleSubmitButtonClick} size="lg" sx={{ mt: 2 }}>
+                Start game
+              </Button>
+            </Stack>
+          </CardContent>
+        </Card>
+        <GamesList {...{ games, router }} />
+      </Stack>
+    )
   );
 }

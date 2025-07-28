@@ -14,23 +14,23 @@ import {
 } from '@mui/joy';
 import PlayerButton from '@/components/PlayerButton';
 import PointCard from '@/components/PointCard';
-import { calculatePointInfo, colStackStyles, splitPlayersByGenderMatch } from '@/utils';
+import { calculatePointInfo, colStackStyles, handleEndHalfButtonClick, splitPlayersByGenderMatch } from '@/utils';
 import { GroupRemove, Undo } from '@mui/icons-material';
 import LastEventAccordion from '@/components/LastEventAccordion';
 
 export default function PointPage() {
   const router = useRouter();
-  const { pointId: rawPointId } = router.query;
+  const pointId = router.query.pointId as string;
 
-  const [pointId, setPointId] = useState('');
-  const [currentPlayersL, setcurrentPlayersL] = useState([] as (typeof players.$inferSelect)[]);
-  const [currentPlayersR, setcurrentPlayersR] = useState([] as (typeof players.$inferSelect)[]);
+  const [currentPlayersL, setCurrentPlayersL] = useState([] as (typeof players.$inferSelect)[]);
+  const [currentPlayersR, setCurrentPlayersR] = useState([] as (typeof players.$inferSelect)[]);
   const [selectedCurrentPlayerId, setSelectedCurrentPlayerId] = useState('');
   const [events, setEvents] = useState([] as (typeof pointEvents.$inferInsert)[]);
   const [nextPointInfo, setNextPointInfo] = useState({
     oOrD: '',
     genderRatio: '',
     fieldSide: '',
+    isFirstHalf: true,
   });
   const [halftimeAt, setHalftimeAt] = useState(null as number | null);
   const [gameId, setGameId] = useState('');
@@ -44,6 +44,7 @@ export default function PointPage() {
     oOrD: '',
     genderRatio: '',
     fieldSide: '',
+    isFirstHalf: true,
   });
   const [nextPlayersL, setNextPlayersL] = useState([] as (typeof players.$inferSelect)[]);
   const [nextPlayersR, setNextPlayersR] = useState([] as (typeof players.$inferSelect)[]);
@@ -53,38 +54,36 @@ export default function PointPage() {
   const [selectedNextPlayersR, setSelectedNextPlayersR] = useState([] as string[]);
 
   useEffect(() => {
-    if (rawPointId) {
-      fetch(`/api/points/${rawPointId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          const gameData = data.gameData as typeof games.$inferSelect;
-          const playersData = data.playersData as PlayerWithLineCountType[];
-          const activePlayerIds = data.pointData.playerIds as string[];
+    if (!router.isReady) return;
 
-          const { genderRatio, oOrD, fieldSide } = calculatePointInfo(gameData);
-          setCurrentPointInfo({ ...gameData, genderRatio, oOrD, fieldSide });
-          setHalftimeAt(gameData.halftimeAt);
-          setGameId(gameData.id);
+    fetch(`/api/points/${pointId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        const gameData = data.gameData as typeof games.$inferSelect;
+        const playersData = data.playersData as PlayerWithLineCountType[];
+        const activePlayerIds = data.pointData.playerIds as string[];
 
-          const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
-          setNextPlayersL(playersL);
-          setNextPlayersR(playersR);
-          setcurrentPlayersL(playersL.filter((player) => activePlayerIds.includes(player.id)));
-          setcurrentPlayersR(playersR.filter((player) => activePlayerIds.includes(player.id)));
+        setCurrentPointInfo({ ...gameData, ...calculatePointInfo(gameData) });
+        setHalftimeAt(gameData.halftimeAt);
+        setGameId(gameData.id);
 
-          const nextPointInfo = calculatePointInfo({
-            ...gameData,
-            teamScore: gameData.teamScore + 1,
-          });
-          setNextPointInfo(nextPointInfo);
-          setNextPlayerLimitL(nextPointInfo.playerLimitL);
-          setNextPlayerLimitR(nextPointInfo.playerLimitR);
+        const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
+        setNextPlayersL(playersL);
+        setNextPlayersR(playersR);
+        setCurrentPlayersL(playersL.filter((player) => activePlayerIds.includes(player.id)));
+        setCurrentPlayersR(playersR.filter((player) => activePlayerIds.includes(player.id)));
 
-          setPointId(`${rawPointId}`);
-          setIsLoading(false);
+        const nextPointInfo = calculatePointInfo({
+          ...gameData,
+          teamScore: gameData.teamScore + 1,
         });
-    }
-  }, [rawPointId]);
+        setNextPointInfo(nextPointInfo);
+        setNextPlayerLimitL(nextPointInfo.playerLimitL);
+        setNextPlayerLimitR(nextPointInfo.playerLimitR);
+
+        setIsLoading(false);
+      });
+  }, [pointId, router.isReady]);
 
   const handleClearButtonClick = () => {
     setSelectedNextPlayersL([]);
@@ -145,23 +144,6 @@ export default function PointPage() {
 
     const { redirectRoute } = await res.json();
     router.push(redirectRoute);
-  };
-
-  const handleHalfOrEndButtonClick = async (e: React.MouseEvent<HTMLElement>) => {
-    e.preventDefault();
-
-    fetch(`/api/games/${gameId}/end-half`, { method: 'POST' })
-      .then((res) => res.json())
-      .then((data) => {
-        const gameData = data.gameData as typeof games.$inferSelect;
-        if (gameData.isComplete) {
-          router.push(`/games/${gameId}/summary`);
-        } else {
-          const { genderRatio, oOrD, fieldSide } = calculatePointInfo(gameData);
-          setCurrentPointInfo({ ...gameData, genderRatio, oOrD, fieldSide });
-          router.reload();
-        }
-      });
   };
 
   return (
@@ -285,7 +267,12 @@ export default function PointPage() {
             THEY scored
           </Button>
         </Stack>
-        <Button variant="soft" color="neutral" sx={{ width: '95%' }} onClick={(e) => handleHalfOrEndButtonClick(e)}>
+        <Button
+          variant="soft"
+          color="neutral"
+          sx={{ width: '95%' }}
+          onClick={(e) => handleEndHalfButtonClick(e, gameId, router, setCurrentPointInfo)}
+        >
           {halftimeAt ? 'End Game' : 'Halftime'}
         </Button>
         <AccordionGroup size="lg" sx={{ width: '100%' }}>
