@@ -28,6 +28,7 @@ export default function TeamPage() {
   const teamId = router.query.teamId as string;
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [teamData, setTeamData] = useState({} as typeof teams.$inferSelect);
   const [formData, setFormData] = useState({
     vsTeamName: '',
@@ -92,6 +93,7 @@ export default function TeamPage() {
       return;
     }
 
+    setIsSaving(true);
     const teamId = teamData.id;
     const res = await fetch(`/api/teams/${teamId}/game`, {
       method: 'POST',
@@ -210,7 +212,7 @@ export default function TeamPage() {
                   </Stack>
                 </AccordionDetails>
               </Accordion>
-              <Button onClick={handleSubmitButtonClick} size="lg" sx={{ mt: 2 }}>
+              <Button size="lg" sx={{ mt: 2 }} loading={isSaving} onClick={handleSubmitButtonClick}>
                 Start game
               </Button>
             </Stack>

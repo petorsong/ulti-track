@@ -37,6 +37,7 @@ export default function PointPage() {
 
   // same as [gameId] but renamed
   const [isLoading, setIsLoading] = useState(true);
+  const [saveFrom, setSaveFrom] = useState('');
   const [currentPointInfo, setCurrentPointInfo] = useState({
     vsTeamName: '',
     teamScore: 0,
@@ -134,6 +135,7 @@ export default function PointPage() {
       scoreEvent.playerOneId = selectedCurrentPlayerId;
     }
 
+    setSaveFrom(type.toString());
     const res = await fetch(`/api/points/${pointId}/events`, {
       method: 'POST',
       body: JSON.stringify({
@@ -259,11 +261,19 @@ export default function PointPage() {
             color="success"
             fullWidth
             disabled={!selectedCurrentPlayerId}
+            loading={saveFrom == 'SCORE'}
             onClick={(e) => handleScoreClick(e, 'SCORE')}
           >
             WE scored
           </Button>
-          <Button variant="solid" size="lg" color="danger" fullWidth onClick={(e) => handleScoreClick(e, 'VS_SCORE')}>
+          <Button
+            variant="solid"
+            size="lg"
+            color="danger"
+            fullWidth
+            loading={saveFrom == 'VS_SCORE'}
+            onClick={(e) => handleScoreClick(e, 'VS_SCORE')}
+          >
             THEY scored
           </Button>
         </Stack>
@@ -271,7 +281,11 @@ export default function PointPage() {
           variant="soft"
           color="neutral"
           sx={{ width: '95%' }}
-          onClick={(e) => handleEndHalfButtonClick(e, gameId, router, setCurrentPointInfo)}
+          loading={saveFrom == 'HALFTIME'}
+          onClick={(e) => {
+            setSaveFrom('HALFTIME');
+            handleEndHalfButtonClick(e, gameId, router, setCurrentPointInfo);
+          }}
         >
           {halftimeAt ? 'End Game' : 'Halftime'}
         </Button>

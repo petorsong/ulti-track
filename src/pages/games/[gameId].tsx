@@ -12,6 +12,7 @@ export default function GamePage() {
   const gameId = router.query.gameId as string;
 
   const [isLoading, setIsLoading] = useState(true);
+  const [saveFrom, setSaveFrom] = useState('');
   const [pointInfo, setPointInfo] = useState({
     vsTeamName: '',
     teamScore: 0,
@@ -60,6 +61,7 @@ export default function GamePage() {
   const handleSubmitButtonClick = async (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
 
+    setSaveFrom('START_POINT');
     const res = await fetch(`/api/games/${gameId}/point`, {
       method: 'POST',
       body: JSON.stringify({
@@ -137,7 +139,11 @@ export default function GamePage() {
           <Button
             variant="soft"
             color="neutral"
-            onClick={(e) => handleEndHalfButtonClick(e, gameId, router, setPointInfo)}
+            loading={saveFrom == 'HALFTIME'}
+            onClick={(e) => {
+              setSaveFrom('HALFTIME');
+              handleEndHalfButtonClick(e, gameId, router, setPointInfo);
+            }}
           >
             {halftimeAt ? 'End Game' : 'Halftime'}
           </Button>
@@ -147,6 +153,7 @@ export default function GamePage() {
             </Button>
             <Button
               endDecorator={<PlayCircleFilledOutlined />}
+              loading={saveFrom == 'START_POINT'}
               disabled={selectedPlayersL.length + selectedPlayersR.length < 7}
               onClick={handleSubmitButtonClick}
             >
