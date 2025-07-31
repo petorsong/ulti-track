@@ -1,38 +1,76 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { Box, Stack, Typography } from '@mui/joy';
-import { games, players, PlayerWithLineCountType } from '@/database/schema';
-import { colStackStyles, splitPlayersByGenderMatch } from '@/utils';
-import PlayerButton from '@/components/PlayerButton';
+import { games, teams } from '@/database/schema';
+import { PlayerStats, PlayerWithStats } from '@/types';
+import { Table, type TableColumnsType } from 'antd';
 
-// TODO LATER: this can be a static server rendered page (for COMPLETED games)
+type StatSummary = PlayerStats & { playerName: string; key: string };
+
+// TODO LATER: consider making this a static server rendered page (for COMPLETED games)
 export default function GameSummaryPage() {
   const router = useRouter();
   const gameId = router.query.gameId as string;
   const [isLoading, setIsLoading] = useState(true);
-  const [scoreInfo, setScoreInfo] = useState({
-    vsTeamName: '',
-    teamScore: 0,
-    vsTeamScore: 0,
-  });
-  const [playersL, setPlayersL] = useState([] as (typeof players.$inferSelect)[]);
-  const [playersR, setPlayersR] = useState([] as (typeof players.$inferSelect)[]);
+  const [teamData, setTeamData] = useState({} as typeof teams.$inferSelect);
+  const [gameData, setGameData] = useState({} as typeof games.$inferSelect);
+  const [playersData, setPlayersData] = useState([] as StatSummary[]);
+
+  const columns: TableColumnsType<StatSummary> = [
+    { dataIndex: 'playerName', title: 'Player', fixed: 'left' },
+    { dataIndex: 'pointsPlayed', title: 'PP', align: 'right', sorter: (a, b) => a.pointsPlayed - b.pointsPlayed },
+    { dataIndex: 'scores', title: 'G', align: 'right', sorter: (a, b) => a.scores - b.scores },
+    { dataIndex: 'assists', title: 'A', align: 'right', sorter: (a, b) => a.assists - b.assists },
+    { dataIndex: 'hockeyAssists', title: '2A', align: 'right', sorter: (a, b) => a.hockeyAssists - b.hockeyAssists },
+    { dataIndex: 'ds', title: 'D', align: 'right', sorter: (a, b) => a.ds - b.ds },
+    { dataIndex: 'throwAways', title: 'TA', align: 'right', sorter: (a, b) => a.throwAways - b.throwAways },
+    { dataIndex: 'drops', title: 'Drop', align: 'right', sorter: (a, b) => a.drops - b.drops },
+    { dataIndex: 'totalPasses', title: 'Pass', align: 'right', sorter: (a, b) => a.totalPasses - b.totalPasses },
+    {
+      dataIndex: 'passesToF',
+      title: 'Pass (F)',
+      align: 'right',
+      sorter: (a, b) => a.passesToF - b.passesToF,
+      // render: (pF, pS) => (
+      //   <div>{`${pF} (${((pF / (pS.totalPasses != 0 ? pS.totalPasses : 1)) * 100).toFixed(2)}%)`}</div>
+      // ),
+    },
+    {
+      dataIndex: 'passesToO',
+      title: 'Pass (O)',
+      align: 'right',
+      sorter: (a, b) => a.passesToO - b.passesToO,
+      // render: (pO, pS) => (
+      //   <div>{`${pO} (${((pO / (pS.totalPasses != 0 ? pS.totalPasses : 1)) * 100).toFixed(2)}%)`}</div>
+      // ),
+    },
+  ];
 
   useEffect(() => {
     if (!router.isReady) return;
 
-    fetch(`/api/games/${gameId}`)
+    fetch(`/api/games/${gameId}/summary`)
       .then((res) => res.json())
       .then((data) => {
-        const gameData = data.gameData as typeof games.$inferSelect;
-        const playersData = data.playersData as PlayerWithLineCountType[];
+        const teamData = data.summaryData.team as typeof teams.$inferSelect;
+        const gameData = data.summaryData.game as typeof games.$inferSelect;
+        const playersData = data.summaryData.players as PlayerWithStats[];
 
-        const { vsTeamName, teamScore, vsTeamScore } = gameData;
-        setScoreInfo({ vsTeamName, teamScore, vsTeamScore });
+        setTeamData(teamData);
+        setGameData(gameData);
+        setPlayersData(
+          playersData.map((playerStats) => {
+            const {
+              player: { id, nickname, firstName },
+              stats,
+            } = playerStats;
 
-        const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
-        setPlayersL(playersL);
-        setPlayersR(playersR);
+            return {
+              key: id,
+              playerName: nickname ?? firstName,
+              ...stats,
+            };
+          })
+        );
 
         setIsLoading(false);
       });
@@ -40,53 +78,15 @@ export default function GameSummaryPage() {
 
   return (
     !isLoading && (
-      <Stack direction="column" spacing={1} sx={{ ...colStackStyles, mt: 1 }}>
-        <Box
-          sx={{
-            flex: 2,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            textAlign: 'center',
-          }}
-        >
-          <Typography level="body-sm" color="neutral">
-            Final Score vs {scoreInfo.vsTeamName}
-          </Typography>
-          <Typography
-            level="h1"
-            sx={{
-              fontSize: '2.5rem',
-              fontWeight: 'bold',
-              lineHeight: 1,
-            }}
-          >
-            {scoreInfo.teamScore}-{scoreInfo.vsTeamScore}
-          </Typography>
-        </Box>
-        <Stack
-          direction="row"
-          sx={{
-            justifyContent: 'flex-start',
-            alignItems: 'flex-start',
-            width: '100%',
-          }}
-        >
-          <Stack direction="column" spacing={1} sx={colStackStyles}>
-            {/* .toSorted((a, b) => b.lineCount - a.lineCount) */}
-            {playersL.map((player) => (
-              <PlayerButton key={player.id} variant="soft" onClick={() => {}} {...player} />
-            ))}
-          </Stack>
-          <Stack direction="column" spacing={1} sx={colStackStyles}>
-            {/* .toSorted((a, b) => b.lineCount - a.lineCount) */}
-            {playersR.map((player) => (
-              <PlayerButton key={player.id} variant="soft" onClick={() => {}} {...player} />
-            ))}
-          </Stack>
-        </Stack>
-      </Stack>
+      <Table<StatSummary>
+        title={() => `${teamData.name} vs ${gameData.vsTeamName}: ${gameData.teamScore}-${gameData.vsTeamScore}`}
+        scroll={{ x: 'max-content' }}
+        size="middle"
+        pagination={false}
+        columns={columns}
+        dataSource={playersData}
+        showSorterTooltip={{ target: 'sorter-icon' }}
+      />
     )
   );
 }

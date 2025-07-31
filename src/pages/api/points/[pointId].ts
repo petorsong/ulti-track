@@ -1,6 +1,6 @@
 import type { NextApiRequest as Req, NextApiResponse as Res } from 'next';
 import { db } from '@/database/drizzle';
-import { games, PlayerWithLineCountType, points } from '@/database/schema';
+import { games, type PlayerWithLineCountType, points } from '@/database/schema';
 
 export default async function handler(
   req: Req,

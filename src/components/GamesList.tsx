@@ -27,7 +27,7 @@ function GameRow({ game, router }: { game: typeof gamesDb.$inferSelect; router: 
       p={1}
       onClick={handleGameClick}
     >
-      <Typography level="title-lg" flexWrap="nowrap">
+      <Typography level="title-lg" textOverflow="ellipsis">
         {vsTeamName}
       </Typography>
       <Box display="flex" alignItems="center" width="180px" justifyContent="space-between" gap={0.5}>

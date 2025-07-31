@@ -1,6 +1,6 @@
 import type { NextRouter } from 'next/router';
 import type { Dispatch, SetStateAction } from 'react';
-import { games, PlayerType, PlayerWithLineCountType } from './database/schema';
+import { games, type PlayerType, type PlayerWithLineCountType } from './database/schema';
 
 export function splitPlayersByGenderMatch<PT extends PlayerType | PlayerWithLineCountType>(
   playersData: PT[]

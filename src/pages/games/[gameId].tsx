@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { games, players, PlayerWithLineCountType } from '@/database/schema';
+import { games, players, type PlayerWithLineCountType } from '@/database/schema';
 import { Button, Stack, Typography } from '@mui/joy';
 import PlayerButton from '@/components/PlayerButton';
 import PointCard from '@/components/PointCard';

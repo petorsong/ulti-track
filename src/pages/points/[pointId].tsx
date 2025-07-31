@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { EventTypeTS, games, players, PlayerWithLineCountType, pointEvents } from '@/database/schema';
+import { EventTypeTS, games, players, type PlayerWithLineCountType, pointEvents } from '@/database/schema';
 import {
   Accordion,
   AccordionDetails,

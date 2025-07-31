@@ -14,7 +14,7 @@ import {
   AccordionDetails,
 } from '@mui/joy';
 import { useRouter } from 'next/router';
-import { PlayerType, games as gamesDb, players, teams } from '@/database/schema';
+import { type PlayerType, games as gamesDb, players, teams } from '@/database/schema';
 import { colStackStyles, splitPlayersByGenderMatch } from '@/utils';
 import PlayerButton from '@/components/PlayerButton';
 import GamesList from '@/components/GamesList';
