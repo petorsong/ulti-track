@@ -1,22 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { EventTypeTS, games, players, type PlayerWithLineCountType, pointEvents } from '@/database/schema';
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionGroup,
-  AccordionSummary,
-  Button,
-  Chip,
-  Divider,
-  Stack,
-  Typography,
-} from '@mui/joy';
-import PlayerButton from '@/components/PlayerButton';
-import PointCard from '@/components/PointCard';
+import { Button, Divider, Modal, ModalClose, ModalDialog, Stack, Typography } from '@mui/joy';
+import { DiscActionsButtons, LastEventAccordion, PlayerButton, PlayersModal, PointCard } from '@/components';
 import { calculatePointInfo, colStackStyles, handleEndHalfButtonClick, splitPlayersByGenderMatch } from '@/utils';
-import { GroupRemove, Undo } from '@mui/icons-material';
-import LastEventAccordion from '@/components/LastEventAccordion';
 
 export default function PointPage() {
   const router = useRouter();
@@ -27,13 +14,14 @@ export default function PointPage() {
   const [selectedCurrentPlayerId, setSelectedCurrentPlayerId] = useState('');
   const [events, setEvents] = useState([] as (typeof pointEvents.$inferInsert)[]);
   const [nextPointInfo, setNextPointInfo] = useState({
-    oOrD: '',
     genderRatio: '',
     fieldSide: '',
-    isFirstHalf: true,
+    playerLimitL: 0,
+    playerLimitR: 0,
   });
   const [halftimeAt, setHalftimeAt] = useState(null as number | null);
   const [gameId, setGameId] = useState('');
+  const [nextLineModalOpen, setNextLineModalOpen] = useState(false);
 
   // same as [gameId] but renamed
   const [isLoading, setIsLoading] = useState(true);
@@ -49,8 +37,6 @@ export default function PointPage() {
   });
   const [nextPlayersL, setNextPlayersL] = useState([] as (typeof players.$inferSelect)[]);
   const [nextPlayersR, setNextPlayersR] = useState([] as (typeof players.$inferSelect)[]);
-  const [nextPlayerLimitL, setNextPlayerLimitL] = useState(0);
-  const [nextPlayerLimitR, setNextPlayerLimitR] = useState(0);
   const [selectedNextPlayersL, setSelectedNextPlayersL] = useState([] as string[]);
   const [selectedNextPlayersR, setSelectedNextPlayersR] = useState([] as string[]);
 
@@ -74,13 +60,12 @@ export default function PointPage() {
         setCurrentPlayersL(playersL.filter((player) => activePlayerIds.includes(player.id)));
         setCurrentPlayersR(playersR.filter((player) => activePlayerIds.includes(player.id)));
 
-        const nextPointInfo = calculatePointInfo({
-          ...gameData,
-          teamScore: gameData.teamScore + 1,
+        setNextPointInfo({
+          ...calculatePointInfo({
+            ...gameData,
+            teamScore: gameData.teamScore + 1,
+          }),
         });
-        setNextPointInfo(nextPointInfo);
-        setNextPlayerLimitL(nextPointInfo.playerLimitL);
-        setNextPlayerLimitR(nextPointInfo.playerLimitR);
 
         setIsLoading(false);
       });
@@ -130,12 +115,12 @@ export default function PointPage() {
 
   const handleScoreClick = async (e: React.MouseEvent<HTMLElement>, type: EventTypeTS) => {
     e.preventDefault();
+    setSaveFrom(type.toString());
     const scoreEvent = { pointId, type } as typeof pointEvents.$inferInsert;
     if (type == 'SCORE') {
       scoreEvent.playerOneId = selectedCurrentPlayerId;
     }
 
-    setSaveFrom(type.toString());
     const res = await fetch(`/api/points/${pointId}/events`, {
       method: 'POST',
       body: JSON.stringify({
@@ -144,6 +129,11 @@ export default function PointPage() {
       }),
     });
 
+    setSaveFrom(''); // clear all state for if we stay on this page
+    setEvents([]);
+    setSelectedCurrentPlayerId('');
+    setSelectedNextPlayersL([]);
+    setSelectedNextPlayersR([]);
     const { redirectRoute } = await res.json();
     router.push(redirectRoute);
   };
@@ -161,91 +151,28 @@ export default function PointPage() {
             width: '100%',
           }}
         >
-          <Stack direction="column" spacing={1} sx={colStackStyles}>
-            {currentPlayersL.map((player) => {
-              return (
-                <PlayerButton
-                  key={player.id}
-                  variant={selectedCurrentPlayerId == player.id ? 'solid' : 'outlined'}
-                  onClick={() => handlePlayerClick(player.id)}
-                  {...player}
-                />
-              );
-            })}
-          </Stack>
-          <Stack direction="column" spacing={1} sx={colStackStyles}>
-            {currentPlayersR.map((player) => {
-              return (
-                <PlayerButton
-                  key={player.id}
-                  variant={selectedCurrentPlayerId == player.id ? 'solid' : 'outlined'}
-                  onClick={() => handlePlayerClick(player.id)}
-                  {...player}
-                />
-              );
-            })}
-          </Stack>
+          {[currentPlayersL, currentPlayersR].map((playerList, i) => (
+            <Stack key={`playerList${i}`} direction="column" spacing={1} sx={colStackStyles}>
+              {playerList.map((player) => {
+                return (
+                  <PlayerButton
+                    key={player.id}
+                    variant={selectedCurrentPlayerId == player.id ? 'solid' : 'outlined'}
+                    onClick={() => handlePlayerClick(player.id)}
+                    {...player}
+                  />
+                );
+              })}
+            </Stack>
+          ))}
         </Stack>
         <Divider sx={{ width: '95%', alignSelf: 'center' }} />
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{
-            justifyContent: 'space-between',
-            width: '95%',
-          }}
-        >
-          <Button
-            variant="soft"
-            size="lg"
-            color="danger"
-            fullWidth
-            disabled={!selectedCurrentPlayerId}
-            onClick={() => handleDiscActionClick('TA')}
-          >
-            Throwaway
-          </Button>
-          <Button
-            variant="soft"
-            size="lg"
-            color="danger"
-            fullWidth
-            disabled={!selectedCurrentPlayerId}
-            onClick={() => handleDiscActionClick('DROP')}
-          >
-            Drop
-          </Button>
-        </Stack>
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{
-            justifyContent: 'space-between',
-            width: '95%',
-          }}
-        >
-          <Button
-            variant="soft"
-            size="lg"
-            color="success"
-            fullWidth
-            disabled={!selectedCurrentPlayerId}
-            onClick={() => handleDiscActionClick('D')}
-          >
-            D
-          </Button>
-          <Button
-            variant="soft"
-            size="lg"
-            color="neutral"
-            fullWidth
-            endDecorator={<Undo />}
-            disabled={events.length == 0}
-            onClick={handleUndoClick}
-          >
-            Undo Last
-          </Button>
-        </Stack>
+        <DiscActionsButtons
+          disableDiscAction={!selectedCurrentPlayerId}
+          disableUndo={events.length == 0}
+          onDiscActionClick={handleDiscActionClick}
+          onUndoClick={handleUndoClick}
+        />
         <LastEventAccordion {...{ events, players: currentPlayersL.concat(currentPlayersR) }} />
         <Stack
           direction="row"
@@ -277,107 +204,57 @@ export default function PointPage() {
             THEY scored
           </Button>
         </Stack>
-        <Button
-          variant="soft"
-          color="neutral"
-          sx={{ width: '95%' }}
-          loading={saveFrom == 'HALFTIME'}
-          onClick={(e) => {
-            setSaveFrom('HALFTIME');
-            handleEndHalfButtonClick(e, gameId, router, setCurrentPointInfo);
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{
+            justifyContent: 'space-between',
+            width: '95%',
           }}
         >
-          {halftimeAt ? 'End Game' : 'Halftime'}
-        </Button>
-        <AccordionGroup size="lg" sx={{ width: '100%' }}>
-          <Accordion>
-            <AccordionSummary>Next Line</AccordionSummary>
-            <AccordionDetails>
-              <Stack direction="column" spacing={0.5} sx={colStackStyles}>
-                <Stack
-                  direction="row"
-                  sx={{
-                    justifyContent: 'space-between',
-                    width: '95%',
-                  }}
-                >
-                  <Stack direction="row" spacing={1}>
-                    <Chip
-                      variant="soft"
-                      color={nextPointInfo.genderRatio[0] == 'F' ? 'primary' : 'warning'}
-                      size="lg"
-                      sx={{ justifyContent: 'center' }}
-                    >
-                      {nextPointInfo.genderRatio}
-                    </Chip>
-                    <Chip variant="soft" size="lg" sx={{ justifyContent: 'center' }}>
-                      {nextPointInfo.fieldSide}
-                    </Chip>
-                  </Stack>
-                  <Button
-                    variant="soft"
-                    color="neutral"
-                    sx={{ width: '47.5%' }}
-                    endDecorator={<GroupRemove />}
-                    disabled={selectedNextPlayersL.length + selectedNextPlayersR.length == 0}
-                    onClick={handleClearButtonClick}
-                  >
-                    Clear Line
-                  </Button>
-                </Stack>
-                <Stack
-                  direction="row"
-                  sx={{
-                    justifyContent: 'flex-start',
-                    alignItems: 'flex-start',
-                    width: '100%',
-                  }}
-                >
-                  <Stack direction="column" spacing={1} sx={colStackStyles}>
-                    {nextPlayersL.map((player) => {
-                      const playerSelected = selectedNextPlayersL.includes(player.id);
-                      return (
-                        <PlayerButton
-                          key={player.id}
-                          variant={playerSelected ? 'solid' : 'soft'}
-                          disabled={selectedNextPlayersL.length >= nextPlayerLimitL && !playerSelected}
-                          onClick={() => {
-                            setSelectedNextPlayersL(
-                              playerSelected
-                                ? selectedNextPlayersL.filter((p) => p != player.id)
-                                : selectedNextPlayersL.concat(player.id)
-                            );
-                          }}
-                          {...player}
-                        />
-                      );
-                    })}
-                  </Stack>
-                  <Stack direction="column" spacing={1} sx={colStackStyles}>
-                    {nextPlayersR.map((player) => {
-                      const playerSelected = selectedNextPlayersR.includes(player.id);
-                      return (
-                        <PlayerButton
-                          key={player.id}
-                          variant={playerSelected ? 'solid' : 'soft'}
-                          disabled={selectedNextPlayersR.length >= nextPlayerLimitR && !playerSelected}
-                          onClick={() => {
-                            setSelectedNextPlayersR(
-                              playerSelected
-                                ? selectedNextPlayersR.filter((p) => p != player.id)
-                                : selectedNextPlayersR.concat(player.id)
-                            );
-                          }}
-                          {...player}
-                        />
-                      );
-                    })}
-                  </Stack>
-                </Stack>
-              </Stack>
-            </AccordionDetails>
-          </Accordion>
-        </AccordionGroup>
+          <Button
+            variant="soft"
+            size="lg"
+            color="neutral"
+            fullWidth
+            loading={saveFrom == 'HALFTIME'}
+            onClick={(e) => {
+              setSaveFrom('HALFTIME');
+              handleEndHalfButtonClick(e, gameId, router, setCurrentPointInfo);
+            }}
+          >
+            {halftimeAt ? 'End Game' : 'Halftime'}
+          </Button>
+          <Button
+            variant="soft"
+            size="lg"
+            color="primary"
+            fullWidth
+            onClick={() => {
+              setNextLineModalOpen(true);
+            }}
+          >
+            Next line ({selectedNextPlayersL.length + selectedNextPlayersR.length}/7)
+          </Button>
+          <Modal open={nextLineModalOpen} onClose={() => setNextLineModalOpen(false)}>
+            <ModalDialog layout="fullscreen">
+              <ModalClose />
+              <PlayersModal
+                onClearLineClick={handleClearButtonClick}
+                onSaveLineClick={() => setNextLineModalOpen(false)}
+                {...{
+                  nextPointInfo,
+                  selectedNextPlayersL,
+                  selectedNextPlayersR,
+                  nextPlayersL,
+                  nextPlayersR,
+                  setSelectedNextPlayersL,
+                  setSelectedNextPlayersR,
+                }}
+              />
+            </ModalDialog>
+          </Modal>
+        </Stack>
       </Stack>
     )
   );

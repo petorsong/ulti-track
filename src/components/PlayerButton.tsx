@@ -1,5 +1,6 @@
 import { Badge, Button } from '@mui/joy';
-import { DirectionsRunOutlined, FrontHandOutlined } from '@mui/icons-material';
+import DirectionsRunOutlined from '@mui/icons-material/DirectionsRunOutlined';
+import FrontHandOutlined from '@mui/icons-material/FrontHandOutlined';
 
 export default function PlayerButton({
   firstName,
@@ -26,25 +27,26 @@ export default function PlayerButton({
 
   return (
     <Badge
-      size="sm"
+      size="md"
       color="neutral"
       variant="solid"
       anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+      badgeInset="1.5%"
       invisible={!lineCount}
       badgeContent={lineCount}
       sx={{ width: '90%' }}
     >
       <Button
-        onClick={onClick}
         size="lg"
+        fullWidth
         variant={variant}
         disabled={disabled}
         endDecorator={roleIcon}
         color={colour}
+        onClick={onClick}
         sx={{
           justifyContent: 'space-between',
         }}
-        fullWidth
       >
         {name}
       </Button>

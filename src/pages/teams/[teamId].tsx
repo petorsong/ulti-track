@@ -16,8 +16,7 @@ import {
 import { useRouter } from 'next/router';
 import { type PlayerType, games as gamesDb, players, teams } from '@/database/schema';
 import { colStackStyles, splitPlayersByGenderMatch } from '@/utils';
-import PlayerButton from '@/components/PlayerButton';
-import GamesList from '@/components/GamesList';
+import { PlayerButton, GamesList } from '@/components';
 
 type ErrorType = {
   [field: string]: string;

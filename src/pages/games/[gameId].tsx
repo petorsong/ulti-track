@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { games, players, type PlayerWithLineCountType } from '@/database/schema';
 import { Button, Stack, Typography } from '@mui/joy';
-import PlayerButton from '@/components/PlayerButton';
-import PointCard from '@/components/PointCard';
+import { PlayerButton, PointCard } from '@/components';
 import { calculatePointInfo, colStackStyles, handleEndHalfButtonClick, splitPlayersByGenderMatch } from '@/utils';
-import { GroupRemove, PlayCircleFilledOutlined } from '@mui/icons-material';
+import GroupRemove from '@mui/icons-material/GroupRemove';
+import PlayCircleFilledOutlined from '@mui/icons-material/PlayCircleFilledOutlined';
 
 export default function GamePage() {
   const router = useRouter();
