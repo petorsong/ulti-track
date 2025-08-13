@@ -1,9 +1,9 @@
 import type { NextApiRequest as Req, NextApiResponse as Res } from 'next';
 import { db } from '@/database/drizzle';
 import { GameSummary, PlayerStats, PlayerWithStats, StatsMap } from '@/types';
-import { EventTypeTS } from '@/database/schema';
+import { type EventType } from '@/database/schema';
 
-const eventTypeToStatMap = new Map<EventTypeTS, keyof PlayerStats>([
+const eventTypeToStatMap = new Map<EventType, keyof PlayerStats>([
   ['SCORE', 'scores'],
   ['BLOCK', 'blocks'],
   ['TA', 'throwAways'],

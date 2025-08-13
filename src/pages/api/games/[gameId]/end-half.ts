@@ -1,9 +1,9 @@
 import type { NextApiRequest as Req, NextApiResponse as Res } from 'next';
 import { db } from '@/database/drizzle';
-import { games } from '@/database/schema';
+import { games, type GameType } from '@/database/schema';
 import { eq } from 'drizzle-orm';
 
-export default async function handler(req: Req, res: Res<{ gameData: typeof games.$inferSelect }>) {
+export default async function handler(req: Req, res: Res<{ gameData: GameType }>) {
   const gameId = req.query.gameId as string;
 
   const gameData = await db.query.games.findFirst({

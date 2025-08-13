@@ -14,7 +14,7 @@ import {
   AccordionDetails,
 } from '@mui/joy';
 import { useRouter } from 'next/router';
-import { type PlayerType, games as gamesDb, players, teams } from '@/database/schema';
+import type { GameType, PlayerType, TeamType } from '@/database/schema';
 import { colStackStyles, splitPlayersByGenderMatch } from '@/utils';
 import { PlayerButton, GamesList } from '@/components';
 
@@ -28,7 +28,7 @@ export default function TeamPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [teamData, setTeamData] = useState({} as typeof teams.$inferSelect);
+  const [teamData, setTeamData] = useState({} as TeamType);
   const [formData, setFormData] = useState({
     vsTeamName: '',
     startOnO: false,
@@ -38,10 +38,10 @@ export default function TeamPage() {
   const [errors, setErrors] = useState({
     vsTeamName: '',
   } as ErrorType);
-  const [playersL, setPlayersL] = useState([] as (typeof players.$inferSelect)[]);
-  const [playersR, setPlayersR] = useState([] as (typeof players.$inferSelect)[]);
+  const [playersL, setPlayersL] = useState([] as PlayerType[]);
+  const [playersR, setPlayersR] = useState([] as PlayerType[]);
   const [activePlayerIds, setActivePlayerIds] = useState([] as string[]);
-  const [games, setGames] = useState([] as (typeof gamesDb.$inferSelect)[]);
+  const [games, setGames] = useState([] as GameType[]);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -49,9 +49,9 @@ export default function TeamPage() {
     fetch(`/api/teams/${teamId}`)
       .then((res) => res.json())
       .then((data) => {
-        const teamData = data.teamData as typeof teams.$inferSelect;
+        const teamData = data.teamData as TeamType;
         const playersData = data.teamData.players as PlayerType[];
-        const gamesData = data.teamData.games as (typeof gamesDb.$inferSelect)[];
+        const gamesData = data.teamData.games as GameType[];
 
         setTeamData(teamData);
         const { playersL, playersR } = splitPlayersByGenderMatch(playersData);

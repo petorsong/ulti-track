@@ -1,6 +1,6 @@
 import type { NextRouter } from 'next/router';
 import type { Dispatch, SetStateAction } from 'react';
-import { games, type PlayerType, type PlayerWithLineCountType } from './database/schema';
+import type { GameType, PlayerType, PlayerWithLineCountType } from './database/schema';
 
 export function splitPlayersByGenderMatch<PT extends PlayerType | PlayerWithLineCountType>(
   playersData: PT[]
@@ -29,7 +29,7 @@ export function calculatePointInfo({
   halftimeAt,
   wasLastScoreUs,
   startOnO,
-}: typeof games.$inferSelect) {
+}: GameType) {
   const totalPoints = teamScore + vsTeamScore;
   const isFirstHalf = halftimeAt == null;
 
@@ -78,7 +78,7 @@ export function handleEndHalfButtonClick(
   fetch(`/api/games/${gameId}/end-half`, { method: 'POST' })
     .then((res) => res.json())
     .then((data) => {
-      const gameData = data.gameData as typeof games.$inferSelect;
+      const gameData = data.gameData as GameType;
       if (gameData.isComplete) {
         router.push(`/games/${gameId}/summary`);
       } else {

@@ -3,7 +3,7 @@ import GroupRemove from '@mui/icons-material/GroupRemove';
 import Save from '@mui/icons-material/Save';
 import { Button, Chip, Divider, Stack, Typography } from '@mui/joy';
 import PlayerButton from './PlayerButton';
-import { players } from '@/database/schema';
+import { type PlayerType } from '@/database/schema';
 
 export default function PointCard({
   onClearLineClick,
@@ -26,8 +26,8 @@ export default function PointCard({
   };
   selectedNextPlayersL: string[];
   selectedNextPlayersR: string[];
-  nextPlayersL: (typeof players.$inferSelect)[];
-  nextPlayersR: (typeof players.$inferSelect)[];
+  nextPlayersL: PlayerType[];
+  nextPlayersR: PlayerType[];
   setSelectedNextPlayersL: (p: string[]) => void;
   setSelectedNextPlayersR: (p: string[]) => void;
 }) {
@@ -49,7 +49,7 @@ export default function PointCard({
           </Chip>
         </Stack>
       </Stack>
-      <Stack direction="row" sx={{ width: '100%' }}>
+      <Stack direction="row" sx={{ justifyContent: 'flex-start', alignItems: 'flex-start', width: '100%' }}>
         {[nextPlayersL, nextPlayersR].map((playerList, i) => (
           <Stack key={`playerList${i}`} direction="column" spacing={1} sx={colStackStyles}>
             {playerList.map((player) => {

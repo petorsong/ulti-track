@@ -11,9 +11,9 @@ export const teamsRelations = relations(teams, ({ many }) => ({
   games: many(games),
 }));
 
-export type PlayerWithLineCountType = typeof players.$inferSelect & {
-  lineCount: number;
-};
+export type TeamType = typeof teams.$inferSelect;
+
+export type PlayerWithLineCountType = PlayerType & { lineCount: number };
 
 export const players = pgTable('players', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -71,6 +71,8 @@ export const gamesRelations = relations(games, ({ many, one }) => ({
   points: many(points),
 }));
 
+export type GameType = typeof games.$inferSelect;
+
 export const points = pgTable('points', {
   id: uuid('id').primaryKey().defaultRandom(),
   gameId: uuid('game_id')
@@ -93,7 +95,7 @@ export const pointsRelations = relations(points, ({ many, one }) => ({
   events: many(pointEvents),
 }));
 
-export const EventType = [
+export const EventTypePG = [
   'VS_SCORE',
   'SCORE',
   'BLOCK',
@@ -105,8 +107,8 @@ export const EventType = [
   'TIMEOUT',
   'VS_TIMEOUT',
 ] as const;
-export const EventTypeEnum = pgEnum('eventtype', EventType);
-export type EventTypeTS = (typeof EventType)[number];
+export const EventTypeEnum = pgEnum('eventtype', EventTypePG);
+export type EventType = (typeof EventTypePG)[number];
 
 export type EventJsonType = {
   throwType?: 'HUCK';
@@ -144,3 +146,5 @@ export const pointEventsRelations = relations(pointEvents, ({ one }) => ({
     references: [players.id],
   }),
 }));
+
+export type InsertPointEventType = typeof pointEvents.$inferInsert;

@@ -1,4 +1,4 @@
-import { EventTypeTS } from '@/database/schema';
+import { type EventType } from '@/database/schema';
 import Undo from '@mui/icons-material/Undo';
 import { Button, Stack } from '@mui/joy';
 
@@ -10,7 +10,7 @@ export default function DiscActionsButtons({
 }: {
   disableDiscAction: boolean;
   disableUndo: boolean;
-  onDiscActionClick: (event: EventTypeTS) => void;
+  onDiscActionClick: (event: EventType) => void;
   onUndoClick: () => void;
 }) {
   return [
@@ -59,9 +59,9 @@ export default function DiscActionsButtons({
         color="success"
         fullWidth
         disabled={disableDiscAction}
-        onClick={() => onDiscActionClick('D')}
+        onClick={() => onDiscActionClick('BLOCK')}
       >
-        D
+        Block
       </Button>
       <Button
         variant="soft"

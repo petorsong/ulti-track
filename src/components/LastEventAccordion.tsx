@@ -1,12 +1,12 @@
 import { Accordion, AccordionDetails, AccordionSummary, Box, Chip } from '@mui/joy';
-import { EventTypeTS, players as playersDb, pointEvents } from '@/database/schema';
+import type { EventType, InsertPointEventType, PlayerType } from '@/database/schema';
 
 export default function LastEventAccordion({
   events,
   players,
 }: {
-  events: (typeof pointEvents.$inferInsert)[];
-  players: (typeof playersDb.$inferSelect)[];
+  events: InsertPointEventType[];
+  players: PlayerType[];
 }) {
   function EventChip({
     index,
@@ -15,7 +15,7 @@ export default function LastEventAccordion({
     playerTwoId,
   }: {
     index: number;
-    type: EventTypeTS;
+    type: EventType;
     playerOneId?: string | null;
     playerTwoId?: string | null;
   }) {
@@ -29,11 +29,11 @@ export default function LastEventAccordion({
             {index}. {playerOneName} ➡️ {playerTwoName}
           </Chip>
         );
-      case 'D':
+      case 'BLOCK':
       case 'TA':
       case 'DROP':
         return (
-          <Chip color={type == 'D' ? 'success' : 'danger'}>
+          <Chip color={type == 'BLOCK' ? 'success' : 'danger'}>
             {index}. {playerOneName} {type}
           </Chip>
         );

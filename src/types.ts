@@ -1,4 +1,4 @@
-import { games, players, teams } from './database/schema';
+import type { GameType, PlayerType, TeamType } from './database/schema';
 
 export type ApiErrorType = {
   error: string;
@@ -16,12 +16,8 @@ export type PlayerStats = {
   throwAways: number;
   drops: number;
 };
-export type PlayerWithStats = { player: typeof players.$inferSelect; stats: PlayerStats };
-export type GameSummary = {
-  team: typeof teams.$inferSelect;
-  game: typeof games.$inferSelect;
-  players: PlayerWithStats[];
-};
+export type PlayerWithStats = { player: PlayerType; stats: PlayerStats };
+export type GameSummary = { team: TeamType; game: GameType; players: PlayerWithStats[] };
 
 export class StatsMap {
   private stats: PlayerStats;

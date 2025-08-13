@@ -1,13 +1,10 @@
 import type { NextApiRequest as Req, NextApiResponse as Res } from 'next';
 import { db } from '@/database/drizzle';
-import { games, type PlayerWithLineCountType } from '@/database/schema';
+import type { GameType, PlayerWithLineCountType } from '@/database/schema';
 
 export default async function handler(
   req: Req,
-  res: Res<{
-    gameData: typeof games.$inferSelect;
-    playersData: PlayerWithLineCountType[];
-  }>
+  res: Res<{ gameData: GameType; playersData: PlayerWithLineCountType[] }>
 ) {
   const gameId = req.query.gameId as string;
   // if (typeof gameId !== 'string') {

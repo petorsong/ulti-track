@@ -1,8 +1,8 @@
-import { games as gamesDb } from '@/database/schema';
+import { type GameType } from '@/database/schema';
 import { Accordion, AccordionDetails, AccordionSummary, Box, Chip, Stack, Typography } from '@mui/joy';
 import { type NextRouter } from 'next/router';
 
-function GameRow({ game, router }: { game: typeof gamesDb.$inferSelect; router: NextRouter }) {
+function GameRow({ game, router }: { game: GameType; router: NextRouter }) {
   const { id, vsTeamName, teamScore, vsTeamScore, halftimeAt, isComplete, createdAt } = game;
 
   const handleGameClick = () => {
@@ -45,7 +45,7 @@ function GameRow({ game, router }: { game: typeof gamesDb.$inferSelect; router: 
   );
 }
 
-export default function GamesList({ games, router }: { games: (typeof gamesDb.$inferSelect)[]; router: NextRouter }) {
+export default function GamesList({ games, router }: { games: GameType[]; router: NextRouter }) {
   return (
     <Accordion sx={{ width: '95%' }}>
       <AccordionSummary>Past games</AccordionSummary>

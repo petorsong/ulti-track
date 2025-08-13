@@ -1,18 +1,18 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { games, teams } from '@/database/schema';
+import type { GameType, TeamType } from '@/database/schema';
 import { PlayerStats, PlayerWithStats } from '@/types';
 import { Table, type TableColumnsType } from 'antd';
 
 type StatSummary = PlayerStats & { playerName: string; key: string };
 
-// TODO LATER: consider making this a static server rendered page (for COMPLETED games)
+// TODO LATER: consider making this a static server rendered page (for COMPLETED games - fetch /summary props)
 export default function GameSummaryPage() {
   const router = useRouter();
   const gameId = router.query.gameId as string;
   const [isLoading, setIsLoading] = useState(true);
-  const [teamData, setTeamData] = useState({} as typeof teams.$inferSelect);
-  const [gameData, setGameData] = useState({} as typeof games.$inferSelect);
+  const [teamData, setTeamData] = useState({} as TeamType);
+  const [gameData, setGameData] = useState({} as GameType);
   const [playersData, setPlayersData] = useState([] as StatSummary[]);
 
   const columns: TableColumnsType<StatSummary> = [
@@ -51,8 +51,8 @@ export default function GameSummaryPage() {
     fetch(`/api/games/${gameId}/summary`)
       .then((res) => res.json())
       .then((data) => {
-        const teamData = data.summaryData.team as typeof teams.$inferSelect;
-        const gameData = data.summaryData.game as typeof games.$inferSelect;
+        const teamData = data.summaryData.team as TeamType;
+        const gameData = data.summaryData.game as GameType;
         const playersData = data.summaryData.players as PlayerWithStats[];
 
         setTeamData(teamData);

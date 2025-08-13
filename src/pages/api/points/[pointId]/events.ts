@@ -1,6 +1,6 @@
 import type { NextApiRequest as Req, NextApiResponse as Res } from 'next';
 import { db } from '@/database/drizzle';
-import { games, pointEvents, points } from '@/database/schema';
+import { games, type InsertPointEventType, pointEvents, points } from '@/database/schema';
 import { eq } from 'drizzle-orm';
 
 export default async function handler(req: Req, res: Res<{ redirectRoute: string }>) {
@@ -8,7 +8,7 @@ export default async function handler(req: Req, res: Res<{ redirectRoute: string
     events,
     nextPlayerIds,
   }: {
-    events: (typeof pointEvents.$inferInsert)[];
+    events: InsertPointEventType[];
     nextPlayerIds: string[];
   } = JSON.parse(req.body);
 

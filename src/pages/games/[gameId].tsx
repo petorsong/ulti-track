@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { games, players, type PlayerWithLineCountType } from '@/database/schema';
+import type { GameType, PlayerType, PlayerWithLineCountType } from '@/database/schema';
 import { Button, Stack, Typography } from '@mui/joy';
 import { PlayerButton, PointCard } from '@/components';
 import { calculatePointInfo, colStackStyles, handleEndHalfButtonClick, splitPlayersByGenderMatch } from '@/utils';
@@ -23,8 +23,8 @@ export default function GamePage() {
     isFirstHalf: true,
   });
   const [halftimeAt, setHalftimeAt] = useState(null as number | null);
-  const [playersL, setPlayersL] = useState([] as (typeof players.$inferSelect)[]);
-  const [playersR, setPlayersR] = useState([] as (typeof players.$inferSelect)[]);
+  const [playersL, setPlayersL] = useState([] as PlayerType[]);
+  const [playersR, setPlayersR] = useState([] as PlayerType[]);
   const [playerLimitL, setPlayerLimitL] = useState(0);
   const [playerLimitR, setPlayerLimitR] = useState(0);
   const [selectedPlayersL, setSelectedPlayersL] = useState([] as string[]);
@@ -36,7 +36,7 @@ export default function GamePage() {
     fetch(`/api/games/${gameId}`)
       .then((res) => res.json())
       .then((data) => {
-        const gameData = data.gameData as typeof games.$inferSelect;
+        const gameData = data.gameData as GameType;
         const playersData = data.playersData as PlayerWithLineCountType[];
         setHalftimeAt(gameData.halftimeAt);
 

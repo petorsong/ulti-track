@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { EventTypeTS, games, players, type PlayerWithLineCountType, pointEvents } from '@/database/schema';
+import type { EventType, GameType, InsertPointEventType, PlayerType, PlayerWithLineCountType } from '@/database/schema';
 import { Button, Divider, Modal, ModalClose, ModalDialog, Stack, Typography } from '@mui/joy';
 import { DiscActionsButtons, LastEventAccordion, PlayerButton, PlayersModal, PointCard } from '@/components';
 import { calculatePointInfo, colStackStyles, handleEndHalfButtonClick, splitPlayersByGenderMatch } from '@/utils';
@@ -9,10 +9,10 @@ export default function PointPage() {
   const router = useRouter();
   const pointId = router.query.pointId as string;
 
-  const [currentPlayersL, setCurrentPlayersL] = useState([] as (typeof players.$inferSelect)[]);
-  const [currentPlayersR, setCurrentPlayersR] = useState([] as (typeof players.$inferSelect)[]);
+  const [currentPlayersL, setCurrentPlayersL] = useState([] as PlayerType[]);
+  const [currentPlayersR, setCurrentPlayersR] = useState([] as PlayerType[]);
   const [selectedCurrentPlayerId, setSelectedCurrentPlayerId] = useState('');
-  const [events, setEvents] = useState([] as (typeof pointEvents.$inferInsert)[]);
+  const [events, setEvents] = useState([] as InsertPointEventType[]);
   const [nextPointInfo, setNextPointInfo] = useState({
     genderRatio: '',
     fieldSide: '',
@@ -35,8 +35,8 @@ export default function PointPage() {
     fieldSide: '',
     isFirstHalf: true,
   });
-  const [nextPlayersL, setNextPlayersL] = useState([] as (typeof players.$inferSelect)[]);
-  const [nextPlayersR, setNextPlayersR] = useState([] as (typeof players.$inferSelect)[]);
+  const [nextPlayersL, setNextPlayersL] = useState([] as PlayerType[]);
+  const [nextPlayersR, setNextPlayersR] = useState([] as PlayerType[]);
   const [selectedNextPlayersL, setSelectedNextPlayersL] = useState([] as string[]);
   const [selectedNextPlayersR, setSelectedNextPlayersR] = useState([] as string[]);
 
@@ -46,7 +46,7 @@ export default function PointPage() {
     fetch(`/api/points/${pointId}`)
       .then((res) => res.json())
       .then((data) => {
-        const gameData = data.gameData as typeof games.$inferSelect;
+        const gameData = data.gameData as GameType;
         const playersData = data.playersData as PlayerWithLineCountType[];
         const activePlayerIds = data.pointData.playerIds as string[];
 
@@ -102,7 +102,7 @@ export default function PointPage() {
     setEvents(events.slice(0, lastIndex));
   };
 
-  const handleDiscActionClick = (type: EventTypeTS) => {
+  const handleDiscActionClick = (type: EventType) => {
     setEvents(
       events.concat({
         pointId,
@@ -113,10 +113,10 @@ export default function PointPage() {
     setSelectedCurrentPlayerId('');
   };
 
-  const handleScoreClick = async (e: React.MouseEvent<HTMLElement>, type: EventTypeTS) => {
+  const handleScoreClick = async (e: React.MouseEvent<HTMLElement>, type: EventType) => {
     e.preventDefault();
     setSaveFrom(type.toString());
-    const scoreEvent = { pointId, type } as typeof pointEvents.$inferInsert;
+    const scoreEvent = { pointId, type } as InsertPointEventType;
     if (type == 'SCORE') {
       scoreEvent.playerOneId = selectedCurrentPlayerId;
     }
