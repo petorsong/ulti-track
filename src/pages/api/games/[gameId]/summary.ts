@@ -5,7 +5,7 @@ import { EventTypeTS } from '@/database/schema';
 
 const eventTypeToStatMap = new Map<EventTypeTS, keyof PlayerStats>([
   ['SCORE', 'scores'],
-  ['D', 'ds'],
+  ['BLOCK', 'blocks'],
   ['TA', 'throwAways'],
   ['DROP', 'drops'],
   ['PASS', 'totalPasses'],

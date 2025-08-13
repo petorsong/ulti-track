@@ -21,7 +21,7 @@ export default function GameSummaryPage() {
     { dataIndex: 'scores', title: 'G', align: 'right', sorter: (a, b) => a.scores - b.scores },
     { dataIndex: 'assists', title: 'A', align: 'right', sorter: (a, b) => a.assists - b.assists },
     { dataIndex: 'hockeyAssists', title: '2A', align: 'right', sorter: (a, b) => a.hockeyAssists - b.hockeyAssists },
-    { dataIndex: 'ds', title: 'D', align: 'right', sorter: (a, b) => a.ds - b.ds },
+    { dataIndex: 'blocks', title: 'D', align: 'right', sorter: (a, b) => a.blocks - b.blocks },
     { dataIndex: 'throwAways', title: 'TA', align: 'right', sorter: (a, b) => a.throwAways - b.throwAways },
     { dataIndex: 'drops', title: 'Drop', align: 'right', sorter: (a, b) => a.drops - b.drops },
     { dataIndex: 'totalPasses', title: 'Pass', align: 'right', sorter: (a, b) => a.totalPasses - b.totalPasses },

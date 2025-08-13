@@ -1,0 +1,1 @@
+ALTER TYPE eventtype ADD VALUE 'BLOCK';

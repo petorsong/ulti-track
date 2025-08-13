@@ -12,7 +12,7 @@ export type PlayerStats = {
   scores: number;
   assists: number;
   hockeyAssists: number;
-  ds: number;
+  blocks: number;
   throwAways: number;
   drops: number;
 };
@@ -35,7 +35,7 @@ export class StatsMap {
       scores: 0,
       assists: 0,
       hockeyAssists: 0,
-      ds: 0,
+      blocks: 0,
       throwAways: 0,
       drops: 0,
     };

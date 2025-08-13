@@ -96,7 +96,7 @@ export const pointsRelations = relations(points, ({ many, one }) => ({
 export const EventType = [
   'VS_SCORE',
   'SCORE',
-  'D',
+  'BLOCK',
   'TA',
   'DROP',
   'PASS',
@@ -106,17 +106,7 @@ export const EventType = [
   'VS_TIMEOUT',
 ] as const;
 export const EventTypeEnum = pgEnum('eventtype', EventType);
-export type EventTypeTS =
-  | 'VS_SCORE'
-  | 'SCORE'
-  | 'D'
-  | 'TA'
-  | 'DROP'
-  | 'PASS'
-  | 'CALLAHAN'
-  | 'SUBSTITUTION'
-  | 'TIMEOUT'
-  | 'VS_TIMEOUT';
+export type EventTypeTS = (typeof EventType)[number];
 
 export type EventJsonType = {
   throwType?: 'HUCK';
