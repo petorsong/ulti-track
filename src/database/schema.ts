@@ -1,5 +1,16 @@
 import { relations, sql } from 'drizzle-orm';
-import { pgTable, uuid, varchar, boolean, timestamp, pgEnum, integer, jsonb } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  boolean,
+  timestamp,
+  pgEnum,
+  integer,
+  jsonb,
+  index,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core';
 
 export const teams = pgTable('teams', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -7,13 +18,12 @@ export const teams = pgTable('teams', {
 });
 
 export const teamsRelations = relations(teams, ({ many }) => ({
-  players: many(players),
+  players: many(players), // TODO: maybe redundant? consider a default unassigned group
+  teamGroups: many(teamGroups),
   games: many(games),
 }));
 
-export type TeamType = typeof teams.$inferSelect;
-
-export type PlayerWithLineCountType = PlayerType & { lineCount: number };
+export type Team = typeof teams.$inferSelect;
 
 export const players = pgTable('players', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -24,29 +34,55 @@ export const players = pgTable('players', {
   isPR: boolean('is_pr').notNull().default(false),
   nickname: varchar('nickname', { length: 255 }),
   teamId: uuid('team_id')
-    .references(() => teams.id, {
-      onDelete: 'cascade',
-      onUpdate: 'cascade',
-    })
+    .references(() => teams.id, { onDelete: 'cascade', onUpdate: 'cascade' })
+    .notNull(),
+  teamGroupId: uuid('team_group_id')
+    .references(() => teamGroups.id, { onDelete: 'set null', onUpdate: 'cascade' })
     .notNull(),
 });
 
 export const playersRelations = relations(players, ({ one }) => ({
-  team: one(teams, {
-    fields: [players.teamId],
-    references: [teams.id],
-  }),
+  team: one(teams, { fields: [players.teamId], references: [teams.id] }),
+  teamGroup: one(teamGroups, { fields: [players.teamGroupId], references: [teamGroups.id] }),
 }));
 
-export type PlayerType = typeof players.$inferSelect;
+export type Player = typeof players.$inferSelect;
+export type PlayerWithLineCount = Player & { lineCount: number };
+
+export const teamGroups = pgTable(
+  'team_groups',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: varchar('name').notNull(),
+    isActive: boolean('is_active').notNull().default(false),
+    isDefault: boolean('is_default').notNull().default(false),
+    teamId: uuid('team_id')
+      .references(() => teams.id, { onDelete: 'cascade', onUpdate: 'cascade' })
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string' })
+      .notNull()
+      .default(sql`now()`),
+  },
+  (table) => [
+    index('team_groups_team_id_idx').on(table.teamId),
+    uniqueIndex('team_groups_team_id_is_default_unique_idx')
+      .on(table.teamId) // only 1 default group per team
+      .where(sql`${table.isDefault} = true`),
+  ]
+);
+
+export const teamGroupsRelations = relations(teamGroups, ({ one, many }) => ({
+  team: one(teams, { fields: [teamGroups.teamId], references: [teams.id] }),
+  players: many(players),
+}));
+
+export type TeamGroup = typeof teamGroups.$inferSelect;
+export type TeamGroupWithPlayers = TeamGroup & { players: Player[] };
 
 export const games = pgTable('games', {
   id: uuid('id').primaryKey().defaultRandom(),
   teamId: uuid('team_id')
-    .references(() => teams.id, {
-      onDelete: 'cascade',
-      onUpdate: 'cascade',
-    })
+    .references(() => teams.id, { onDelete: 'cascade', onUpdate: 'cascade' })
     .notNull(),
   vsTeamName: varchar('vs_team_name', { length: 255 }).notNull(),
   startOnO: boolean('start_on_o').default(false).notNull(),
@@ -64,22 +100,16 @@ export const games = pgTable('games', {
 });
 
 export const gamesRelations = relations(games, ({ many, one }) => ({
-  team: one(teams, {
-    fields: [games.teamId],
-    references: [teams.id],
-  }),
+  team: one(teams, { fields: [games.teamId], references: [teams.id] }),
   points: many(points),
 }));
 
-export type GameType = typeof games.$inferSelect;
+export type Game = typeof games.$inferSelect;
 
 export const points = pgTable('points', {
   id: uuid('id').primaryKey().defaultRandom(),
   gameId: uuid('game_id')
-    .references(() => games.id, {
-      onDelete: 'cascade',
-      onUpdate: 'cascade',
-    })
+    .references(() => games.id, { onDelete: 'cascade', onUpdate: 'cascade' })
     .notNull(),
   playerIds: uuid('player_ids').array(7).notNull(), // references prolly doesn't work here
   createdAt: timestamp('created_at', { mode: 'string' })
@@ -88,10 +118,7 @@ export const points = pgTable('points', {
 });
 
 export const pointsRelations = relations(points, ({ many, one }) => ({
-  game: one(games, {
-    fields: [points.gameId],
-    references: [games.id],
-  }),
+  game: one(games, { fields: [points.gameId], references: [games.id] }),
   events: many(pointEvents),
 }));
 
@@ -110,18 +137,12 @@ export const EventTypePG = [
 export const EventTypeEnum = pgEnum('eventtype', EventTypePG);
 export type EventType = (typeof EventTypePG)[number];
 
-export type EventJsonType = {
-  throwType?: 'HUCK';
-  assistType?: 'ASSIST' | 'HOCKEY_ASSIST';
-};
+export type EventJsonType = { throwType?: 'HUCK'; assistType?: 'ASSIST' | 'HOCKEY_ASSIST' };
 
 export const pointEvents = pgTable('point_events', {
   id: uuid('id').primaryKey().defaultRandom(),
   pointId: uuid('point_id')
-    .references(() => points.id, {
-      onDelete: 'cascade',
-      onUpdate: 'cascade',
-    })
+    .references(() => points.id, { onDelete: 'cascade', onUpdate: 'cascade' })
     .notNull(),
   type: EventTypeEnum('type').notNull(),
   playerOneId: uuid('player_one_id').references(() => players.id),
@@ -133,18 +154,9 @@ export const pointEvents = pgTable('point_events', {
 });
 
 export const pointEventsRelations = relations(pointEvents, ({ one }) => ({
-  points: one(points, {
-    fields: [pointEvents.pointId],
-    references: [points.id],
-  }),
-  playerOne: one(players, {
-    fields: [pointEvents.playerOneId],
-    references: [players.id],
-  }),
-  playerTwo: one(players, {
-    fields: [pointEvents.playerTwoId],
-    references: [players.id],
-  }),
+  points: one(points, { fields: [pointEvents.pointId], references: [points.id] }),
+  playerOne: one(players, { fields: [pointEvents.playerOneId], references: [players.id] }),
+  playerTwo: one(players, { fields: [pointEvents.playerTwoId], references: [players.id] }),
 }));
 
-export type InsertPointEventType = typeof pointEvents.$inferInsert;
+export type InsertPointEvent = typeof pointEvents.$inferInsert;

@@ -9,14 +9,14 @@ import {
   Switch,
   Typography,
   Stack,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
+  Modal,
+  ModalDialog,
+  ModalClose,
 } from '@mui/joy';
 import { useRouter } from 'next/router';
-import type { GameType, PlayerType, TeamType } from '@/database/schema';
-import { colStackStyles, splitPlayersByGenderMatch } from '@/utils';
-import { PlayerButton, GamesList } from '@/components';
+import type { Game, Team, TeamGroup } from '@/database/schema';
+import { colStackStyles } from '@/utils';
+import { EditTeamGroupsModal, GamesList } from '@/components';
 
 type ErrorType = {
   [field: string]: string;
@@ -28,20 +28,12 @@ export default function TeamPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [teamData, setTeamData] = useState({} as TeamType);
-  const [formData, setFormData] = useState({
-    vsTeamName: '',
-    startOnO: false,
-    startFRatio: false,
-    startLeft: false,
-  });
-  const [errors, setErrors] = useState({
-    vsTeamName: '',
-  } as ErrorType);
-  const [playersL, setPlayersL] = useState([] as PlayerType[]);
-  const [playersR, setPlayersR] = useState([] as PlayerType[]);
-  const [activePlayerIds, setActivePlayerIds] = useState([] as string[]);
-  const [games, setGames] = useState([] as GameType[]);
+  const [teamGroupsModalOpen, setTeamGroupsModalOpen] = useState(false);
+  const [team, setTeam] = useState({} as Team);
+  const [teamGroups, setTeamGroups] = useState([] as TeamGroup[]);
+  const [games, setGames] = useState([] as Game[]);
+  const [formData, setFormData] = useState({ vsTeamName: '', startOnO: false, startFRatio: false, startLeft: false });
+  const [errors, setErrors] = useState({ vsTeamName: '' } as ErrorType);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -49,16 +41,9 @@ export default function TeamPage() {
     fetch(`/api/teams/${teamId}`)
       .then((res) => res.json())
       .then((data) => {
-        const teamData = data.teamData as TeamType;
-        const playersData = data.teamData.players as PlayerType[];
-        const gamesData = data.teamData.games as GameType[];
-
-        setTeamData(teamData);
-        const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
-        setPlayersL(playersL);
-        setPlayersR(playersR);
-        setActivePlayerIds(playersData.filter((p) => !p.isPR).map((p) => p.id));
-        setGames(gamesData);
+        setTeam(data.teamData as Team);
+        setTeamGroups(data.teamData.teamGroups as TeamGroup[]);
+        setGames(data.teamData.games as Game[]);
         setIsLoading(false);
       });
   }, [teamId, router.isReady]);
@@ -71,10 +56,7 @@ export default function TeamPage() {
 
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors((prev) => ({
-        ...prev,
-        [field]: '',
-      }));
+      setErrors((prev) => ({ ...prev, [field]: '' }));
     }
   };
 
@@ -93,15 +75,7 @@ export default function TeamPage() {
     }
 
     setIsSaving(true);
-    const teamId = teamData.id;
-    const res = await fetch(`/api/teams/${teamId}/game`, {
-      method: 'POST',
-      body: JSON.stringify({
-        ...formData,
-        activePlayerIds,
-        teamId,
-      }),
-    });
+    const res = await fetch(`/api/teams/${teamId}/game`, { method: 'POST', body: JSON.stringify({ ...formData }) });
     const { gameId } = await res.json();
     router.push(`/games/${gameId}`);
   };
@@ -112,7 +86,7 @@ export default function TeamPage() {
         <Card variant="outlined" sx={{ width: '95%', m: 0.5 }}>
           <CardContent>
             <Typography level="title-lg" sx={{ mb: 2 }}>
-              New game: {teamData.name}
+              New game: {team.name}
             </Typography>
             <Stack spacing={2}>
               <FormControl error={!!errors.vsTeamName}>
@@ -134,6 +108,7 @@ export default function TeamPage() {
               <FormControl orientation="horizontal">
                 <FormLabel>On offence</FormLabel>
                 <Switch
+                  size="lg"
                   checked={!formData.startOnO}
                   onChange={(e) => handleInputChange('startOnO', !e.target.checked)}
                   startDecorator="O"
@@ -143,6 +118,7 @@ export default function TeamPage() {
               <FormControl orientation="horizontal">
                 <FormLabel>Gender ratio</FormLabel>
                 <Switch
+                  size="lg"
                   checked={!formData.startFRatio}
                   onChange={(e) => handleInputChange('startFRatio', !e.target.checked)}
                   startDecorator="F"
@@ -152,71 +128,28 @@ export default function TeamPage() {
               <FormControl orientation="horizontal">
                 <FormLabel>Side</FormLabel>
                 <Switch
+                  size="lg"
                   checked={!formData.startLeft}
                   onChange={(e) => handleInputChange('startLeft', !e.target.checked)}
                   startDecorator="L"
                   endDecorator="R"
                 />
               </FormControl>
-              <Accordion>
-                <AccordionSummary>Active players</AccordionSummary>
-                <AccordionDetails>
-                  <Stack
-                    direction="row"
-                    sx={{
-                      justifyContent: 'flex-start',
-                      alignItems: 'flex-start',
-                      width: '100%',
-                      mt: 1,
-                    }}
-                  >
-                    <Stack direction="column" spacing={1} sx={colStackStyles}>
-                      {playersL.map((player) => {
-                        const playerSelected = activePlayerIds.includes(player.id);
-                        return (
-                          <PlayerButton
-                            key={player.id}
-                            variant={playerSelected ? 'solid' : 'outlined'}
-                            onClick={() => {
-                              setActivePlayerIds(
-                                playerSelected
-                                  ? activePlayerIds.filter((p) => p != player.id)
-                                  : activePlayerIds.concat(player.id)
-                              );
-                            }}
-                            {...player}
-                          />
-                        );
-                      })}
-                    </Stack>
-                    <Stack direction="column" spacing={1} sx={colStackStyles}>
-                      {playersR.map((player) => {
-                        const playerSelected = activePlayerIds.includes(player.id);
-                        return (
-                          <PlayerButton
-                            key={player.id}
-                            variant={playerSelected ? 'solid' : 'outlined'}
-                            onClick={() => {
-                              setActivePlayerIds(
-                                playerSelected
-                                  ? activePlayerIds.filter((p) => p != player.id)
-                                  : activePlayerIds.concat(player.id)
-                              );
-                            }}
-                            {...player}
-                          />
-                        );
-                      })}
-                    </Stack>
-                  </Stack>
-                </AccordionDetails>
-              </Accordion>
               <Button size="lg" sx={{ mt: 2 }} loading={isSaving} onClick={handleSubmitButtonClick}>
                 Start game
               </Button>
             </Stack>
           </CardContent>
         </Card>
+        <Button variant="soft" size="lg" color="primary" onClick={() => setTeamGroupsModalOpen(true)}>
+          Edit Pods
+        </Button>
+        <Modal open={teamGroupsModalOpen} onClose={() => setTeamGroupsModalOpen(false)}>
+          <ModalDialog layout="fullscreen">
+            <ModalClose /> {/* TODO: guardrail for unsaved changes */}
+            <EditTeamGroupsModal {...{ teamGroups }} />
+          </ModalDialog>
+        </Modal>
         <GamesList {...{ games, router }} />
       </Stack>
     )

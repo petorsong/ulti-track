@@ -1,8 +1,8 @@
-import { type GameType } from '@/database/schema';
+import { type Game } from '@/database/schema';
 import { Accordion, AccordionDetails, AccordionSummary, Box, Chip, Stack, Typography } from '@mui/joy';
 import { type NextRouter } from 'next/router';
 
-function GameRow({ game, router }: { game: GameType; router: NextRouter }) {
+function GameRow({ game, router }: { game: Game; router: NextRouter }) {
   const { id, vsTeamName, teamScore, vsTeamScore, halftimeAt, isComplete, createdAt } = game;
 
   const handleGameClick = () => {
@@ -45,7 +45,7 @@ function GameRow({ game, router }: { game: GameType; router: NextRouter }) {
   );
 }
 
-export default function GamesList({ games, router }: { games: GameType[]; router: NextRouter }) {
+export default function GamesList({ games, router }: { games: Game[]; router: NextRouter }) {
   return (
     <Accordion sx={{ width: '95%' }}>
       <AccordionSummary>Past games</AccordionSummary>

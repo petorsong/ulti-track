@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import type { GameType, PlayerType, PlayerWithLineCountType } from '@/database/schema';
-import { Button, Stack, Typography } from '@mui/joy';
+import type { Game, Player, PlayerWithLineCount, TeamGroup } from '@/database/schema';
+import { Box, Button, Stack, Typography } from '@mui/joy';
 import { PlayerButton, PointCard } from '@/components';
 import { calculatePointInfo, colStackStyles, handleEndHalfButtonClick, splitPlayersByGenderMatch } from '@/utils';
 import GroupRemove from '@mui/icons-material/GroupRemove';
+import Group from '@mui/icons-material/Group';
 import PlayCircleFilledOutlined from '@mui/icons-material/PlayCircleFilledOutlined';
 
 export default function GamePage() {
@@ -13,6 +14,7 @@ export default function GamePage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [saveFrom, setSaveFrom] = useState('');
+
   const [pointInfo, setPointInfo] = useState({
     vsTeamName: '',
     teamScore: 0,
@@ -23,12 +25,13 @@ export default function GamePage() {
     isFirstHalf: true,
   });
   const [halftimeAt, setHalftimeAt] = useState(null as number | null);
-  const [playersL, setPlayersL] = useState([] as PlayerType[]);
-  const [playersR, setPlayersR] = useState([] as PlayerType[]);
-  const [playerLimitL, setPlayerLimitL] = useState(0);
+  const [playersL, setPlayersL] = useState([] as Player[]);
+  const [playersR, setPlayersR] = useState([] as Player[]);
+  const [playerLimitL, setPlayerLimitL] = useState(0); // TODO: can pull from pointInfo?
   const [playerLimitR, setPlayerLimitR] = useState(0);
   const [selectedPlayersL, setSelectedPlayersL] = useState([] as string[]);
   const [selectedPlayersR, setSelectedPlayersR] = useState([] as string[]);
+  const [teamGroups, setTeamGroups] = useState([] as TeamGroup[]);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -36,8 +39,11 @@ export default function GamePage() {
     fetch(`/api/games/${gameId}`)
       .then((res) => res.json())
       .then((data) => {
-        const gameData = data.gameData as GameType;
-        const playersData = data.playersData as PlayerWithLineCountType[];
+        const gameData = data.game as Game;
+        const playersData = data.players as PlayerWithLineCount[];
+        const teamGroupsData = data.teamGroups as TeamGroup[];
+
+        setTeamGroups(teamGroupsData);
         setHalftimeAt(gameData.halftimeAt);
 
         const pointInfo = calculatePointInfo(gameData);
@@ -64,10 +70,7 @@ export default function GamePage() {
     setSaveFrom('START_POINT');
     const res = await fetch(`/api/games/${gameId}/point`, {
       method: 'POST',
-      body: JSON.stringify({
-        gameId,
-        playerIds: selectedPlayersL.concat(selectedPlayersR),
-      }),
+      body: JSON.stringify({ gameId, playerIds: selectedPlayersL.concat(selectedPlayersR) }),
     });
     const { pointId } = await res.json();
     router.push(`/points/${pointId}`);
@@ -78,64 +81,45 @@ export default function GamePage() {
       <Stack direction="column" spacing={1} sx={{ ...colStackStyles, mt: 1 }}>
         <PointCard {...pointInfo} />
         <Typography level="title-sm" sx={{ mb: 2 }}>
-          Select players for this line:
+          Select players for the CURRENT line:
         </Typography>
-        <Stack
-          direction="row"
-          sx={{
-            justifyContent: 'flex-start',
-            alignItems: 'flex-start',
-            width: '100%',
-          }}
-        >
-          <Stack direction="column" spacing={1} sx={colStackStyles}>
-            {playersL.map((player) => {
-              const playerSelected = selectedPlayersL.includes(player.id);
-              return (
-                <PlayerButton
-                  key={player.id}
-                  variant={playerSelected ? 'solid' : 'soft'}
-                  disabled={selectedPlayersL.length >= playerLimitL && !playerSelected}
-                  onClick={() => {
-                    setSelectedPlayersL(
-                      playerSelected
-                        ? selectedPlayersL.filter((p) => p != player.id)
-                        : selectedPlayersL.concat(player.id)
-                    );
-                  }}
-                  {...player}
-                />
-              );
-            })}
-          </Stack>
-          <Stack direction="column" spacing={1} sx={colStackStyles}>
-            {playersR.map((player) => {
-              const playerSelected = selectedPlayersR.includes(player.id);
-              return (
-                <PlayerButton
-                  key={player.id}
-                  variant={playerSelected ? 'solid' : 'soft'}
-                  disabled={selectedPlayersR.length >= playerLimitR && !playerSelected}
-                  onClick={() => {
-                    setSelectedPlayersR(
-                      playerSelected
-                        ? selectedPlayersR.filter((p) => p != player.id)
-                        : selectedPlayersR.concat(player.id)
-                    );
-                  }}
-                  {...player}
-                />
-              );
-            })}
-          </Stack>
-        </Stack>
-        <Stack
-          direction="row"
-          sx={{
-            justifyContent: 'space-between',
-            width: '95%',
-          }}
-        >
+        {teamGroups.map((teamGroup) => (
+          <Box key={teamGroup.id} sx={{ width: '100%' }}>
+            <Typography level="title-sm" justifySelf="center" startDecorator={<Group />} sx={{ mb: 1 }}>
+              {teamGroup.name}
+            </Typography>
+            <Stack direction="row" sx={{ justifyContent: 'flex-start', alignItems: 'flex-start', width: '100%' }}>
+              {[playersL, playersR].map((playerList, i) => (
+                <Stack key={`playerList${i}`} direction="column" spacing={1} sx={colStackStyles}>
+                  {playerList
+                    .filter((player) => player.teamGroupId == teamGroup.id)
+                    .map((player) => {
+                      const selectedList = i == 0 ? selectedPlayersL : selectedPlayersR;
+                      const playerLimit = i == 0 ? playerLimitL : playerLimitR;
+                      const selectFunc = i == 0 ? setSelectedPlayersL : setSelectedPlayersR;
+                      const playerSelected = selectedList.includes(player.id);
+                      return (
+                        <PlayerButton
+                          key={player.id}
+                          variant={playerSelected ? 'solid' : 'soft'}
+                          disabled={selectedList.length >= playerLimit && !playerSelected}
+                          onClick={() => {
+                            selectFunc(
+                              playerSelected
+                                ? selectedList.filter((p) => p != player.id)
+                                : selectedList.concat(player.id)
+                            );
+                          }}
+                          {...player}
+                        />
+                      );
+                    })}
+                </Stack>
+              ))}
+            </Stack>
+          </Box>
+        ))}
+        <Stack direction="row" sx={{ justifyContent: 'space-between', width: '95%' }}>
           <Button
             variant="soft"
             color="neutral"

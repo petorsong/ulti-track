@@ -1,13 +1,7 @@
 import { Accordion, AccordionDetails, AccordionSummary, Box, Chip } from '@mui/joy';
-import type { EventType, InsertPointEventType, PlayerType } from '@/database/schema';
+import type { EventType, InsertPointEvent, Player } from '@/database/schema';
 
-export default function LastEventAccordion({
-  events,
-  players,
-}: {
-  events: InsertPointEventType[];
-  players: PlayerType[];
-}) {
+export default function LastEventAccordion({ events, players }: { events: InsertPointEvent[]; players: Player[] }) {
   function EventChip({
     index,
     type,

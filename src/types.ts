@@ -1,8 +1,6 @@
-import type { GameType, PlayerType, TeamType } from './database/schema';
+import type { Game, Player, Team, TeamGroup } from './database/schema';
 
-export type ApiErrorType = {
-  error: string;
-};
+export type ApiError = { error: string };
 
 export type PlayerStats = {
   pointsPlayed: number;
@@ -16,8 +14,8 @@ export type PlayerStats = {
   throwAways: number;
   drops: number;
 };
-export type PlayerWithStats = { player: PlayerType; stats: PlayerStats };
-export type GameSummary = { team: TeamType; game: GameType; players: PlayerWithStats[] };
+export type PlayerWithStats = { player: Player; stats: PlayerStats };
+export type GameSummary = { team: Team; game: Game; players: PlayerWithStats[] };
 
 export class StatsMap {
   private stats: PlayerStats;
@@ -49,3 +47,7 @@ export class StatsMap {
     return { ...this.stats };
   }
 }
+
+export type PlayerGroup = { teamGroup: TeamGroup; playersL: Player[]; playersR: Player[] };
+
+export type PlayerIdToTeamGroupId = { playerId: string; teamGroupId: string };

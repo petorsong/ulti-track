@@ -1,18 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import type { EventType, GameType, InsertPointEventType, PlayerType, PlayerWithLineCountType } from '@/database/schema';
+import type { EventType, Game, InsertPointEvent, Player, PlayerWithLineCount, TeamGroup } from '@/database/schema';
 import { Button, Divider, Modal, ModalClose, ModalDialog, Stack, Typography } from '@mui/joy';
-import { DiscActionsButtons, LastEventAccordion, PlayerButton, PlayersModal, PointCard } from '@/components';
+import { DiscActionsButtons, LastEventAccordion, NextLineModal, PlayerButton, PointCard } from '@/components';
 import { calculatePointInfo, colStackStyles, handleEndHalfButtonClick, splitPlayersByGenderMatch } from '@/utils';
 
 export default function PointPage() {
   const router = useRouter();
   const pointId = router.query.pointId as string;
 
-  const [currentPlayersL, setCurrentPlayersL] = useState([] as PlayerType[]);
-  const [currentPlayersR, setCurrentPlayersR] = useState([] as PlayerType[]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [saveFrom, setSaveFrom] = useState('');
+  const [nextLineModalOpen, setNextLineModalOpen] = useState(false);
+
+  const [currentPlayersL, setCurrentPlayersL] = useState([] as Player[]);
+  const [currentPlayersR, setCurrentPlayersR] = useState([] as Player[]);
   const [selectedCurrentPlayerId, setSelectedCurrentPlayerId] = useState('');
-  const [events, setEvents] = useState([] as InsertPointEventType[]);
+  const [events, setEvents] = useState([] as InsertPointEvent[]);
   const [nextPointInfo, setNextPointInfo] = useState({
     genderRatio: '',
     fieldSide: '',
@@ -21,11 +25,8 @@ export default function PointPage() {
   });
   const [halftimeAt, setHalftimeAt] = useState(null as number | null);
   const [gameId, setGameId] = useState('');
-  const [nextLineModalOpen, setNextLineModalOpen] = useState(false);
+  const [teamGroups, setTeamGroups] = useState([] as TeamGroup[]);
 
-  // same as [gameId] but renamed
-  const [isLoading, setIsLoading] = useState(true);
-  const [saveFrom, setSaveFrom] = useState('');
   const [currentPointInfo, setCurrentPointInfo] = useState({
     vsTeamName: '',
     teamScore: 0,
@@ -35,8 +36,8 @@ export default function PointPage() {
     fieldSide: '',
     isFirstHalf: true,
   });
-  const [nextPlayersL, setNextPlayersL] = useState([] as PlayerType[]);
-  const [nextPlayersR, setNextPlayersR] = useState([] as PlayerType[]);
+  const [nextPlayersL, setNextPlayersL] = useState([] as Player[]);
+  const [nextPlayersR, setNextPlayersR] = useState([] as Player[]);
   const [selectedNextPlayersL, setSelectedNextPlayersL] = useState([] as string[]);
   const [selectedNextPlayersR, setSelectedNextPlayersR] = useState([] as string[]);
 
@@ -46,10 +47,12 @@ export default function PointPage() {
     fetch(`/api/points/${pointId}`)
       .then((res) => res.json())
       .then((data) => {
-        const gameData = data.gameData as GameType;
-        const playersData = data.playersData as PlayerWithLineCountType[];
-        const activePlayerIds = data.pointData.playerIds as string[];
+        const gameData = data.game as Game;
+        const playersData = data.players as PlayerWithLineCount[];
+        const teamGroupsData = data.teamGroups as TeamGroup[];
+        const activePlayerIds = data.point.playerIds as string[];
 
+        setTeamGroups(teamGroupsData);
         setCurrentPointInfo({ ...gameData, ...calculatePointInfo(gameData) });
         setHalftimeAt(gameData.halftimeAt);
         setGameId(gameData.id);
@@ -116,7 +119,7 @@ export default function PointPage() {
   const handleScoreClick = async (e: React.MouseEvent<HTMLElement>, type: EventType) => {
     e.preventDefault();
     setSaveFrom(type.toString());
-    const scoreEvent = { pointId, type } as InsertPointEventType;
+    const scoreEvent = { pointId, type } as InsertPointEvent;
     if (type == 'SCORE') {
       scoreEvent.playerOneId = selectedCurrentPlayerId;
     }
@@ -143,14 +146,7 @@ export default function PointPage() {
       <Stack direction="column" spacing={2} sx={{ ...colStackStyles, mt: 1 }}>
         <PointCard {...currentPointInfo} />
         <Typography level="title-sm">Track player stats for point (let em cook):</Typography>
-        <Stack
-          direction="row"
-          sx={{
-            justifyContent: 'flex-start',
-            alignItems: 'flex-start',
-            width: '100%',
-          }}
-        >
+        <Stack direction="row" sx={{ justifyContent: 'flex-start', alignItems: 'flex-start', width: '100%' }}>
           {[currentPlayersL, currentPlayersR].map((playerList, i) => (
             <Stack key={`playerList${i}`} direction="column" spacing={1} sx={colStackStyles}>
               {playerList.map((player) => {
@@ -174,14 +170,7 @@ export default function PointPage() {
           onUndoClick={handleUndoClick}
         />
         <LastEventAccordion {...{ events, players: currentPlayersL.concat(currentPlayersR) }} />
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{
-            justifyContent: 'space-between',
-            width: '95%',
-          }}
-        >
+        <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between', width: '95%' }}>
           <Button
             variant="solid"
             size="lg"
@@ -204,14 +193,7 @@ export default function PointPage() {
             THEY scored
           </Button>
         </Stack>
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{
-            justifyContent: 'space-between',
-            width: '95%',
-          }}
-        >
+        <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between', width: '95%' }}>
           <Button
             variant="soft"
             size="lg"
@@ -225,21 +207,13 @@ export default function PointPage() {
           >
             {halftimeAt ? 'End Game' : 'Halftime'}
           </Button>
-          <Button
-            variant="soft"
-            size="lg"
-            color="primary"
-            fullWidth
-            onClick={() => {
-              setNextLineModalOpen(true);
-            }}
-          >
+          <Button variant="soft" size="lg" color="primary" fullWidth onClick={() => setNextLineModalOpen(true)}>
             Next line ({selectedNextPlayersL.length + selectedNextPlayersR.length}/7)
           </Button>
           <Modal open={nextLineModalOpen} onClose={() => setNextLineModalOpen(false)}>
             <ModalDialog layout="fullscreen">
               <ModalClose />
-              <PlayersModal
+              <NextLineModal
                 onClearLineClick={handleClearButtonClick}
                 onSaveLineClick={() => setNextLineModalOpen(false)}
                 {...{
@@ -250,6 +224,7 @@ export default function PointPage() {
                   nextPlayersR,
                   setSelectedNextPlayersL,
                   setSelectedNextPlayersR,
+                  teamGroups,
                 }}
               />
             </ModalDialog>

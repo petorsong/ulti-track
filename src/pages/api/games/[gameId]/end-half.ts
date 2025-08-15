@@ -1,9 +1,9 @@
 import type { NextApiRequest as Req, NextApiResponse as Res } from 'next';
 import { db } from '@/database/drizzle';
-import { games, type GameType } from '@/database/schema';
+import { games, type Game } from '@/database/schema';
 import { eq } from 'drizzle-orm';
 
-export default async function handler(req: Req, res: Res<{ gameData: GameType }>) {
+export default async function handler(req: Req, res: Res<{ gameData: Game }>) {
   const gameId = req.query.gameId as string;
 
   const gameData = await db.query.games.findFirst({
@@ -14,15 +14,7 @@ export default async function handler(req: Req, res: Res<{ gameData: GameType }>
 
   const [result] = await db
     .update(games)
-    .set(
-      halftimeAt
-        ? {
-            isComplete: true,
-          }
-        : {
-            halftimeAt: teamScore + vsTeamScore,
-          }
-    )
+    .set(halftimeAt ? { isComplete: true } : { halftimeAt: teamScore + vsTeamScore })
     .where(eq(games.id, gameId))
     .returning();
 

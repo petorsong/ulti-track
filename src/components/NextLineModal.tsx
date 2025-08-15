@@ -1,11 +1,12 @@
 import { colStackStyles } from '@/utils';
 import GroupRemove from '@mui/icons-material/GroupRemove';
 import Save from '@mui/icons-material/Save';
-import { Button, Chip, Divider, Stack, Typography } from '@mui/joy';
+import Group from '@mui/icons-material/Group';
+import { Box, Button, Chip, Divider, Stack, Typography } from '@mui/joy';
+import { TeamGroup, type Player } from '@/database/schema';
 import PlayerButton from './PlayerButton';
-import { type PlayerType } from '@/database/schema';
 
-export default function PointCard({
+export default function NextLineModal({
   onClearLineClick,
   onSaveLineClick,
   nextPointInfo,
@@ -15,6 +16,7 @@ export default function PointCard({
   nextPlayersR,
   setSelectedNextPlayersL,
   setSelectedNextPlayersR,
+  teamGroups,
 }: {
   onClearLineClick: () => void;
   onSaveLineClick: () => void;
@@ -26,15 +28,16 @@ export default function PointCard({
   };
   selectedNextPlayersL: string[];
   selectedNextPlayersR: string[];
-  nextPlayersL: PlayerType[];
-  nextPlayersR: PlayerType[];
+  nextPlayersL: Player[];
+  nextPlayersR: Player[];
   setSelectedNextPlayersL: (p: string[]) => void;
   setSelectedNextPlayersR: (p: string[]) => void;
+  teamGroups: TeamGroup[];
 }) {
   return (
     <Stack direction="column" spacing={1} sx={{ overflow: 'scroll', ...colStackStyles }}>
       <Stack direction="row" sx={{ justifyContent: 'space-between', width: '95%' }}>
-        <Typography level="h4">Next line:</Typography>
+        <Typography level="h4">Select NEXT line:</Typography>
         <Stack direction="row" spacing={1}>
           <Chip
             variant="soft"
@@ -49,31 +52,41 @@ export default function PointCard({
           </Chip>
         </Stack>
       </Stack>
-      <Stack direction="row" sx={{ justifyContent: 'flex-start', alignItems: 'flex-start', width: '100%' }}>
-        {[nextPlayersL, nextPlayersR].map((playerList, i) => (
-          <Stack key={`playerList${i}`} direction="column" spacing={1} sx={colStackStyles}>
-            {playerList.map((player) => {
-              const selectedList = i == 0 ? selectedNextPlayersL : selectedNextPlayersR;
-              const playerLimit = i == 0 ? nextPointInfo.playerLimitL : nextPointInfo.playerLimitR;
-              const selectFunc = i == 0 ? setSelectedNextPlayersL : setSelectedNextPlayersR;
-              const playerSelected = selectedList.includes(player.id);
-              return (
-                <PlayerButton
-                  key={player.id}
-                  variant={playerSelected ? 'solid' : 'soft'}
-                  disabled={selectedList.length >= playerLimit && !playerSelected}
-                  onClick={() => {
-                    selectFunc(
-                      playerSelected ? selectedList.filter((p) => p != player.id) : selectedList.concat(player.id)
+      <Divider />
+      {teamGroups.map((teamGroup) => (
+        <Box key={teamGroup.id} sx={{ width: '100%' }}>
+          <Typography level="title-sm" justifySelf="center" startDecorator={<Group />} sx={{ mb: 1 }}>
+            {teamGroup.name}
+          </Typography>
+          <Stack direction="row" sx={{ justifyContent: 'flex-start', alignItems: 'flex-start', width: '100%' }}>
+            {[nextPlayersL, nextPlayersR].map((playerList, i) => (
+              <Stack key={`playerList${i}`} direction="column" spacing={1} sx={colStackStyles}>
+                {playerList
+                  .filter((player) => player.teamGroupId == teamGroup.id)
+                  .map((player) => {
+                    const selectedList = i == 0 ? selectedNextPlayersL : selectedNextPlayersR;
+                    const playerLimit = i == 0 ? nextPointInfo.playerLimitL : nextPointInfo.playerLimitR;
+                    const selectFunc = i == 0 ? setSelectedNextPlayersL : setSelectedNextPlayersR;
+                    const playerSelected = selectedList.includes(player.id);
+                    return (
+                      <PlayerButton
+                        key={player.id}
+                        variant={playerSelected ? 'solid' : 'soft'}
+                        disabled={selectedList.length >= playerLimit && !playerSelected}
+                        onClick={() => {
+                          selectFunc(
+                            playerSelected ? selectedList.filter((p) => p != player.id) : selectedList.concat(player.id)
+                          );
+                        }}
+                        {...player}
+                      />
                     );
-                  }}
-                  {...player}
-                />
-              );
-            })}
+                  })}
+              </Stack>
+            ))}
           </Stack>
-        ))}
-      </Stack>
+        </Box>
+      ))}
       <Divider />
       <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between', width: '95%' }}>
         <Button

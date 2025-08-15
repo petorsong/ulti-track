@@ -1,16 +1,10 @@
 import type { NextApiRequest as Req, NextApiResponse as Res } from 'next';
 import { db } from '@/database/drizzle';
-import { games, type InsertPointEventType, pointEvents, points } from '@/database/schema';
+import { games, type InsertPointEvent, pointEvents, points } from '@/database/schema';
 import { eq } from 'drizzle-orm';
 
 export default async function handler(req: Req, res: Res<{ redirectRoute: string }>) {
-  const {
-    events,
-    nextPlayerIds,
-  }: {
-    events: InsertPointEventType[];
-    nextPlayerIds: string[];
-  } = JSON.parse(req.body);
+  const { events, nextPlayerIds }: { events: InsertPointEvent[]; nextPlayerIds: string[] } = JSON.parse(req.body);
 
   const redirectRoute = await db.transaction(async (tx) => {
     const scoreEvent = events[events.length - 1];
@@ -20,12 +14,12 @@ export default async function handler(req: Req, res: Res<{ redirectRoute: string
         secondLastEvent.eventJson = {
           assistType: 'ASSIST',
         };
-      }
-      const thirdLastEvent = events[events.length - 3];
-      if (thirdLastEvent && thirdLastEvent.type == 'PASS') {
-        thirdLastEvent.eventJson = {
-          assistType: 'HOCKEY_ASSIST',
-        };
+        const thirdLastEvent = events[events.length - 3];
+        if (thirdLastEvent && thirdLastEvent.type == 'PASS') {
+          thirdLastEvent.eventJson = {
+            assistType: 'HOCKEY_ASSIST',
+          };
+        }
       }
     }
     await tx.insert(pointEvents).values(events);
@@ -51,10 +45,7 @@ export default async function handler(req: Req, res: Res<{ redirectRoute: string
     if (nextPlayerIds.length == 7) {
       const [{ pointId: newPointId }] = await db
         .insert(points)
-        .values({
-          gameId,
-          playerIds: nextPlayerIds,
-        })
+        .values({ gameId, playerIds: nextPlayerIds })
         .returning({ pointId: points.id });
 
       return `/points/${newPointId}`;

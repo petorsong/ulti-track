@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import type { GameType, TeamType } from '@/database/schema';
+import type { Game, Team } from '@/database/schema';
 import { PlayerStats, PlayerWithStats } from '@/types';
 import { Table, type TableColumnsType } from 'antd';
 
@@ -11,8 +11,8 @@ export default function GameSummaryPage() {
   const router = useRouter();
   const gameId = router.query.gameId as string;
   const [isLoading, setIsLoading] = useState(true);
-  const [teamData, setTeamData] = useState({} as TeamType);
-  const [gameData, setGameData] = useState({} as GameType);
+  const [teamData, setTeamData] = useState({} as Team);
+  const [gameData, setGameData] = useState({} as Game);
   const [playersData, setPlayersData] = useState([] as StatSummary[]);
 
   const columns: TableColumnsType<StatSummary> = [
@@ -25,24 +25,12 @@ export default function GameSummaryPage() {
     { dataIndex: 'throwAways', title: 'TA', align: 'right', sorter: (a, b) => a.throwAways - b.throwAways },
     { dataIndex: 'drops', title: 'Drop', align: 'right', sorter: (a, b) => a.drops - b.drops },
     { dataIndex: 'totalPasses', title: 'Pass', align: 'right', sorter: (a, b) => a.totalPasses - b.totalPasses },
-    {
-      dataIndex: 'passesToF',
-      title: 'Pass (F)',
-      align: 'right',
-      sorter: (a, b) => a.passesToF - b.passesToF,
-      // render: (pF, pS) => (
-      //   <div>{`${pF} (${((pF / (pS.totalPasses != 0 ? pS.totalPasses : 1)) * 100).toFixed(2)}%)`}</div>
-      // ),
-    },
-    {
-      dataIndex: 'passesToO',
-      title: 'Pass (O)',
-      align: 'right',
-      sorter: (a, b) => a.passesToO - b.passesToO,
-      // render: (pO, pS) => (
-      //   <div>{`${pO} (${((pO / (pS.totalPasses != 0 ? pS.totalPasses : 1)) * 100).toFixed(2)}%)`}</div>
-      // ),
-    },
+    { dataIndex: 'passesToF', title: 'Pass (F)', align: 'right', sorter: (a, b) => a.passesToF - b.passesToF },
+    { dataIndex: 'passesToO', title: 'Pass (O)', align: 'right', sorter: (a, b) => a.passesToO - b.passesToO },
+    // for percentage passes:
+    // render: (pF, pS) => (
+    //   <div>{`${pF} (${((pF / (pS.totalPasses != 0 ? pS.totalPasses : 1)) * 100).toFixed(2)}%)`}</div>
+    // ),
   ];
 
   useEffect(() => {
@@ -51,8 +39,8 @@ export default function GameSummaryPage() {
     fetch(`/api/games/${gameId}/summary`)
       .then((res) => res.json())
       .then((data) => {
-        const teamData = data.summaryData.team as TeamType;
-        const gameData = data.summaryData.game as GameType;
+        const teamData = data.summaryData.team as Team;
+        const gameData = data.summaryData.game as Game;
         const playersData = data.summaryData.players as PlayerWithStats[];
 
         setTeamData(teamData);
@@ -64,11 +52,7 @@ export default function GameSummaryPage() {
               stats,
             } = playerStats;
 
-            return {
-              key: id,
-              playerName: nickname ?? firstName,
-              ...stats,
-            };
+            return { key: id, playerName: nickname ?? firstName, ...stats };
           })
         );
 

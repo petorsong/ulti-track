@@ -1,8 +1,8 @@
 import type { NextRouter } from 'next/router';
 import type { Dispatch, SetStateAction } from 'react';
-import type { GameType, PlayerType, PlayerWithLineCountType } from './database/schema';
+import type { Game, Player, PlayerWithLineCount } from './database/schema';
 
-export function splitPlayersByGenderMatch<PT extends PlayerType | PlayerWithLineCountType>(
+export function splitPlayersByGenderMatch<PT extends Player | PlayerWithLineCount>(
   playersData: PT[]
 ): { playersL: PT[]; playersR: PT[] } {
   return playersData
@@ -10,11 +10,7 @@ export function splitPlayersByGenderMatch<PT extends PlayerType | PlayerWithLine
     .sort((a, b) => (a.isHandler === b.isHandler ? 0 : b.isHandler ? 1 : -1))
     .reduce(
       (result, player) => {
-        if (player.isFMP) {
-          result.playersL.push(player);
-        } else {
-          result.playersR.push(player);
-        }
+        (player.isFMP ? result.playersL : result.playersR).push(player);
         return result;
       },
       { playersL: [] as PT[], playersR: [] as PT[] }
@@ -29,7 +25,7 @@ export function calculatePointInfo({
   halftimeAt,
   wasLastScoreUs,
   startOnO,
-}: GameType) {
+}: Game) {
   const totalPoints = teamScore + vsTeamScore;
   const isFirstHalf = halftimeAt == null;
 
@@ -78,7 +74,7 @@ export function handleEndHalfButtonClick(
   fetch(`/api/games/${gameId}/end-half`, { method: 'POST' })
     .then((res) => res.json())
     .then((data) => {
-      const gameData = data.gameData as GameType;
+      const gameData = data.gameData as Game;
       if (gameData.isComplete) {
         router.push(`/games/${gameId}/summary`);
       } else {
@@ -88,8 +84,4 @@ export function handleEndHalfButtonClick(
     });
 }
 
-export const colStackStyles = {
-  justifyContent: 'center',
-  alignItems: 'center',
-  width: '100%',
-};
+export const colStackStyles = { justifyContent: 'center', alignItems: 'center', width: '100%' };
