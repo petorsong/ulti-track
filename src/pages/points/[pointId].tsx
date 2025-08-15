@@ -1,7 +1,26 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import type { EventType, Game, InsertPointEvent, Player, PlayerWithLineCount, TeamGroup } from '@/database/schema';
-import { Button, Divider, Modal, ModalClose, ModalDialog, Stack, Typography } from '@mui/joy';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Button,
+  Divider,
+  Modal,
+  ModalClose,
+  ModalDialog,
+  Stack,
+  Typography,
+} from '@mui/joy';
+import type {
+  EventType,
+  Game,
+  InsertPointEvent,
+  Player,
+  PlayerWithLineCount,
+  TeamGroup,
+  TimeoutsJson,
+} from '@/database/schema';
 import { DiscActionsButtons, LastEventAccordion, NextLineModal, PlayerButton, PointCard } from '@/components';
 import { calculatePointInfo, colStackStyles, handleEndHalfButtonClick, splitPlayersByGenderMatch } from '@/utils';
 
@@ -23,9 +42,9 @@ export default function PointPage() {
     playerLimitL: 0,
     playerLimitR: 0,
   });
-  const [halftimeAt, setHalftimeAt] = useState(null as number | null);
-  const [gameId, setGameId] = useState('');
+  const [game, setGame] = useState({} as Game);
   const [teamGroups, setTeamGroups] = useState([] as TeamGroup[]);
+  const [timeouts, setTimeouts] = useState({} as TimeoutsJson);
 
   const [currentPointInfo, setCurrentPointInfo] = useState({
     vsTeamName: '',
@@ -53,9 +72,9 @@ export default function PointPage() {
         const activePlayerIds = data.point.playerIds as string[];
 
         setTeamGroups(teamGroupsData);
+        setGame(gameData);
+        setTimeouts(gameData.timeouts);
         setCurrentPointInfo({ ...gameData, ...calculatePointInfo(gameData) });
-        setHalftimeAt(gameData.halftimeAt);
-        setGameId(gameData.id);
 
         const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
         setNextPlayersL(playersL);
@@ -102,6 +121,16 @@ export default function PointPage() {
     const lastIndex = events.length - 1;
     const lastEvent = events[lastIndex];
     setSelectedCurrentPlayerId(lastEvent.playerOneId ?? '');
+    if (['TIMEOUT', 'VS_TIMEOUT'].includes(lastEvent.type)) {
+      const currentHalf = game.halftimeAt ? 'secondHalf' : 'firstHalf';
+      const updatedTimeouts = { ...timeouts };
+      if (lastEvent.type === 'TIMEOUT') {
+        updatedTimeouts.ourTimeouts[currentHalf]++;
+      } else {
+        updatedTimeouts.vsTimeouts[currentHalf]++;
+      }
+      setTimeouts(updatedTimeouts);
+    }
     setEvents(events.slice(0, lastIndex));
   };
 
@@ -114,6 +143,27 @@ export default function PointPage() {
       })
     );
     setSelectedCurrentPlayerId('');
+  };
+
+  const handleTimeoutClick = (isOurTimeout: boolean) => {
+    const currentHalf = game.halftimeAt ? 'secondHalf' : 'firstHalf';
+    const updatedTimeouts = { ...timeouts };
+    if (isOurTimeout) {
+      updatedTimeouts.ourTimeouts[currentHalf]--;
+    } else {
+      updatedTimeouts.vsTimeouts[currentHalf]--;
+    }
+
+    setTimeouts(updatedTimeouts);
+    if (!isOurTimeout) {
+      setSelectedCurrentPlayerId('');
+    }
+    setEvents(
+      events.concat({
+        pointId,
+        type: isOurTimeout ? 'TIMEOUT' : 'VS_TIMEOUT',
+      })
+    );
   };
 
   const handleScoreClick = async (e: React.MouseEvent<HTMLElement>, type: EventType) => {
@@ -129,6 +179,7 @@ export default function PointPage() {
       body: JSON.stringify({
         events: events.concat(scoreEvent),
         nextPlayerIds: selectedNextPlayersL.concat(selectedNextPlayersR),
+        timeouts,
       }),
     });
 
@@ -202,10 +253,10 @@ export default function PointPage() {
             loading={saveFrom == 'HALFTIME'}
             onClick={(e) => {
               setSaveFrom('HALFTIME');
-              handleEndHalfButtonClick(e, gameId, router, setCurrentPointInfo);
+              handleEndHalfButtonClick(e, game.id, router, setCurrentPointInfo);
             }}
           >
-            {halftimeAt ? 'End Game' : 'Halftime'}
+            {game.halftimeAt ? 'End Game' : 'Halftime'}
           </Button>
           <Button variant="soft" size="lg" color="primary" fullWidth onClick={() => setNextLineModalOpen(true)}>
             Next line ({selectedNextPlayersL.length + selectedNextPlayersR.length}/7)
@@ -230,6 +281,34 @@ export default function PointPage() {
             </ModalDialog>
           </Modal>
         </Stack>
+        <Accordion sx={{ width: '95%' }}>
+          <AccordionSummary sx={{ justifyContent: 'space-between' }}>More:</AccordionSummary>
+          <AccordionDetails>
+            <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between', width: '100%', mt: 1 }}>
+              {[
+                { type: 'TIMEOUT', label: 'OUR', color: 'primary', source: timeouts.ourTimeouts },
+                { type: 'VS_TIMEOUT', label: 'THEIR', color: 'warning', source: timeouts.vsTimeouts },
+              ].map(({ type, label, color, source }) => {
+                const currentHalf = game.halftimeAt ? 'secondHalf' : 'firstHalf';
+                const timeoutsLeft = source[currentHalf];
+
+                return (
+                  <Button
+                    key={type}
+                    variant="soft"
+                    size="lg"
+                    color={color as 'primary' | 'warning'}
+                    fullWidth
+                    disabled={timeoutsLeft === 0}
+                    onClick={() => handleTimeoutClick(type == 'TIMEOUT')}
+                  >
+                    {`${label} TIMEOUT (${timeoutsLeft}/${timeouts.perHalf} this half)`}
+                  </Button>
+                );
+              })}
+            </Stack>
+          </AccordionDetails>
+        </Accordion>
       </Stack>
     )
   );

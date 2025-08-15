@@ -31,9 +31,14 @@ export default function LastEventAccordion({ events, players }: { events: Insert
             {index}. {playerOneName} {type}
           </Chip>
         );
-      case 'SUBSTITUTION': // TODO: eventTypes completion
-      case 'TIMEOUT': // TODO: timeout completion
+      case 'TIMEOUT':
       case 'VS_TIMEOUT':
+        return (
+          <Chip color={type == 'TIMEOUT' ? 'primary' : 'warning'}>
+            {index}. {type == 'TIMEOUT' ? 'TIMEOUT (US)' : 'TIMEOUT (THEM)'}
+          </Chip>
+        );
+      case 'SUBSTITUTION': // TODO: eventTypes completion
       default:
         return <Chip>N/A</Chip>;
     }
@@ -45,20 +50,16 @@ export default function LastEventAccordion({ events, players }: { events: Insert
   return (
     <Accordion sx={{ width: '95%' }}>
       <AccordionSummary sx={{ justifyContent: 'space-between' }}>
-        {
-          <Box sx={{ alignItems: 'flex-start' }}>
-            Last: <EventChip {...lastEvent} index={reversedEvents.length} />
-          </Box>
-        }
+        <Box sx={{ alignItems: 'flex-start' }}>
+          Last: <EventChip {...lastEvent} index={reversedEvents.length} />
+        </Box>
       </AccordionSummary>
       <AccordionDetails>
-        {
-          <Box sx={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {reversedEvents.slice(1).map((e, i) => (
-              <EventChip {...e} index={reversedEvents.length - (i + 1)} key={i} />
-            ))}
-          </Box>
-        }
+        <Box sx={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+          {reversedEvents.slice(1).map((e, i) => (
+            <EventChip {...e} index={reversedEvents.length - (i + 1)} key={i} />
+          ))}
+        </Box>
       </AccordionDetails>
     </Accordion>
   );

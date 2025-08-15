@@ -1,10 +1,14 @@
+import { eq } from 'drizzle-orm';
 import type { NextApiRequest as Req, NextApiResponse as Res } from 'next';
 import { db } from '@/database/drizzle';
-import { games, type InsertPointEvent, pointEvents, points } from '@/database/schema';
-import { eq } from 'drizzle-orm';
+import { games, type InsertPointEvent, pointEvents, points, type TimeoutsJson } from '@/database/schema';
 
 export default async function handler(req: Req, res: Res<{ redirectRoute: string }>) {
-  const { events, nextPlayerIds }: { events: InsertPointEvent[]; nextPlayerIds: string[] } = JSON.parse(req.body);
+  const {
+    events,
+    nextPlayerIds,
+    timeouts,
+  }: { events: InsertPointEvent[]; nextPlayerIds: string[]; timeouts: TimeoutsJson } = JSON.parse(req.body);
 
   const redirectRoute = await db.transaction(async (tx) => {
     const scoreEvent = events[events.length - 1];
@@ -31,13 +35,19 @@ export default async function handler(req: Req, res: Res<{ redirectRoute: string
     const { id: gameId, teamScore, vsTeamScore } = point!.game;
     if (scoreEvent.type == 'SCORE') {
       const newTeamScore = teamScore + 1;
-      await tx.update(games).set({ teamScore: newTeamScore, wasLastScoreUs: true }).where(eq(games.id, gameId));
+      await tx
+        .update(games)
+        .set({ teamScore: newTeamScore, wasLastScoreUs: true, timeouts })
+        .where(eq(games.id, gameId));
       if (newTeamScore >= 15) {
         return `/games/${gameId}/summary`;
       }
-    } else if (scoreEvent.type == 'VS_SCORE') {
+    } else {
       const newVsTeamScore = vsTeamScore + 1;
-      await tx.update(games).set({ vsTeamScore: newVsTeamScore, wasLastScoreUs: false }).where(eq(games.id, gameId));
+      await tx
+        .update(games)
+        .set({ vsTeamScore: newVsTeamScore, wasLastScoreUs: false, timeouts })
+        .where(eq(games.id, gameId));
       if (newVsTeamScore >= 15) {
         return `/games/${gameId}/summary`;
       }
@@ -50,7 +60,7 @@ export default async function handler(req: Req, res: Res<{ redirectRoute: string
 
       return `/points/${newPointId}`;
     }
-    return `/games/${gameId}`;
+    return `/games/${gameId}`; // TODO: consider passing in partially selected line
   });
 
   res.status(200).json({ redirectRoute });

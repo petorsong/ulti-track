@@ -27,6 +27,11 @@ export default async function handler(req: Req, res: Res<{ gameId: string } | Ap
         teamId,
         activePlayerIds: activeTeamGroupPlayerIds.map(({ id }) => id),
         wasLastScoreUs: !parsedBody.startOnO,
+        timeouts: {
+          perHalf: 2,
+          ourTimeouts: { firstHalf: 2, secondHalf: 2 },
+          vsTimeouts: { firstHalf: 2, secondHalf: 2 },
+        },
       })
       .returning({ gameId: games.id });
   });

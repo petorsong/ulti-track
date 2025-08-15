@@ -79,6 +79,12 @@ export const teamGroupsRelations = relations(teamGroups, ({ one, many }) => ({
 export type TeamGroup = typeof teamGroups.$inferSelect;
 export type TeamGroupWithPlayers = TeamGroup & { players: Player[] };
 
+export type TimeoutsJson = {
+  perHalf: number;
+  ourTimeouts: { firstHalf: number; secondHalf: number };
+  vsTimeouts: { firstHalf: number; secondHalf: number };
+};
+
 export const games = pgTable('games', {
   id: uuid('id').primaryKey().defaultRandom(),
   teamId: uuid('team_id')
@@ -94,6 +100,10 @@ export const games = pgTable('games', {
   activePlayerIds: uuid('active_player_ids').array().notNull(),
   halftimeAt: integer('halftime_at'),
   wasLastScoreUs: boolean('was_last_score_us').notNull(),
+  timeouts: jsonb('timeouts')
+    .$type<TimeoutsJson>()
+    .default({} as TimeoutsJson)
+    .notNull(),
   createdAt: timestamp('created_at', { mode: 'string' })
     .notNull()
     .default(sql`now()`),
@@ -137,7 +147,7 @@ export const EventTypePG = [
 export const EventTypeEnum = pgEnum('eventtype', EventTypePG);
 export type EventType = (typeof EventTypePG)[number];
 
-export type EventJsonType = { throwType?: 'HUCK'; assistType?: 'ASSIST' | 'HOCKEY_ASSIST' };
+export type EventJson = { throwType?: 'HUCK'; assistType?: 'ASSIST' | 'HOCKEY_ASSIST' };
 
 export const pointEvents = pgTable('point_events', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -147,7 +157,7 @@ export const pointEvents = pgTable('point_events', {
   type: EventTypeEnum('type').notNull(),
   playerOneId: uuid('player_one_id').references(() => players.id),
   playerTwoId: uuid('player_two_id').references(() => players.id),
-  eventJson: jsonb('event_json').$type<EventJsonType>(),
+  eventJson: jsonb('event_json').$type<EventJson>(),
   createdAt: timestamp('created_at', { mode: 'string' })
     .notNull()
     .default(sql`now()`),
