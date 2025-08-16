@@ -97,13 +97,13 @@ export default function EditTeamGroupsModal({ teamGroups }: { teamGroups: TeamGr
                                 ? 'outlined'
                                 : 'soft'
                           }
-                          onClick={() => {
+                          onClick={() =>
                             setSelectedPlayers(
                               playerSelected
                                 ? selectedPlayers.filter((p) => p != player.id)
                                 : selectedPlayers.concat(player.id)
-                            );
-                          }}
+                            )
+                          }
                           {...player}
                         />
                       );

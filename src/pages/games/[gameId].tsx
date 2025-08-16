@@ -103,13 +103,13 @@ export default function GamePage() {
                           key={player.id}
                           variant={playerSelected ? 'solid' : 'soft'}
                           disabled={selectedList.length >= playerLimit && !playerSelected}
-                          onClick={() => {
+                          onClick={() =>
                             selectFunc(
                               playerSelected
                                 ? selectedList.filter((p) => p != player.id)
                                 : selectedList.concat(player.id)
-                            );
-                          }}
+                            )
+                          }
                           {...player}
                         />
                       );

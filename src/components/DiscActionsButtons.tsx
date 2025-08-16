@@ -1,6 +1,6 @@
-import { type EventType } from '@/database/schema';
 import Undo from '@mui/icons-material/Undo';
 import { Button, Stack } from '@mui/joy';
+import { type EventType } from '@/database/schema';
 
 export default function DiscActionsButtons({
   disableDiscAction,
@@ -14,15 +14,7 @@ export default function DiscActionsButtons({
   onUndoClick: () => void;
 }) {
   return [
-    <Stack
-      key="TA_DROP"
-      direction="row"
-      spacing={1}
-      sx={{
-        justifyContent: 'space-between',
-        width: '95%',
-      }}
-    >
+    <Stack key="TA_DROP" direction="row" spacing={1} sx={{ justifyContent: 'space-between', width: '95%' }}>
       <Button
         variant="soft"
         size="lg"
@@ -44,15 +36,7 @@ export default function DiscActionsButtons({
         Drop
       </Button>
     </Stack>,
-    <Stack
-      key="D_UNDO"
-      direction="row"
-      spacing={1}
-      sx={{
-        justifyContent: 'space-between',
-        width: '95%',
-      }}
-    >
+    <Stack key="D_UNDO" direction="row" spacing={1} sx={{ justifyContent: 'space-between', width: '95%' }}>
       <Button
         variant="soft"
         size="lg"
@@ -72,7 +56,7 @@ export default function DiscActionsButtons({
         disabled={disableUndo}
         onClick={onUndoClick}
       >
-        Undo Last
+        Undo last
       </Button>
     </Stack>,
   ];
