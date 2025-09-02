@@ -1,19 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Edit from '@mui/icons-material/Edit';
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Button,
-  Chip,
-  Divider,
-  Modal,
-  ModalClose,
-  ModalDialog,
-  Stack,
-  Typography,
-} from '@mui/joy';
+import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Chip, Divider, Stack, Typography } from '@mui/joy';
 import type {
   EventType,
   Game,
@@ -23,35 +11,46 @@ import type {
   TeamGroup,
   TimeoutsJson,
 } from '@/database/schema';
-import { DiscActionsButtons, LastEventAccordion, SelectLineModal, PlayerButton, PointCard } from '@/components';
+import {
+  DiscActionsButtons,
+  LastEventAccordion,
+  SelectLineModal,
+  PlayerButton,
+  PointCard,
+  BottomDialog,
+} from '@/components';
 import { calculatePointInfo, colStackStyles, handleEndHalfButtonClick, splitPlayersByGenderMatch } from '@/utils';
 
 export default function PointPage() {
   const router = useRouter();
   const pointId = router.query.pointId as string;
 
+  // component mutated state
   const [isLoading, setIsLoading] = useState(true);
   const [saveFrom, setSaveFrom] = useState('');
-  const [nextLineModalOpen, setNextLineModalOpen] = useState(false);
-  const [editLineModalOpen, setEditLineModalOpen] = useState(false);
-
-  const [currentPlayersL, setCurrentPlayersL] = useState([] as Player[]);
-  const [currentPlayersR, setCurrentPlayersR] = useState([] as Player[]);
-  const [currentPlayersIdsL, setCurrentPlayersIdsL] = useState([] as string[]);
-  const [currentPlayersIdsR, setCurrentPlayersIdsR] = useState([] as string[]);
+  const [modalsOpen, setModalsOpen] = useState({ nextLine: false, editLine: false, confirmScore: false });
 
   const [selectedCurrentPlayerId, setSelectedCurrentPlayerId] = useState('');
   const [events, setEvents] = useState([] as InsertPointEvent[]);
+  const [timeouts, setTimeouts] = useState({} as TimeoutsJson);
+  const [currentPlayersIdsL, setCurrentPlayersIdsL] = useState([] as string[]);
+  const [currentPlayersIdsR, setCurrentPlayersIdsR] = useState([] as string[]);
+  const [selectedNextPlayersL, setSelectedNextPlayersL] = useState([] as string[]);
+  const [selectedNextPlayersR, setSelectedNextPlayersR] = useState([] as string[]);
+
+  // read only data
+  const [gameTeamData, setGameTeamData] = useState({
+    game: {} as Game,
+    teamGroups: [] as TeamGroup[],
+    players: { left: [] as Player[], right: [] as Player[] },
+    initialPlayers: { left: [] as Player[], right: [] as Player[] },
+  });
   const [nextPointInfo, setNextPointInfo] = useState({
     genderRatio: '',
     fieldSide: '',
     playerLimitL: 0,
     playerLimitR: 0,
   });
-  const [game, setGame] = useState({} as Game);
-  const [teamGroups, setTeamGroups] = useState([] as TeamGroup[]);
-  const [timeouts, setTimeouts] = useState({} as TimeoutsJson);
-
   const [currentPointInfo, setCurrentPointInfo] = useState({
     vsTeamName: '',
     teamScore: 0,
@@ -61,10 +60,6 @@ export default function PointPage() {
     fieldSide: '',
     isFirstHalf: true,
   });
-  const [playersL, setPlayersL] = useState([] as Player[]);
-  const [playersR, setPlayersR] = useState([] as Player[]);
-  const [selectedNextPlayersL, setSelectedNextPlayersL] = useState([] as string[]);
-  const [selectedNextPlayersR, setSelectedNextPlayersR] = useState([] as string[]);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -77,52 +72,43 @@ export default function PointPage() {
         const teamGroupsData = data.teamGroups as TeamGroup[];
         const activePlayerIds = data.point.playerIds as string[];
 
-        setTeamGroups(teamGroupsData);
-        setGame(gameData);
         setTimeouts(gameData.timeouts);
         setCurrentPointInfo({ ...gameData, ...calculatePointInfo(gameData) });
-
-        const { playersL: allPlayersL, playersR: allPlayersR } = splitPlayersByGenderMatch(playersData);
-        setPlayersL(allPlayersL);
-        setPlayersR(allPlayersR);
-        const linePlayersL = allPlayersL.filter((player) => activePlayerIds.includes(player.id));
-        const linePlayersR = allPlayersR.filter((player) => activePlayerIds.includes(player.id));
-        setCurrentPlayersL(linePlayersL);
-        setCurrentPlayersR(linePlayersR);
-        setCurrentPlayersIdsL(linePlayersL.map((player) => player.id));
-        setCurrentPlayersIdsR(linePlayersR.map((player) => player.id));
-
         setNextPointInfo({
           ...calculatePointInfo({
             ...gameData,
             teamScore: gameData.teamScore + 1,
           }),
         });
-
+        const { playersL: allPlayersL, playersR: allPlayersR } = splitPlayersByGenderMatch(playersData);
+        const linePlayersL = allPlayersL.filter((player) => activePlayerIds.includes(player.id));
+        const linePlayersR = allPlayersR.filter((player) => activePlayerIds.includes(player.id));
+        setCurrentPlayersIdsL(linePlayersL.map((player) => player.id));
+        setCurrentPlayersIdsR(linePlayersR.map((player) => player.id));
+        setGameTeamData({
+          game: gameData,
+          teamGroups: teamGroupsData,
+          players: { left: allPlayersL, right: allPlayersR },
+          initialPlayers: { left: linePlayersL, right: linePlayersR },
+        });
         setIsLoading(false);
       });
   }, [pointId, router.isReady]);
 
-  const handleNextClearLine = () => {
-    setSelectedNextPlayersL([]);
-    setSelectedNextPlayersR([]);
+  const updateModals = (name: 'nextLine' | 'editLine' | 'confirmScore', isOpen: boolean) => {
+    setModalsOpen({ ...modalsOpen, [name]: isOpen });
   };
 
-  const handleEditClearLine = () => {
-    setCurrentPlayersIdsL([]);
-    setCurrentPlayersIdsR([]);
+  const handleNextLineSave = (players: { left: string[]; right: string[] }) => () => {
+    setSelectedNextPlayersL(players.left);
+    setSelectedNextPlayersR(players.right);
+    updateModals('nextLine', false);
   };
 
-  const handleEditCloseModal = () => {
-    setCurrentPlayersIdsL(currentPlayersL.map((player) => player.id));
-    setCurrentPlayersIdsR(currentPlayersR.map((player) => player.id));
-    setEditLineModalOpen(false);
-  };
-
-  const handleEditLineSave = () =>
+  const handleEditLineSave = (players: { left: string[]; right: string[] }) => () =>
     fetch(`/api/points/${pointId}/edit-line`, {
       method: 'POST',
-      body: JSON.stringify(currentPlayersIdsL.concat(currentPlayersIdsR)),
+      body: JSON.stringify(players.left.concat(players.right)),
     }).then(() => router.reload());
 
   const handlePlayerClick = (playerId: string) => {
@@ -149,7 +135,7 @@ export default function PointPage() {
     const lastEvent = events[lastIndex];
     setSelectedCurrentPlayerId(lastEvent.playerOneId ?? '');
     if (['TIMEOUT', 'VS_TIMEOUT'].includes(lastEvent.type)) {
-      const currentHalf = game.halftimeAt ? 'secondHalf' : 'firstHalf';
+      const currentHalf = gameTeamData.game.halftimeAt ? 'secondHalf' : 'firstHalf';
       const updatedTimeouts = { ...timeouts };
       if (lastEvent.type === 'TIMEOUT') {
         updatedTimeouts.ourTimeouts[currentHalf]++;
@@ -173,7 +159,7 @@ export default function PointPage() {
   };
 
   const handleTimeout = (isOurTimeout: boolean) => {
-    const currentHalf = game.halftimeAt ? 'secondHalf' : 'firstHalf';
+    const currentHalf = gameTeamData.game.halftimeAt ? 'secondHalf' : 'firstHalf';
     const updatedTimeouts = { ...timeouts };
     if (isOurTimeout) {
       updatedTimeouts.ourTimeouts[currentHalf]--;
@@ -193,9 +179,19 @@ export default function PointPage() {
     );
   };
 
-  const handleScore = async (e: React.MouseEvent<HTMLElement>, type: EventType) => {
+  const handleConfirmScoreClose = () => {
+    setSaveFrom('');
+    updateModals('confirmScore', false);
+  };
+
+  const confirmScore = (e: React.MouseEvent<HTMLElement>, type: EventType) => {
     e.preventDefault();
-    setSaveFrom(type.toString());
+    setSaveFrom(type.toString()); // TODO: perhaps track score type separately
+    updateModals('confirmScore', true);
+  };
+
+  const handleScore = async (type: 'SCORE' | 'VS_SCORE') => {
+    updateModals('confirmScore', false);
     const scoreEvent = { pointId, type } as InsertPointEvent;
     if (type == 'SCORE') {
       scoreEvent.playerOneId = selectedCurrentPlayerId;
@@ -225,7 +221,7 @@ export default function PointPage() {
         <PointCard {...currentPointInfo} />
         <Typography level="title-sm">Track player stats for point (let em cook):</Typography>
         <Stack direction="row" sx={{ justifyContent: 'flex-start', alignItems: 'flex-start', width: '100%' }}>
-          {[currentPlayersL, currentPlayersR].map((playerList, i) => (
+          {Object.values(gameTeamData.initialPlayers).map((playerList, i) => (
             <Stack key={`playerList${i}`} direction="column" spacing={1} sx={colStackStyles}>
               {playerList.map((player) => (
                 <PlayerButton
@@ -245,7 +241,9 @@ export default function PointPage() {
           onDiscActionClick={handleDiscAction}
           onUndoClick={handleUndoLast}
         />
-        <LastEventAccordion {...{ events, players: currentPlayersL.concat(currentPlayersR) }} />
+        <LastEventAccordion
+          {...{ events, players: gameTeamData.initialPlayers.left.concat(gameTeamData.initialPlayers.right) }}
+        />
         <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between', width: '95%' }}>
           <Button
             variant="solid"
@@ -254,7 +252,7 @@ export default function PointPage() {
             fullWidth
             disabled={!selectedCurrentPlayerId}
             loading={saveFrom == 'SCORE'}
-            onClick={(e) => handleScore(e, 'SCORE')}
+            onClick={(e) => confirmScore(e, 'SCORE')}
           >
             WE scored
           </Button>
@@ -264,11 +262,30 @@ export default function PointPage() {
             color="danger"
             fullWidth
             loading={saveFrom == 'VS_SCORE'}
-            onClick={(e) => handleScore(e, 'VS_SCORE')}
+            onClick={(e) => confirmScore(e, 'VS_SCORE')}
           >
             THEY scored
           </Button>
         </Stack>
+        <BottomDialog
+          open={modalsOpen.confirmScore}
+          onClose={handleConfirmScoreClose}
+          content={
+            <>
+              <Typography id="nested-modal-title" level="h2">
+                Are you sure that {saveFrom == 'SCORE' ? 'WE' : 'THEY'} just scored?
+              </Typography>
+              <Box sx={{ mt: 1, display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row-reverse' } }}>
+                <Button variant="solid" color="primary" onClick={() => handleScore(saveFrom as 'SCORE' | 'VS_SCORE')}>
+                  Save {saveFrom == 'SCORE' ? 'our' : 'their'} point
+                </Button>
+                <Button variant="outlined" color="neutral" onClick={handleConfirmScoreClose}>
+                  Cancel
+                </Button>
+              </Box>
+            </>
+          }
+        />
         <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between', width: '95%' }}>
           <Button
             variant="soft"
@@ -278,56 +295,50 @@ export default function PointPage() {
             loading={saveFrom == 'HALFTIME'}
             onClick={(e) => {
               setSaveFrom('HALFTIME');
-              handleEndHalfButtonClick(e, game.id, router, setCurrentPointInfo);
+              handleEndHalfButtonClick(e, gameTeamData.game.id, router, setCurrentPointInfo);
             }}
           >
-            {game.halftimeAt ? 'End game' : 'Halftime'}
+            {gameTeamData.game.halftimeAt ? 'End game' : 'Halftime'}
           </Button>
-          <Button variant="soft" size="lg" color="primary" fullWidth onClick={() => setNextLineModalOpen(true)}>
+          <Button variant="soft" size="lg" color="primary" fullWidth onClick={() => updateModals('nextLine', true)}>
             Next line ({selectedNextPlayersL.length + selectedNextPlayersR.length}/7)
           </Button>
-          <Modal open={nextLineModalOpen} onClose={() => setNextLineModalOpen(false)}>
-            <ModalDialog layout="fullscreen">
-              <ModalClose />
-              <SelectLineModal
-                InfoSection={
-                  <Stack direction="row" sx={{ justifyContent: 'space-between', width: '95%' }}>
-                    <Typography level="h4">Select NEXT line:</Typography>
-                    <Stack direction="row" spacing={1}>
-                      <Chip
-                        variant="soft"
-                        color={nextPointInfo.genderRatio[0] == 'F' ? 'primary' : 'warning'}
-                        size="lg"
-                        sx={{ justifyContent: 'center' }}
-                      >
-                        {nextPointInfo.genderRatio}
-                      </Chip>
-                      <Chip variant="soft" size="lg" sx={{ justifyContent: 'center' }}>
-                        {nextPointInfo.fieldSide}
-                      </Chip>
-                    </Stack>
-                  </Stack>
-                }
-                teamGroups={teamGroups}
-                onClearLineClick={handleNextClearLine}
-                onSaveLineClick={() => setNextLineModalOpen(false)}
-                splitPlayers={{
-                  left: {
-                    players: playersL,
-                    selected: selectedNextPlayersL,
-                    limit: nextPointInfo.playerLimitL,
-                    selectFunc: setSelectedNextPlayersL,
-                  },
-                  right: {
-                    players: playersR,
-                    selected: selectedNextPlayersR,
-                    limit: nextPointInfo.playerLimitR,
-                    selectFunc: setSelectedNextPlayersR,
-                  },
-                }}
-              />
-            </ModalDialog>
-          </Modal>
+          <SelectLineModal
+            open={modalsOpen.nextLine}
+            onClose={() => updateModals('nextLine', false)}
+            InfoSection={
+              <Stack direction="row" sx={{ justifyContent: 'space-between', width: '95%' }}>
+                <Typography level="h4">Select NEXT line:</Typography>
+                <Stack direction="row" spacing={1}>
+                  <Chip
+                    variant="soft"
+                    color={nextPointInfo.genderRatio[0] == 'F' ? 'primary' : 'warning'}
+                    size="lg"
+                    sx={{ justifyContent: 'center' }}
+                  >
+                    {nextPointInfo.genderRatio}
+                  </Chip>
+                  <Chip variant="soft" size="lg" sx={{ justifyContent: 'center' }}>
+                    {nextPointInfo.fieldSide}
+                  </Chip>
+                </Stack>
+              </Stack>
+            }
+            teamGroups={gameTeamData.teamGroups}
+            onSaveLineClick={handleNextLineSave}
+            splitPlayers={{
+              left: {
+                players: gameTeamData.players.left,
+                selected: selectedNextPlayersL,
+                limit: nextPointInfo.playerLimitL,
+              },
+              right: {
+                players: gameTeamData.players.right,
+                selected: selectedNextPlayersR,
+                limit: nextPointInfo.playerLimitR,
+              },
+            }}
+          />
         </Stack>
         <Accordion sx={{ width: '95%' }}>
           <AccordionSummary sx={{ justifyContent: 'space-between' }}>More:</AccordionSummary>
@@ -337,7 +348,7 @@ export default function PointPage() {
                 { type: 'TIMEOUT', label: 'OUR', color: 'primary', source: timeouts.ourTimeouts },
                 { type: 'VS_TIMEOUT', label: 'THEIR', color: 'warning', source: timeouts.vsTimeouts },
               ].map(({ type, label, color, source }) => {
-                const currentHalf = game.halftimeAt ? 'secondHalf' : 'firstHalf';
+                const currentHalf = gameTeamData.game.halftimeAt ? 'secondHalf' : 'firstHalf';
                 const timeoutsLeft = source[currentHalf];
 
                 return (
@@ -362,42 +373,36 @@ export default function PointPage() {
                 color="success"
                 fullWidth
                 startDecorator={<Edit />}
-                onClick={() => setEditLineModalOpen(true)}
+                onClick={() => updateModals('editLine', true)}
               >
                 Edit line
               </Button>
-              <Modal open={editLineModalOpen} onClose={handleEditCloseModal}>
-                <ModalDialog layout="fullscreen">
-                  <ModalClose />
-                  <SelectLineModal
-                    InfoSection={
-                      <>
-                        <PointCard {...currentPointInfo} />
-                        <Typography level="title-sm" sx={{ mb: 2 }}>
-                          EDIT players for the CURRENT line:
-                        </Typography>
-                      </>
-                    }
-                    teamGroups={teamGroups}
-                    onClearLineClick={handleEditClearLine}
-                    onSaveLineClick={handleEditLineSave}
-                    splitPlayers={{
-                      left: {
-                        players: playersL,
-                        selected: currentPlayersIdsL,
-                        limit: currentPlayersL.length,
-                        selectFunc: setCurrentPlayersIdsL,
-                      },
-                      right: {
-                        players: playersR,
-                        selected: currentPlayersIdsR,
-                        limit: currentPlayersR.length,
-                        selectFunc: setCurrentPlayersIdsR,
-                      },
-                    }}
-                  />
-                </ModalDialog>
-              </Modal>
+              <SelectLineModal
+                open={modalsOpen.editLine}
+                onClose={() => updateModals('editLine', false)}
+                InfoSection={
+                  <>
+                    <PointCard {...currentPointInfo} />
+                    <Typography level="title-sm" sx={{ mb: 2 }}>
+                      EDIT players for the CURRENT line:
+                    </Typography>
+                  </>
+                }
+                teamGroups={gameTeamData.teamGroups}
+                onSaveLineClick={handleEditLineSave}
+                splitPlayers={{
+                  left: {
+                    players: gameTeamData.players.left,
+                    selected: currentPlayersIdsL,
+                    limit: gameTeamData.initialPlayers.left.length,
+                  },
+                  right: {
+                    players: gameTeamData.players.right,
+                    selected: currentPlayersIdsR,
+                    limit: gameTeamData.initialPlayers.right.length,
+                  },
+                }}
+              />
             </Stack>
           </AccordionDetails>
         </Accordion>

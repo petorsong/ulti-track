@@ -5,3 +5,4 @@ export { default as PlayerButton } from './PlayerButton';
 export { default as PointCard } from './PointCard';
 export { default as SelectLineModal } from './SelectLineModal';
 export { default as EditTeamGroupsModal } from './EditTeamGroupsModal';
+export { default as BottomDialog } from './BottomDialog';

@@ -18,7 +18,7 @@ export const teams = pgTable('teams', {
 });
 
 export const teamsRelations = relations(teams, ({ many }) => ({
-  players: many(players), // TODO: maybe redundant? consider a default unassigned group
+  players: many(players),
   teamGroups: many(teamGroups),
   games: many(games),
 }));

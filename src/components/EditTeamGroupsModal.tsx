@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { colStackStyles, splitPlayersByGenderMatch } from '@/utils';
-import { Box, Button, Divider, Modal, ModalDialog, Stack, Typography } from '@mui/joy';
+import { Box, Button, Divider, Stack, Typography } from '@mui/joy';
 import Save from '@mui/icons-material/Save';
 import Group from '@mui/icons-material/Group';
 import type { Player, TeamGroup } from '@/database/schema';
-import { PlayerGroup, PlayerIdToTeamGroupId } from '@/types';
+import type { PlayerGroup, PlayerIdToTeamGroupId } from '@/types';
 import PlayerButton from './PlayerButton';
+import BottomDialog from './BottomDialog';
 
 function splitTeamGroupsByGenderMatch(players: Player[], teamGroups: TeamGroup[]): PlayerGroup[] {
   return teamGroups.map((teamGroup) => {
@@ -136,41 +137,32 @@ export default function EditTeamGroupsModal({ teamGroups }: { teamGroups: TeamGr
             >
               Move players
             </Button>
-            <Modal open={moveModalOpen} onClose={() => setMoveModalOpen(false)}>
-              <ModalDialog
-                aria-labelledby="nested-modal-title"
-                sx={(theme) => ({
-                  [theme.breakpoints.only('xs')]: {
-                    top: 'unset',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    borderRadius: 0,
-                    transform: 'none',
-                    maxWidth: 'unset',
-                  },
-                })}
-              >
-                <Typography id="nested-modal-title" level="h2">
-                  Move players to pod:
-                </Typography>
-                <Box sx={{ mt: 1, display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row-reverse' } }}>
-                  {teamGroups.map((teamGroup) => (
-                    <Button
-                      key={teamGroup.id}
-                      color="primary"
-                      variant={teamGroup.name == 'None' ? 'outlined' : 'solid'}
-                      onClick={() => handleMovePlayers(teamGroup.id)}
-                    >
-                      {teamGroup.name}
+            <BottomDialog
+              open={moveModalOpen}
+              onClose={() => setMoveModalOpen(false)}
+              content={
+                <>
+                  <Typography id="nested-modal-title" level="h2">
+                    Move players to pod:
+                  </Typography>
+                  <Box sx={{ mt: 1, display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row-reverse' } }}>
+                    {teamGroups.map((teamGroup) => (
+                      <Button
+                        key={teamGroup.id}
+                        color="primary"
+                        variant={teamGroup.name == 'None' ? 'outlined' : 'solid'}
+                        onClick={() => handleMovePlayers(teamGroup.id)}
+                      >
+                        {teamGroup.name}
+                      </Button>
+                    ))}
+                    <Button variant="outlined" color="neutral" onClick={() => setMoveModalOpen(false)}>
+                      Cancel
                     </Button>
-                  ))}
-                  <Button variant="outlined" color="neutral" onClick={() => setMoveModalOpen(false)}>
-                    Cancel
-                  </Button>
-                </Box>
-              </ModalDialog>
-            </Modal>
+                  </Box>
+                </>
+              }
+            />
             <Button
               variant="solid"
               color="primary"

@@ -6,7 +6,7 @@ import { Table, type TableColumnsType } from 'antd';
 
 type StatSummary = PlayerStats & { playerName: string; key: string };
 
-// TODO LATER: consider making this a static server rendered page (for COMPLETED games - fetch /summary props)
+// TODO LATER: consider server rendered page (for COMPLETED games - fetch /summary props); or a one time job?
 export default function GameSummaryPage() {
   const router = useRouter();
   const gameId = router.query.gameId as string;

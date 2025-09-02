@@ -6,8 +6,7 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        // TODO LATER: remove after more than devs
-        source: '/',
+        source: '/devs2025',
         destination: '/teams/b3836ba2-c6f1-4e67-8d5b-afecd7c486ec',
         permanent: false,
       },
