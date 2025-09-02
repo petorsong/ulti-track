@@ -1,0 +1,3 @@
+ALTER TABLE "points" ADD COLUMN IF NOT EXISTS "is_active" BOOLEAN DEFAULT TRUE;
+UPDATE "points" SET "is_active"=FALSE;
+ALTER TABLE "points" ALTER COLUMN "is_active" SET NOT NULL;

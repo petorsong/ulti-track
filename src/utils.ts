@@ -57,17 +57,7 @@ export function handleEndHalfButtonClick(
   e: React.MouseEvent<HTMLElement>,
   gameId: string,
   router: NextRouter,
-  setPointInfo: Dispatch<
-    SetStateAction<{
-      vsTeamName: string;
-      teamScore: number;
-      vsTeamScore: number;
-      oOrD: string;
-      genderRatio: string;
-      fieldSide: string;
-      isFirstHalf: boolean;
-    }>
-  >
+  setPointInfo: Dispatch<SetStateAction<typeof POINT_INFO_DEFAULT>>
 ) {
   e.preventDefault();
 
@@ -84,4 +74,16 @@ export function handleEndHalfButtonClick(
     });
 }
 
-export const colStackStyles = { justifyContent: 'center', alignItems: 'center', width: '100%' };
+export const COL_STACK_STYLES = { justifyContent: 'center', alignItems: 'center', width: '100%' };
+
+export const POINT_INFO_DEFAULT = {
+  vsTeamName: '',
+  teamScore: 0,
+  vsTeamScore: 0,
+  oOrD: '',
+  genderRatio: '',
+  fieldSide: '',
+  isFirstHalf: true,
+  playerLimitL: 0,
+  playerLimitR: 0,
+};

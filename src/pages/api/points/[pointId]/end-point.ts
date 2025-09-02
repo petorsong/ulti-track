@@ -9,7 +9,6 @@ export default async function handler(req: Req, res: Res<{ redirectRoute: string
     nextPlayerIds,
     timeouts,
   }: { events: InsertPointEvent[]; nextPlayerIds: string[]; timeouts: TimeoutsJson } = JSON.parse(req.body);
-
   const redirectRoute = await db.transaction(async (tx) => {
     const scoreEvent = events[events.length - 1];
     if (scoreEvent.type == 'SCORE') {
@@ -27,8 +26,9 @@ export default async function handler(req: Req, res: Res<{ redirectRoute: string
       }
     }
     await tx.insert(pointEvents).values(events);
+    await tx.update(points).set({ isActive: false }).where(eq(points.id, scoreEvent.pointId));
 
-    const point = await db.query.points.findFirst({
+    const point = await tx.query.points.findFirst({
       where: (points, { eq }) => eq(points.id, scoreEvent.pointId),
       with: { game: true },
     });
@@ -53,7 +53,7 @@ export default async function handler(req: Req, res: Res<{ redirectRoute: string
       }
     }
     if (nextPlayerIds.length == 7) {
-      const [{ pointId: newPointId }] = await db
+      const [{ pointId: newPointId }] = await tx
         .insert(points)
         .values({ gameId, playerIds: nextPlayerIds })
         .returning({ pointId: points.id });

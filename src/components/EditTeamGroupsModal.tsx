@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { colStackStyles, splitPlayersByGenderMatch } from '@/utils';
+import { COL_STACK_STYLES, splitPlayersByGenderMatch } from '@/utils';
 import { Box, Button, Divider, Stack, Typography } from '@mui/joy';
 import Save from '@mui/icons-material/Save';
 import Group from '@mui/icons-material/Group';
@@ -77,7 +77,7 @@ export default function EditTeamGroupsModal({ teamGroups }: { teamGroups: TeamGr
   return (
     !isLoading && (
       <Box sx={{ overflow: 'scroll', width: '100%' }}>
-        <Stack direction="column" spacing={1} sx={{ ...colStackStyles, marginBottom: '36px' }}>
+        <Stack direction="column" spacing={1} sx={{ ...COL_STACK_STYLES, marginBottom: '36px' }}>
           {groupedPlayers.map((playerGroup) => (
             <Box key={playerGroup.teamGroup.id} sx={{ width: '100%' }}>
               <Typography level="title-sm" justifySelf="center" startDecorator={<Group />} sx={{ mb: 1 }}>
@@ -85,7 +85,7 @@ export default function EditTeamGroupsModal({ teamGroups }: { teamGroups: TeamGr
               </Typography>
               <Stack direction="row" sx={{ justifyContent: 'flex-start', alignItems: 'flex-start', width: '100%' }}>
                 {[playerGroup.playersL, playerGroup.playersR].map((playerList, i) => (
-                  <Stack key={`playerList${i}`} direction="column" spacing={1} sx={colStackStyles}>
+                  <Stack key={`playerList${i}`} direction="column" spacing={1} sx={COL_STACK_STYLES}>
                     {playerList.map((player) => {
                       const playerSelected = selectedPlayers.includes(player.id);
                       return (

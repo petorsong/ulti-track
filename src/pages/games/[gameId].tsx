@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import type { Game, PlayerWithLineCount, TeamGroup } from '@/database/schema';
+import type { Game, PlayerWithLineCount, Point, TeamGroup } from '@/database/schema';
 import { Box, Button, Stack, Typography } from '@mui/joy';
 import { PlayerButton, PointCard } from '@/components';
-import { calculatePointInfo, colStackStyles, handleEndHalfButtonClick, splitPlayersByGenderMatch } from '@/utils';
+import {
+  calculatePointInfo,
+  COL_STACK_STYLES,
+  handleEndHalfButtonClick,
+  POINT_INFO_DEFAULT,
+  splitPlayersByGenderMatch,
+} from '@/utils';
 import GroupRemove from '@mui/icons-material/GroupRemove';
 import Group from '@mui/icons-material/Group';
 import PlayCircleFilledOutlined from '@mui/icons-material/PlayCircleFilledOutlined';
@@ -15,20 +21,10 @@ export default function GamePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [saveFrom, setSaveFrom] = useState('');
 
-  const [pointInfo, setPointInfo] = useState({
-    vsTeamName: '',
-    teamScore: 0,
-    vsTeamScore: 0,
-    oOrD: '',
-    genderRatio: '',
-    fieldSide: '',
-    isFirstHalf: true,
-  });
+  const [pointInfo, setPointInfo] = useState(POINT_INFO_DEFAULT);
   const [halftimeAt, setHalftimeAt] = useState(null as number | null);
   const [playersL, setPlayersL] = useState([] as PlayerWithLineCount[]);
   const [playersR, setPlayersR] = useState([] as PlayerWithLineCount[]);
-  const [playerLimitL, setPlayerLimitL] = useState(0); // TODO: can pull from pointInfo?
-  const [playerLimitR, setPlayerLimitR] = useState(0);
   const [selectedPlayersL, setSelectedPlayersL] = useState([] as string[]);
   const [selectedPlayersR, setSelectedPlayersR] = useState([] as string[]);
   const [teamGroups, setTeamGroups] = useState([] as TeamGroup[]);
@@ -40,24 +36,27 @@ export default function GamePage() {
       .then((res) => res.json())
       .then((data) => {
         const gameData = data.game as Game;
-        const playersData = data.players as PlayerWithLineCount[];
+        const pointsData = data.points as Point[];
         const teamGroupsData = data.teamGroups as TeamGroup[];
+        const playersData = data.players as PlayerWithLineCount[];
 
-        setTeamGroups(teamGroupsData);
-        setHalftimeAt(gameData.halftimeAt);
+        if (pointsData.length > 0 && pointsData[0].isActive) {
+          router.push(`/points/${pointsData[0].id}`);
+        } else {
+          setTeamGroups(teamGroupsData);
+          setHalftimeAt(gameData.halftimeAt);
 
-        const pointInfo = calculatePointInfo(gameData);
-        setPointInfo({ ...gameData, ...pointInfo });
-        setPlayerLimitL(pointInfo.playerLimitL);
-        setPlayerLimitR(pointInfo.playerLimitR);
+          const pointInfo = calculatePointInfo(gameData);
+          setPointInfo({ ...gameData, ...pointInfo });
 
-        const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
-        setPlayersL(playersL);
-        setPlayersR(playersR);
+          const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
+          setPlayersL(playersL);
+          setPlayersR(playersR);
 
-        setIsLoading(false);
+          setIsLoading(false);
+        }
       });
-  }, [gameId, router.isReady]);
+  }, [gameId, router]);
 
   const handleClearButtonClick = () => {
     setSelectedPlayersL([]);
@@ -78,7 +77,7 @@ export default function GamePage() {
 
   return (
     !isLoading && (
-      <Stack direction="column" spacing={1} sx={{ ...colStackStyles, mt: 1 }}>
+      <Stack direction="column" spacing={1} sx={{ ...COL_STACK_STYLES, mt: 1 }}>
         <PointCard {...pointInfo} />
         <Typography level="title-sm" sx={{ mb: 2 }}>
           Select players for the CURRENT line:
@@ -90,12 +89,12 @@ export default function GamePage() {
             </Typography>
             <Stack direction="row" sx={{ justifyContent: 'flex-start', alignItems: 'flex-start', width: '100%' }}>
               {[playersL, playersR].map((playerList, i) => (
-                <Stack key={`playerList${i}`} direction="column" spacing={1} sx={colStackStyles}>
+                <Stack key={`playerList${i}`} direction="column" spacing={1} sx={COL_STACK_STYLES}>
                   {playerList
                     .filter((player) => player.teamGroupId == teamGroup.id)
                     .map((player) => {
                       const selectedList = i == 0 ? selectedPlayersL : selectedPlayersR;
-                      const playerLimit = i == 0 ? playerLimitL : playerLimitR;
+                      const playerLimit = i == 0 ? pointInfo.playerLimitL : pointInfo.playerLimitR;
                       const selectFunc = i == 0 ? setSelectedPlayersL : setSelectedPlayersR;
                       const playerSelected = selectedList.includes(player.id);
                       const lineCount = playerSelected ? player.lineCount + 1 : player.lineCount;

@@ -4,7 +4,7 @@ import Save from '@mui/icons-material/Save';
 import Group from '@mui/icons-material/Group';
 import { Box, Button, Divider, Modal, ModalClose, ModalDialog, Stack, Typography } from '@mui/joy';
 import type { PlayerWithLineCount, TeamGroup } from '@/database/schema';
-import { colStackStyles } from '@/utils';
+import { COL_STACK_STYLES } from '@/utils';
 import PlayerButton from './PlayerButton';
 
 type SplitPlayersListProps = {
@@ -44,7 +44,7 @@ export default function SelectLineModal({
     >
       <ModalDialog layout="fullscreen">
         <ModalClose />
-        <Stack direction="column" spacing={1} sx={{ overflow: 'scroll', ...colStackStyles }}>
+        <Stack direction="column" spacing={1} sx={{ overflow: 'scroll', ...COL_STACK_STYLES }}>
           {InfoSection}
           <Divider />
           {teamGroups.map((teamGroup) => (
@@ -54,7 +54,7 @@ export default function SelectLineModal({
               </Typography>
               <Stack direction="row" sx={{ justifyContent: 'flex-start', alignItems: 'flex-start', width: '100%' }}>
                 {[splitPlayers.left, splitPlayers.right].map((split, i) => (
-                  <Stack key={`playerList${i}`} direction="column" spacing={1} sx={colStackStyles}>
+                  <Stack key={`playerList${i}`} direction="column" spacing={1} sx={COL_STACK_STYLES}>
                     {split.players
                       .filter((player) => player.teamGroupId == teamGroup.id)
                       .map((player) => {

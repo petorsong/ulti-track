@@ -15,7 +15,7 @@ import {
 } from '@mui/joy';
 import { useRouter } from 'next/router';
 import type { Game, Team, TeamGroup } from '@/database/schema';
-import { colStackStyles } from '@/utils';
+import { COL_STACK_STYLES } from '@/utils';
 import { EditTeamGroupsModal, GamesList } from '@/components';
 
 type ErrorType = {
@@ -82,7 +82,7 @@ export default function TeamPage() {
 
   return (
     !isLoading && (
-      <Stack {...colStackStyles}>
+      <Stack {...COL_STACK_STYLES}>
         <Card variant="outlined" sx={{ width: '95%', m: 0.5 }}>
           <CardContent>
             <Typography level="title-lg" sx={{ mb: 2 }}>

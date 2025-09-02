@@ -121,7 +121,8 @@ export const points = pgTable('points', {
   gameId: uuid('game_id')
     .references(() => games.id, { onDelete: 'cascade', onUpdate: 'cascade' })
     .notNull(),
-  playerIds: uuid('player_ids').array(7).notNull(), // references prolly doesn't work here
+  playerIds: uuid('player_ids').array(7).notNull(), // TODO: consider making this 1 to many relation
+  isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at', { mode: 'string' })
     .notNull()
     .default(sql`now()`),
@@ -131,6 +132,8 @@ export const pointsRelations = relations(points, ({ many, one }) => ({
   game: one(games, { fields: [points.gameId], references: [games.id] }),
   events: many(pointEvents),
 }));
+
+export type Point = typeof points.$inferSelect;
 
 export const EventTypePG = [
   'VS_SCORE',

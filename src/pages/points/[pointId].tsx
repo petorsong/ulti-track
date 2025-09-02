@@ -18,7 +18,13 @@ import {
   PointCard,
   BottomDialog,
 } from '@/components';
-import { calculatePointInfo, colStackStyles, handleEndHalfButtonClick, splitPlayersByGenderMatch } from '@/utils';
+import {
+  calculatePointInfo,
+  COL_STACK_STYLES,
+  handleEndHalfButtonClick,
+  POINT_INFO_DEFAULT,
+  splitPlayersByGenderMatch,
+} from '@/utils';
 
 export default function PointPage() {
   const router = useRouter();
@@ -50,15 +56,7 @@ export default function PointPage() {
     playerLimitL: 0,
     playerLimitR: 0,
   });
-  const [currentPointInfo, setCurrentPointInfo] = useState({
-    vsTeamName: '',
-    teamScore: 0,
-    vsTeamScore: 0,
-    oOrD: '',
-    genderRatio: '',
-    fieldSide: '',
-    isFirstHalf: true,
-  });
+  const [currentPointInfo, setCurrentPointInfo] = useState(POINT_INFO_DEFAULT);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -69,7 +67,7 @@ export default function PointPage() {
         const gameData = data.game as Game;
         const playersData = data.players as PlayerWithLineCount[];
         const teamGroupsData = data.teamGroups as TeamGroup[];
-        const activePlayerIds = data.point.playerIds as string[];
+        const activePlayerIds = data.playerIds as string[];
 
         setTimeouts(gameData.timeouts);
         setCurrentPointInfo({ ...gameData, ...calculatePointInfo(gameData) });
@@ -196,7 +194,7 @@ export default function PointPage() {
       scoreEvent.playerOneId = selectedCurrentPlayerId;
     }
 
-    const res = await fetch(`/api/points/${pointId}/events`, {
+    const res = await fetch(`/api/points/${pointId}/end-point`, {
       method: 'POST',
       body: JSON.stringify({
         events: events.concat(scoreEvent),
@@ -216,12 +214,12 @@ export default function PointPage() {
 
   return (
     !isLoading && (
-      <Stack direction="column" spacing={2} sx={{ ...colStackStyles, mt: 1 }}>
+      <Stack direction="column" spacing={2} sx={{ ...COL_STACK_STYLES, mt: 1 }}>
         <PointCard {...currentPointInfo} />
         <Typography level="title-sm">Track player stats for point (let em cook):</Typography>
         <Stack direction="row" sx={{ justifyContent: 'flex-start', alignItems: 'flex-start', width: '100%' }}>
           {Object.values(gameTeamData.initialPlayers).map((playerList, i) => (
-            <Stack key={`playerList${i}`} direction="column" spacing={1} sx={colStackStyles}>
+            <Stack key={`playerList${i}`} direction="column" spacing={1} sx={COL_STACK_STYLES}>
               {playerList.map((player) => (
                 <PlayerButton
                   key={player.id}
