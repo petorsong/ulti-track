@@ -3,17 +3,18 @@ import GroupRemove from '@mui/icons-material/GroupRemove';
 import Save from '@mui/icons-material/Save';
 import Group from '@mui/icons-material/Group';
 import { Box, Button, Divider, Modal, ModalClose, ModalDialog, Stack, Typography } from '@mui/joy';
-import { TeamGroup, type Player } from '@/database/schema';
+import type { PlayerWithLineCount, TeamGroup } from '@/database/schema';
 import { colStackStyles } from '@/utils';
 import PlayerButton from './PlayerButton';
 
 type SplitPlayersListProps = {
-  players: Player[];
+  players: PlayerWithLineCount[];
   selected: string[];
   limit: number;
 };
 
 export default function SelectLineModal({
+  type,
   open,
   onClose,
   InfoSection,
@@ -21,6 +22,7 @@ export default function SelectLineModal({
   onSaveLineClick,
   splitPlayers,
 }: {
+  type: 'editLine' | 'nextLine';
   open: boolean;
   onClose: () => void;
   InfoSection: ReactNode;
@@ -59,6 +61,13 @@ export default function SelectLineModal({
                         const selectedPlayers = i == 0 ? selectedPlayersL : selectedPlayersR;
                         const selectFunc = i == 0 ? setSelectedPlayersL : setSelectedPlayersR;
                         const playerSelected = selectedPlayers.includes(player.id);
+                        const badgeColour = playerSelected ? (player.isFMP ? 'primary' : 'success') : 'neutral';
+                        let lineCount = player.lineCount;
+                        if (playerSelected) {
+                          lineCount += 1;
+                        } else if (type === 'editLine' && split.selected.includes(player.id)) {
+                          lineCount = Math.max(lineCount - 1, 0);
+                        }
                         return (
                           <PlayerButton
                             key={player.id}
@@ -71,7 +80,9 @@ export default function SelectLineModal({
                                   : selectedPlayers.concat(player.id)
                               )
                             }
+                            badgeColour={badgeColour}
                             {...player}
+                            lineCount={lineCount}
                           />
                         );
                       })}

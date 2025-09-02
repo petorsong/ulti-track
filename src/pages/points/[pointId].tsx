@@ -6,7 +6,6 @@ import type {
   EventType,
   Game,
   InsertPointEvent,
-  Player,
   PlayerWithLineCount,
   TeamGroup,
   TimeoutsJson,
@@ -42,8 +41,8 @@ export default function PointPage() {
   const [gameTeamData, setGameTeamData] = useState({
     game: {} as Game,
     teamGroups: [] as TeamGroup[],
-    players: { left: [] as Player[], right: [] as Player[] },
-    initialPlayers: { left: [] as Player[], right: [] as Player[] },
+    players: { left: [] as PlayerWithLineCount[], right: [] as PlayerWithLineCount[] },
+    initialPlayers: { left: [] as PlayerWithLineCount[], right: [] as PlayerWithLineCount[] },
   });
   const [nextPointInfo, setNextPointInfo] = useState({
     genderRatio: '',
@@ -304,6 +303,7 @@ export default function PointPage() {
             Next line ({selectedNextPlayersL.length + selectedNextPlayersR.length}/7)
           </Button>
           <SelectLineModal
+            type="nextLine"
             open={modalsOpen.nextLine}
             onClose={() => updateModals('nextLine', false)}
             InfoSection={
@@ -378,6 +378,7 @@ export default function PointPage() {
                 Edit line
               </Button>
               <SelectLineModal
+                type="editLine"
                 open={modalsOpen.editLine}
                 onClose={() => updateModals('editLine', false)}
                 InfoSection={

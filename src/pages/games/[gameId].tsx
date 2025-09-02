@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import type { Game, Player, PlayerWithLineCount, TeamGroup } from '@/database/schema';
+import type { Game, PlayerWithLineCount, TeamGroup } from '@/database/schema';
 import { Box, Button, Stack, Typography } from '@mui/joy';
 import { PlayerButton, PointCard } from '@/components';
 import { calculatePointInfo, colStackStyles, handleEndHalfButtonClick, splitPlayersByGenderMatch } from '@/utils';
@@ -25,8 +25,8 @@ export default function GamePage() {
     isFirstHalf: true,
   });
   const [halftimeAt, setHalftimeAt] = useState(null as number | null);
-  const [playersL, setPlayersL] = useState([] as Player[]);
-  const [playersR, setPlayersR] = useState([] as Player[]);
+  const [playersL, setPlayersL] = useState([] as PlayerWithLineCount[]);
+  const [playersR, setPlayersR] = useState([] as PlayerWithLineCount[]);
   const [playerLimitL, setPlayerLimitL] = useState(0); // TODO: can pull from pointInfo?
   const [playerLimitR, setPlayerLimitR] = useState(0);
   const [selectedPlayersL, setSelectedPlayersL] = useState([] as string[]);
@@ -98,6 +98,8 @@ export default function GamePage() {
                       const playerLimit = i == 0 ? playerLimitL : playerLimitR;
                       const selectFunc = i == 0 ? setSelectedPlayersL : setSelectedPlayersR;
                       const playerSelected = selectedList.includes(player.id);
+                      const lineCount = playerSelected ? player.lineCount + 1 : player.lineCount;
+                      const badgeColour = playerSelected ? (player.isFMP ? 'primary' : 'success') : 'neutral';
                       return (
                         <PlayerButton
                           key={player.id}
@@ -110,7 +112,9 @@ export default function GamePage() {
                                 : selectedList.concat(player.id)
                             )
                           }
+                          badgeColour={badgeColour}
                           {...player}
+                          lineCount={lineCount}
                         />
                       );
                     })}
