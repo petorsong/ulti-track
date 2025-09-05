@@ -4,11 +4,11 @@ import type { Game, PlayerWithLineCount, Point, TeamGroup } from '@/database/sch
 
 export default async function handler(
   req: Req,
-  res: Res<{ game: Game; points: Point[]; teamGroups: TeamGroup[]; players: PlayerWithLineCount[] }>
+  res: Res<{ game: Game; lastPoint?: Point; teamGroups: TeamGroup[]; players: PlayerWithLineCount[] }>
 ) {
   const gameId = req.query.gameId as string;
 
-  const { game, points, teamGroups, players } = await db.transaction(async (tx) => {
+  const { game, lastPoint, teamGroups, players } = await db.transaction(async (tx) => {
     const game = (await tx.query.games.findFirst({
       where: (games, { eq }) => eq(games.id, gameId),
     }))!;
@@ -28,8 +28,8 @@ export default async function handler(
       lineCount: points.reduce((count, point) => count + (point.playerIds.includes(player.id) ? 1 : 0), 0),
     }));
 
-    return { game, points, teamGroups, players };
+    return { game, lastPoint: points.length > 0 ? points[0] : undefined, teamGroups, players };
   });
 
-  res.status(200).json({ game, points, teamGroups, players });
+  res.status(200).json({ game, lastPoint, teamGroups, players });
 }

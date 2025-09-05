@@ -18,16 +18,21 @@ export default function GamePage() {
   const router = useRouter();
   const gameId = router.query.gameId as string;
 
+  // component mutated state
   const [isLoading, setIsLoading] = useState(true);
   const [saveFrom, setSaveFrom] = useState('');
 
-  const [pointInfo, setPointInfo] = useState(POINT_INFO_DEFAULT);
-  const [halftimeAt, setHalftimeAt] = useState(null as number | null);
-  const [playersL, setPlayersL] = useState([] as PlayerWithLineCount[]);
-  const [playersR, setPlayersR] = useState([] as PlayerWithLineCount[]);
   const [selectedPlayersL, setSelectedPlayersL] = useState([] as string[]);
   const [selectedPlayersR, setSelectedPlayersR] = useState([] as string[]);
-  const [teamGroups, setTeamGroups] = useState([] as TeamGroup[]);
+
+  // read-only data
+  const [pointInfo, setPointInfo] = useState(POINT_INFO_DEFAULT);
+  const [gameTeamData, setGameTeamData] = useState({
+    game: {} as Game,
+    teamGroups: [] as TeamGroup[],
+    players: { left: [] as PlayerWithLineCount[], right: [] as PlayerWithLineCount[] },
+    lastLinePlayerIds: [] as string[],
+  });
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -36,22 +41,23 @@ export default function GamePage() {
       .then((res) => res.json())
       .then((data) => {
         const gameData = data.game as Game;
-        const pointsData = data.points as Point[];
+        const lastPointData = data.lastPoint as Point | undefined;
         const teamGroupsData = data.teamGroups as TeamGroup[];
         const playersData = data.players as PlayerWithLineCount[];
 
-        if (pointsData.length > 0 && pointsData[0].isActive) {
-          router.push(`/points/${pointsData[0].id}`);
+        if (lastPointData && lastPointData.isActive) {
+          router.push(`/points/${lastPointData.id}`);
         } else {
-          setTeamGroups(teamGroupsData);
-          setHalftimeAt(gameData.halftimeAt);
-
           const pointInfo = calculatePointInfo(gameData);
           setPointInfo({ ...gameData, ...pointInfo });
 
           const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
-          setPlayersL(playersL);
-          setPlayersR(playersR);
+          setGameTeamData({
+            game: gameData,
+            teamGroups: teamGroupsData,
+            players: { left: playersL, right: playersR },
+            lastLinePlayerIds: lastPointData ? lastPointData.playerIds : [],
+          });
 
           setIsLoading(false);
         }
@@ -82,13 +88,13 @@ export default function GamePage() {
         <Typography level="title-sm" sx={{ mb: 2 }}>
           Select players for the CURRENT line:
         </Typography>
-        {teamGroups.map((teamGroup) => (
+        {gameTeamData.teamGroups.map((teamGroup) => (
           <Box key={teamGroup.id} sx={{ width: '100%' }}>
             <Typography level="title-sm" justifySelf="center" startDecorator={<Group />} sx={{ mb: 1 }}>
               {teamGroup.name}
             </Typography>
             <Stack direction="row" sx={{ justifyContent: 'flex-start', alignItems: 'flex-start', width: '100%' }}>
-              {[playersL, playersR].map((playerList, i) => (
+              {Object.values(gameTeamData.players).map((playerList, i) => (
                 <Stack key={`playerList${i}`} direction="column" spacing={1} sx={COL_STACK_STYLES}>
                   {playerList
                     .filter((player) => player.teamGroupId == teamGroup.id)
@@ -99,6 +105,7 @@ export default function GamePage() {
                       const playerSelected = selectedList.includes(player.id);
                       const lineCount = playerSelected ? player.lineCount + 1 : player.lineCount;
                       const badgeColour = playerSelected ? (player.isFMP ? 'primary' : 'success') : 'neutral';
+                      const badgeVariant = gameTeamData.lastLinePlayerIds.includes(player.id) ? 'solid' : 'outlined';
                       return (
                         <PlayerButton
                           key={player.id}
@@ -112,6 +119,7 @@ export default function GamePage() {
                             )
                           }
                           badgeColour={badgeColour}
+                          badgeVariant={badgeVariant}
                           {...player}
                           lineCount={lineCount}
                         />
@@ -132,7 +140,7 @@ export default function GamePage() {
               handleEndHalfButtonClick(e, gameId, router, setPointInfo);
             }}
           >
-            {halftimeAt ? 'End Game' : 'Halftime'}
+            {gameTeamData.game.halftimeAt ? 'End Game' : 'Halftime'}
           </Button>
           <Stack direction="row" spacing={1}>
             <Button variant="outlined" endDecorator={<GroupRemove />} onClick={handleClearButtonClick}>

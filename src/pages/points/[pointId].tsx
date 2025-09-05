@@ -7,6 +7,7 @@ import type {
   Game,
   InsertPointEvent,
   PlayerWithLineCount,
+  Point,
   TeamGroup,
   TimeoutsJson,
 } from '@/database/schema';
@@ -43,12 +44,13 @@ export default function PointPage() {
   const [selectedNextPlayersL, setSelectedNextPlayersL] = useState([] as string[]);
   const [selectedNextPlayersR, setSelectedNextPlayersR] = useState([] as string[]);
 
-  // read only data
+  // read-only data
   const [gameTeamData, setGameTeamData] = useState({
     game: {} as Game,
     teamGroups: [] as TeamGroup[],
     players: { left: [] as PlayerWithLineCount[], right: [] as PlayerWithLineCount[] },
     initialPlayers: { left: [] as PlayerWithLineCount[], right: [] as PlayerWithLineCount[] },
+    lastLinePlayerIds: [] as string[],
   });
   const [nextPointInfo, setNextPointInfo] = useState({
     genderRatio: '',
@@ -68,6 +70,7 @@ export default function PointPage() {
         const playersData = data.players as PlayerWithLineCount[];
         const teamGroupsData = data.teamGroups as TeamGroup[];
         const activePlayerIds = data.playerIds as string[];
+        const lastPointData = data.lastPoint as Point;
 
         setTimeouts(gameData.timeouts);
         setCurrentPointInfo({ ...gameData, ...calculatePointInfo(gameData) });
@@ -87,6 +90,7 @@ export default function PointPage() {
           teamGroups: teamGroupsData,
           players: { left: allPlayersL, right: allPlayersR },
           initialPlayers: { left: linePlayersL, right: linePlayersR },
+          lastLinePlayerIds: lastPointData.playerIds,
         });
         setIsLoading(false);
       });
@@ -323,6 +327,7 @@ export default function PointPage() {
               </Stack>
             }
             teamGroups={gameTeamData.teamGroups}
+            lastLinePlayerIds={gameTeamData.lastLinePlayerIds}
             onSaveLineClick={handleNextLineSave}
             splitPlayers={{
               left: {
@@ -388,6 +393,7 @@ export default function PointPage() {
                   </>
                 }
                 teamGroups={gameTeamData.teamGroups}
+                lastLinePlayerIds={gameTeamData.lastLinePlayerIds}
                 onSaveLineClick={handleEditLineSave}
                 splitPlayers={{
                   left: {

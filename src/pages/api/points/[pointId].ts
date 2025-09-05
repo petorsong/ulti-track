@@ -1,39 +1,54 @@
 import type { NextApiRequest as Req, NextApiResponse as Res } from 'next';
 import { db } from '@/database/drizzle';
-import { type Game, type PlayerWithLineCount, type TeamGroup } from '@/database/schema';
+import type { Point, Game, PlayerWithLineCount, TeamGroup } from '@/database/schema';
 
 export default async function handler(
   req: Req,
-  res: Res<{ playerIds: string[]; game: Game; players: PlayerWithLineCount[]; teamGroups: TeamGroup[] }>
+  res: Res<{
+    game: Game;
+    playerIds: string[];
+    lastPoint: Point;
+    teamGroups: TeamGroup[];
+    players: PlayerWithLineCount[];
+  }>
 ) {
   const pointId = req.query.pointId as string;
 
-  const { playerIds, game, players, teamGroups } = await db.transaction(async (tx) => {
-    const {
-      game: { id: gameId },
-      playerIds,
-    } = (await tx.query.points.findFirst({
+  const { game, playerIds, lastPoint, teamGroups, players } = await db.transaction(async (tx) => {
+    const { game, playerIds } = (await tx.query.points.findFirst({
       where: (points, { eq }) => eq(points.id, pointId),
-      with: { game: true },
+      with: {
+        game: {
+          with: {
+            points: {
+              orderBy: (points, { desc }) => [desc(points.createdAt)],
+            },
+            team: {
+              with: {
+                teamGroups: {
+                  where: (teamGroups, { eq }) => eq(teamGroups.isActive, true),
+                },
+              },
+            },
+          },
+        },
+      },
     }))!;
-
-    const game = (await tx.query.games.findFirst({
-      where: (games, { eq }) => eq(games.id, gameId),
-      with: { points: true },
-    }))!;
-    const teamGroups = await tx.query.teamGroups.findMany({
-      where: (teamGroups, { and, eq }) => and(eq(teamGroups.teamId, game.teamId), eq(teamGroups.isActive, true)),
-    });
+    const {
+      points,
+      team: { teamGroups },
+    } = game;
     const players: PlayerWithLineCount[] = (
       await tx.query.players.findMany({
         where: (players, { inArray }) => inArray(players.id, game.activePlayerIds),
       })
     ).map((player) => ({
-      ...player,
-      lineCount: game.points.reduce((count, point) => count + (point.playerIds.includes(player.id) ? 1 : 0), 0),
+      ...player, // TODO: consider aggregating this directly in SQL
+      lineCount: points.reduce((count, point) => count + (point.playerIds.includes(player.id) ? 1 : 0), 0),
     }));
-    return { playerIds, game, players, teamGroups };
+
+    return { game, playerIds, lastPoint: points[0], teamGroups, players };
   });
 
-  res.status(200).json({ playerIds, game, players, teamGroups });
+  res.status(200).json({ game, playerIds, lastPoint, teamGroups, players });
 }

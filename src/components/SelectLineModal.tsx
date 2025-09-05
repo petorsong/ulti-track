@@ -19,6 +19,7 @@ export default function SelectLineModal({
   onClose,
   InfoSection,
   teamGroups,
+  lastLinePlayerIds,
   onSaveLineClick,
   splitPlayers,
 }: {
@@ -27,11 +28,13 @@ export default function SelectLineModal({
   onClose: () => void;
   InfoSection: ReactNode;
   teamGroups: TeamGroup[];
+  lastLinePlayerIds: string[];
   onSaveLineClick: (players: { left: string[]; right: string[] }) => () => void;
   splitPlayers: { left: SplitPlayersListProps; right: SplitPlayersListProps };
 }) {
   const [selectedPlayersL, setSelectedPlayersL] = useState(splitPlayers.left.selected);
   const [selectedPlayersR, setSelectedPlayersR] = useState(splitPlayers.right.selected);
+  const selectedCount = selectedPlayersL.length + selectedPlayersR.length;
 
   return (
     <Modal
@@ -62,6 +65,7 @@ export default function SelectLineModal({
                         const selectFunc = i == 0 ? setSelectedPlayersL : setSelectedPlayersR;
                         const playerSelected = selectedPlayers.includes(player.id);
                         const badgeColour = playerSelected ? (player.isFMP ? 'primary' : 'success') : 'neutral';
+                        const badgeVariant = lastLinePlayerIds.includes(player.id) ? 'solid' : 'outlined';
                         let lineCount = player.lineCount;
                         if (playerSelected) {
                           lineCount += 1;
@@ -81,6 +85,7 @@ export default function SelectLineModal({
                               )
                             }
                             badgeColour={badgeColour}
+                            badgeVariant={badgeVariant}
                             {...player}
                             lineCount={lineCount}
                           />
@@ -98,7 +103,7 @@ export default function SelectLineModal({
               color="warning"
               sx={{ width: '47.5%' }}
               startDecorator={<GroupRemove />}
-              disabled={selectedPlayersL.length + selectedPlayersR.length == 0}
+              disabled={selectedCount == 0}
               onClick={() => {
                 setSelectedPlayersL([]);
                 setSelectedPlayersR([]);
@@ -111,10 +116,10 @@ export default function SelectLineModal({
               color="primary"
               sx={{ width: '47.5%' }}
               startDecorator={<Save />}
-              disabled={selectedPlayersL.length + selectedPlayersR.length < 7}
+              disabled={selectedCount < 7 && (type != 'nextLine' || selectedCount != 0)}
               onClick={onSaveLineClick({ left: selectedPlayersL, right: selectedPlayersR })}
             >
-              Save line ({selectedPlayersL.length + selectedPlayersR.length}/7)
+              Save line ({selectedCount}/7)
             </Button>
           </Stack>
         </Stack>

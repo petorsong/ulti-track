@@ -11,6 +11,7 @@ export default function PlayerButton({
   disabled,
   lineCount,
   badgeColour = 'neutral',
+  badgeVariant = 'solid',
   onClick,
 }: {
   firstName: string;
@@ -21,6 +22,7 @@ export default function PlayerButton({
   disabled?: boolean;
   lineCount?: number;
   badgeColour?: 'neutral' | 'primary' | 'success';
+  badgeVariant?: 'solid' | 'outlined';
   onClick: () => void;
 }) {
   const name = nickname ?? firstName;
@@ -31,7 +33,7 @@ export default function PlayerButton({
     <Badge
       size="md"
       color={badgeColour}
-      variant="solid"
+      variant={badgeVariant}
       anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
       badgeInset="1.5%"
       invisible={!lineCount}
