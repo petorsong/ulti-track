@@ -15,6 +15,11 @@ const nextConfig: NextConfig = {
         destination: '/teams/2e7603c3-c6be-419c-be32-4c9391c288da',
         permanent: false,
       },
+      {
+        source: '/gbp',
+        destination: '/teams/e54aed7e-92b8-4915-9cc1-47fdb3ca9636',
+        permanent: false,
+      },
     ];
   },
 };
