@@ -8,7 +8,7 @@ import type {
   InsertPointEvent,
   PlayerWithLineCount,
   Point,
-  TeamGroup,
+  TeamWithTeamGroups,
   TimeoutsJson,
 } from '@/database/schema';
 import {
@@ -24,7 +24,7 @@ import {
   COL_STACK_STYLES,
   handleEndHalfButtonClick,
   POINT_INFO_DEFAULT,
-  splitPlayersByGenderMatch,
+  splitPlayers,
 } from '@/utils';
 
 export default function PointPage() {
@@ -47,16 +47,16 @@ export default function PointPage() {
   // read-only data
   const [gameTeamData, setGameTeamData] = useState({
     game: {} as Game,
-    teamGroups: [] as TeamGroup[],
+    teamWithGroups: {} as TeamWithTeamGroups,
     players: { left: [] as PlayerWithLineCount[], right: [] as PlayerWithLineCount[] },
     initialPlayers: { left: [] as PlayerWithLineCount[], right: [] as PlayerWithLineCount[] },
     lastLinePlayerIds: [] as string[],
   });
   const [nextPointInfo, setNextPointInfo] = useState({
-    genderRatio: '',
+    genderRatio: null as string | null,
     fieldSide: '',
-    playerLimitL: 0,
-    playerLimitR: 0,
+    playerLimitL: 0 as number | null,
+    playerLimitR: 0 as number | null,
   });
   const [currentPointInfo, setCurrentPointInfo] = useState(POINT_INFO_DEFAULT);
 
@@ -68,27 +68,22 @@ export default function PointPage() {
       .then((data) => {
         const gameData = data.game as Game;
         const playersData = data.players as PlayerWithLineCount[];
-        const teamGroupsData = data.teamGroups as TeamGroup[];
+        const teamData = data.team as TeamWithTeamGroups;
         const activePlayerIds = data.playerIds as string[];
         const lastPointData = data.lastPoint as Point;
 
         setTimeouts(gameData.timeouts);
         setCurrentPointInfo({ ...gameData, ...calculatePointInfo(gameData) });
-        setNextPointInfo({
-          ...calculatePointInfo({
-            ...gameData,
-            teamScore: gameData.teamScore + 1,
-          }),
-        });
-        const { playersL: allPlayersL, playersR: allPlayersR } = splitPlayersByGenderMatch(playersData);
-        const linePlayersL = allPlayersL.filter((player) => activePlayerIds.includes(player.id));
-        const linePlayersR = allPlayersR.filter((player) => activePlayerIds.includes(player.id));
+        setNextPointInfo({ ...calculatePointInfo({ ...gameData, teamScore: gameData.teamScore + 1 }) });
+        const { playersL, playersR } = splitPlayers(playersData, teamData.type);
+        const linePlayersL = playersL.filter((player) => activePlayerIds.includes(player.id));
+        const linePlayersR = playersR.filter((player) => activePlayerIds.includes(player.id));
         setCurrentPlayersIdsL(linePlayersL.map((player) => player.id));
         setCurrentPlayersIdsR(linePlayersR.map((player) => player.id));
         setGameTeamData({
           game: gameData,
-          teamGroups: teamGroupsData,
-          players: { left: allPlayersL, right: allPlayersR },
+          teamWithGroups: teamData,
+          players: { left: playersL, right: playersR },
           initialPlayers: { left: linePlayersL, right: linePlayersR },
           lastLinePlayerIds: lastPointData.playerIds,
         });
@@ -119,14 +114,7 @@ export default function PointPage() {
     } else if (playerId == selectedCurrentPlayerId) {
       setSelectedCurrentPlayerId('');
     } else {
-      setEvents(
-        events.concat({
-          pointId,
-          type: 'PASS',
-          playerOneId: selectedCurrentPlayerId,
-          playerTwoId: playerId,
-        })
-      );
+      setEvents(events.concat({ pointId, type: 'PASS', playerOneId: selectedCurrentPlayerId, playerTwoId: playerId }));
       setSelectedCurrentPlayerId(playerId);
     }
   };
@@ -228,6 +216,7 @@ export default function PointPage() {
                 <PlayerButton
                   key={player.id}
                   variant={selectedCurrentPlayerId == player.id ? 'solid' : 'outlined'}
+                  colour={i == 0 ? 'primary' : 'success'}
                   onClick={() => handlePlayerClick(player.id)}
                   {...player}
                 />
@@ -312,21 +301,23 @@ export default function PointPage() {
               <Stack direction="row" sx={{ justifyContent: 'space-between', width: '95%' }}>
                 <Typography level="h4">Select NEXT line:</Typography>
                 <Stack direction="row" spacing={1}>
-                  <Chip
-                    variant="soft"
-                    color={nextPointInfo.genderRatio[0] == 'F' ? 'primary' : 'warning'}
-                    size="lg"
-                    sx={{ justifyContent: 'center' }}
-                  >
-                    {nextPointInfo.genderRatio}
-                  </Chip>
+                  {nextPointInfo.genderRatio && (
+                    <Chip
+                      variant="soft"
+                      color={nextPointInfo.genderRatio[0] == 'F' ? 'primary' : 'warning'}
+                      size="lg"
+                      sx={{ justifyContent: 'center' }}
+                    >
+                      {nextPointInfo.genderRatio}
+                    </Chip>
+                  )}
                   <Chip variant="soft" size="lg" sx={{ justifyContent: 'center' }}>
                     {nextPointInfo.fieldSide}
                   </Chip>
                 </Stack>
               </Stack>
             }
-            teamGroups={gameTeamData.teamGroups}
+            teamWithGroups={gameTeamData.teamWithGroups}
             lastLinePlayerIds={gameTeamData.lastLinePlayerIds}
             onSaveLineClick={handleNextLineSave}
             splitPlayers={{
@@ -392,7 +383,7 @@ export default function PointPage() {
                     </Typography>
                   </>
                 }
-                teamGroups={gameTeamData.teamGroups}
+                teamWithGroups={gameTeamData.teamWithGroups}
                 lastLinePlayerIds={gameTeamData.lastLinePlayerIds}
                 onSaveLineClick={handleEditLineSave}
                 splitPlayers={{

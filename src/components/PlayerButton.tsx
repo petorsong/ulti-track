@@ -6,10 +6,10 @@ export default function PlayerButton({
   firstName,
   nickname,
   isHandler,
-  isFMP,
   variant,
   disabled,
   lineCount,
+  colour,
   badgeColour = 'neutral',
   badgeVariant = 'solid',
   onClick,
@@ -17,17 +17,16 @@ export default function PlayerButton({
   firstName: string;
   nickname: string | null;
   isHandler: boolean;
-  isFMP: boolean;
   variant: 'plain' | 'outlined' | 'soft' | 'solid';
   disabled?: boolean;
   lineCount?: number;
+  colour: 'primary' | 'success';
   badgeColour?: 'neutral' | 'primary' | 'success';
   badgeVariant?: 'solid' | 'outlined';
   onClick: () => void;
 }) {
   const name = nickname ?? firstName;
   const roleIcon = isHandler ? <FrontHandOutlined /> : <DirectionsRunOutlined />;
-  const colour = isFMP ? 'primary' : 'success';
 
   return (
     <Badge
@@ -43,11 +42,8 @@ export default function PlayerButton({
       <Button
         size="lg"
         fullWidth
-        variant={variant}
-        disabled={disabled}
         endDecorator={roleIcon}
-        color={colour}
-        onClick={onClick}
+        {...{ variant, disabled, color: colour, onClick }}
         sx={{
           justifyContent: 'space-between',
         }}

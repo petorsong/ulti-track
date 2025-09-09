@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { COL_STACK_STYLES, splitPlayersByGenderMatch } from '@/utils';
+import { COL_STACK_STYLES, splitPlayers } from '@/utils';
 import { Box, Button, Divider, Stack, Typography } from '@mui/joy';
 import Save from '@mui/icons-material/Save';
 import Group from '@mui/icons-material/Group';
-import type { Player, TeamGroup } from '@/database/schema';
+import type { Player, TeamGroup, TeamType, TeamWithPlayers } from '@/database/schema';
 import type { PlayerGroup, PlayerIdToTeamGroupId } from '@/types';
 import PlayerButton from './PlayerButton';
 import BottomDialog from './BottomDialog';
 
-function splitTeamGroupsByGenderMatch(players: Player[], teamGroups: TeamGroup[]): PlayerGroup[] {
+function splitTeamGroups(players: Player[], type: TeamType, teamGroups: TeamGroup[]): PlayerGroup[] {
   return teamGroups.map((teamGroup) => {
     const groupPlayers = players.filter(({ teamGroupId }) => teamGroupId == teamGroup.id);
-    const { playersL, playersR } = splitPlayersByGenderMatch(groupPlayers);
+    const { playersL, playersR } = splitPlayers(groupPlayers, type);
     return { teamGroup, playersL, playersR };
   });
 }
@@ -25,7 +25,7 @@ export default function EditTeamGroupsModal({ teamGroups }: { teamGroups: TeamGr
   const [isSaving, setIsSaving] = useState(false);
   const [moveModalOpen, setMoveModalOpen] = useState(false);
 
-  const [players, setPlayers] = useState([] as Player[]);
+  const [teamData, setTeamData] = useState({} as TeamWithPlayers);
   const [currentPlayers, setCurrentPlayers] = useState([] as Player[]);
   const [groupedPlayers, setGroupedPlayers] = useState([] as PlayerGroup[]);
   const [selectedPlayers, setSelectedPlayers] = useState([] as string[]);
@@ -37,10 +37,10 @@ export default function EditTeamGroupsModal({ teamGroups }: { teamGroups: TeamGr
     fetch(`/api/teams/${teamId}/players`)
       .then((res) => res.json())
       .then((data) => {
-        const playersData = data.players as Player[];
-        setPlayers(playersData);
-        setCurrentPlayers(playersData);
-        setGroupedPlayers(splitTeamGroupsByGenderMatch(playersData, teamGroups));
+        const teamData = data.team as TeamWithPlayers;
+        setTeamData(teamData);
+        setCurrentPlayers(teamData.players);
+        setGroupedPlayers(splitTeamGroups(teamData.players, teamData.type, teamGroups));
         setIsLoading(false);
       });
   }, [teamId, teamGroups, router.isReady]);
@@ -48,7 +48,7 @@ export default function EditTeamGroupsModal({ teamGroups }: { teamGroups: TeamGr
   const handleMovePlayers = (teamGroupId: string) => {
     const newUpdatedPlayers = [] as PlayerIdToTeamGroupId[];
     const newCurrentPlayers = currentPlayers.map((player) => {
-      const originalPlayer = players.find((p) => p.id == player.id)!;
+      const originalPlayer = teamData.players.find((p) => p.id == player.id)!;
       const isSelected = selectedPlayers.includes(player.id);
       const finalTeamGroupId = isSelected ? teamGroupId : player.teamGroupId;
 
@@ -59,7 +59,7 @@ export default function EditTeamGroupsModal({ teamGroups }: { teamGroups: TeamGr
     });
     setCurrentPlayers(newCurrentPlayers);
     setUpdatedPlayers(newUpdatedPlayers);
-    setGroupedPlayers(splitTeamGroupsByGenderMatch(newCurrentPlayers, teamGroups));
+    setGroupedPlayers(splitTeamGroups(newCurrentPlayers, teamData.type, teamGroups));
 
     setSelectedPlayers([]);
     setMoveModalOpen(false);
@@ -98,6 +98,7 @@ export default function EditTeamGroupsModal({ teamGroups }: { teamGroups: TeamGr
                                 ? 'outlined'
                                 : 'soft'
                           }
+                          colour={i == 0 ? 'primary' : 'success'}
                           onClick={() =>
                             setSelectedPlayers(
                               playerSelected

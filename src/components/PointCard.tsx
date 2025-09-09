@@ -14,8 +14,8 @@ export default function PointCard({
   teamScore: number;
   vsTeamScore: number;
   oOrD: string;
-  genderRatio: string;
   fieldSide: string;
+  genderRatio: string | null;
   isFirstHalf: boolean;
 }) {
   return (
@@ -40,9 +40,11 @@ export default function PointCard({
               <Chip size="sm" color={oOrD == 'Offence' ? 'success' : 'danger'}>
                 {oOrD}
               </Chip>
-              <Chip size="sm" color={genderRatio[0] == 'F' ? 'primary' : 'warning'}>
-                {genderRatio}
-              </Chip>
+              {genderRatio && (
+                <Chip size="sm" color={genderRatio[0] == 'F' ? 'primary' : 'warning'}>
+                  {genderRatio}
+                </Chip>
+              )}
               <Chip size="sm" variant="outlined" color={fieldSide == 'L' ? 'neutral' : 'warning'}>
                 {fieldSide}
               </Chip>

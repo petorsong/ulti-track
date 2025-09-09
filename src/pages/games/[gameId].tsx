@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import type { Game, PlayerWithLineCount, Point, TeamGroup } from '@/database/schema';
+import type { Game, PlayerWithLineCount, Point, TeamWithTeamGroups } from '@/database/schema';
 import { Box, Button, Stack, Typography } from '@mui/joy';
 import { PlayerButton, PointCard } from '@/components';
 import {
@@ -8,7 +8,7 @@ import {
   COL_STACK_STYLES,
   handleEndHalfButtonClick,
   POINT_INFO_DEFAULT,
-  splitPlayersByGenderMatch,
+  splitPlayers,
 } from '@/utils';
 import GroupRemove from '@mui/icons-material/GroupRemove';
 import Group from '@mui/icons-material/Group';
@@ -29,7 +29,7 @@ export default function GamePage() {
   const [pointInfo, setPointInfo] = useState(POINT_INFO_DEFAULT);
   const [gameTeamData, setGameTeamData] = useState({
     game: {} as Game,
-    teamGroups: [] as TeamGroup[],
+    teamWithGroups: {} as TeamWithTeamGroups,
     players: { left: [] as PlayerWithLineCount[], right: [] as PlayerWithLineCount[] },
     lastLinePlayerIds: [] as string[],
   });
@@ -41,8 +41,8 @@ export default function GamePage() {
       .then((res) => res.json())
       .then((data) => {
         const gameData = data.game as Game;
+        const teamData = data.team as TeamWithTeamGroups;
         const lastPointData = data.lastPoint as Point | undefined;
-        const teamGroupsData = data.teamGroups as TeamGroup[];
         const playersData = data.players as PlayerWithLineCount[];
 
         if (lastPointData && lastPointData.isActive) {
@@ -51,10 +51,10 @@ export default function GamePage() {
           const pointInfo = calculatePointInfo(gameData);
           setPointInfo({ ...gameData, ...pointInfo });
 
-          const { playersL, playersR } = splitPlayersByGenderMatch(playersData);
+          const { playersL, playersR } = splitPlayers(playersData, teamData.type);
           setGameTeamData({
             game: gameData,
-            teamGroups: teamGroupsData,
+            teamWithGroups: teamData,
             players: { left: playersL, right: playersR },
             lastLinePlayerIds: lastPointData ? lastPointData.playerIds : [],
           });
@@ -88,45 +88,50 @@ export default function GamePage() {
         <Typography level="title-sm" sx={{ mb: 2 }}>
           Select players for the CURRENT line:
         </Typography>
-        {gameTeamData.teamGroups.map((teamGroup) => (
+        {gameTeamData.teamWithGroups.teamGroups.map((teamGroup) => (
           <Box key={teamGroup.id} sx={{ width: '100%' }}>
             <Typography level="title-sm" justifySelf="center" startDecorator={<Group />} sx={{ mb: 1 }}>
               {teamGroup.name}
             </Typography>
             <Stack direction="row" sx={{ justifyContent: 'flex-start', alignItems: 'flex-start', width: '100%' }}>
-              {Object.values(gameTeamData.players).map((playerList, i) => (
-                <Stack key={`playerList${i}`} direction="column" spacing={1} sx={COL_STACK_STYLES}>
-                  {playerList
-                    .filter((player) => player.teamGroupId == teamGroup.id)
-                    .map((player) => {
-                      const selectedList = i == 0 ? selectedPlayersL : selectedPlayersR;
-                      const playerLimit = i == 0 ? pointInfo.playerLimitL : pointInfo.playerLimitR;
-                      const selectFunc = i == 0 ? setSelectedPlayersL : setSelectedPlayersR;
-                      const playerSelected = selectedList.includes(player.id);
-                      const lineCount = playerSelected ? player.lineCount + 1 : player.lineCount;
-                      const badgeColour = playerSelected ? (player.isFMP ? 'primary' : 'success') : 'neutral';
-                      const badgeVariant = gameTeamData.lastLinePlayerIds.includes(player.id) ? 'solid' : 'outlined';
-                      return (
-                        <PlayerButton
-                          key={player.id}
-                          variant={playerSelected ? 'solid' : 'soft'}
-                          disabled={selectedList.length >= playerLimit && !playerSelected}
-                          onClick={() =>
-                            selectFunc(
-                              playerSelected
-                                ? selectedList.filter((p) => p != player.id)
-                                : selectedList.concat(player.id)
-                            )
-                          }
-                          badgeColour={badgeColour}
-                          badgeVariant={badgeVariant}
-                          {...player}
-                          lineCount={lineCount}
-                        />
-                      );
-                    })}
-                </Stack>
-              ))}
+              {Object.values(gameTeamData.players).map((playerList, i) => {
+                const isLeftSide = i === 0;
+                const selectedList = isLeftSide ? selectedPlayersL : selectedPlayersR;
+                const selectFunc = isLeftSide ? setSelectedPlayersL : setSelectedPlayersR;
+                const playerLimit =
+                  gameTeamData.teamWithGroups.type === 'Mixed'
+                    ? (isLeftSide ? pointInfo.playerLimitL! : pointInfo.playerLimitR!) <= selectedList.length
+                    : selectedPlayersL.length + selectedPlayersR.length >= 7;
+                const colour = isLeftSide ? 'primary' : 'success';
+                return (
+                  <Stack key={`playerList${i}`} direction="column" spacing={1} sx={COL_STACK_STYLES}>
+                    {playerList
+                      .filter((player) => player.teamGroupId == teamGroup.id)
+                      .map((player) => {
+                        const playerSelected = selectedList.includes(player.id);
+                        const lineCount = playerSelected ? player.lineCount + 1 : player.lineCount;
+                        const badgeColour = playerSelected ? colour : 'neutral';
+                        const badgeVariant = gameTeamData.lastLinePlayerIds.includes(player.id) ? 'solid' : 'outlined';
+                        return (
+                          <PlayerButton
+                            key={player.id}
+                            variant={playerSelected ? 'solid' : 'soft'}
+                            disabled={playerLimit && !playerSelected}
+                            onClick={() =>
+                              selectFunc(
+                                playerSelected
+                                  ? selectedList.filter((p) => p != player.id)
+                                  : selectedList.concat(player.id)
+                              )
+                            }
+                            {...player}
+                            {...{ colour, badgeColour, badgeVariant, lineCount }}
+                          />
+                        );
+                      })}
+                  </Stack>
+                );
+              })}
             </Stack>
           </Box>
         ))}

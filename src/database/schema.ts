@@ -12,9 +12,14 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
 
+export const TeamTypePG = ['Mixed', 'Open', 'Women'] as const;
+export const TeamTypeEnum = pgEnum('teamtype', TeamTypePG);
+export type TeamType = (typeof TeamTypePG)[number];
+
 export const teams = pgTable('teams', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 255 }).notNull(),
+  type: TeamTypeEnum('type').notNull(),
 });
 
 export const teamsRelations = relations(teams, ({ many }) => ({
@@ -24,6 +29,9 @@ export const teamsRelations = relations(teams, ({ many }) => ({
 }));
 
 export type Team = typeof teams.$inferSelect;
+export type TeamWithPlayers = Team & { players: Player[] };
+export type TeamWithTeamGroups = Team & { teamGroups: TeamGroup[] };
+export type TeamWithGroupsAndGames = Team & { teamGroups: TeamGroup[]; games: Game[] };
 
 export const players = pgTable('players', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -92,7 +100,7 @@ export const games = pgTable('games', {
     .notNull(),
   vsTeamName: varchar('vs_team_name', { length: 255 }).notNull(),
   startOnO: boolean('start_on_o').default(false).notNull(),
-  startFRatio: boolean('start_f_ratio').default(false).notNull(),
+  startFRatio: boolean('start_f_ratio'),
   startLeft: boolean('start_left').default(false).notNull(),
   teamScore: integer('team_score').default(0).notNull(),
   vsTeamScore: integer('vs_team_score').default(0).notNull(),

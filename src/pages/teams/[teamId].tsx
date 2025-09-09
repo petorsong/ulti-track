@@ -14,7 +14,7 @@ import {
   ModalClose,
 } from '@mui/joy';
 import { useRouter } from 'next/router';
-import type { Game, Team, TeamGroup } from '@/database/schema';
+import type { TeamWithGroupsAndGames } from '@/database/schema';
 import { COL_STACK_STYLES } from '@/utils';
 import { EditTeamGroupsModal, GamesList } from '@/components';
 
@@ -29,10 +29,13 @@ export default function TeamPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [teamGroupsModalOpen, setTeamGroupsModalOpen] = useState(false);
-  const [team, setTeam] = useState({} as Team);
-  const [teamGroups, setTeamGroups] = useState([] as TeamGroup[]);
-  const [games, setGames] = useState([] as Game[]);
-  const [formData, setFormData] = useState({ vsTeamName: '', startOnO: false, startFRatio: false, startLeft: false });
+  const [teamData, setTeamData] = useState({} as TeamWithGroupsAndGames);
+  const [formData, setFormData] = useState({
+    vsTeamName: '',
+    startOnO: false,
+    startLeft: false,
+    startFRatio: null as boolean | null,
+  });
   const [errors, setErrors] = useState({ vsTeamName: '' } as ErrorType);
 
   useEffect(() => {
@@ -41,18 +44,14 @@ export default function TeamPage() {
     fetch(`/api/teams/${teamId}`)
       .then((res) => res.json())
       .then((data) => {
-        setTeam(data.teamData as Team);
-        setTeamGroups(data.teamData.teamGroups as TeamGroup[]);
-        setGames(data.teamData.games as Game[]);
+        setTeamData(data.teamData as TeamWithGroupsAndGames);
+        setFormData((formData) => ({ ...formData, startFRatio: data.teamData.type == 'Mixed' ? false : null }));
         setIsLoading(false);
       });
   }, [teamId, router.isReady]);
 
   const handleInputChange = (field: string, value: boolean | string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
 
     // Clear error when user starts typing
     if (errors[field]) {
@@ -86,7 +85,7 @@ export default function TeamPage() {
         <Card variant="outlined" sx={{ width: '95%', m: 0.5 }}>
           <CardContent>
             <Typography level="title-lg" sx={{ mb: 2 }}>
-              New game: {team.name}
+              New game: {teamData.name}
             </Typography>
             <Stack spacing={2}>
               <FormControl error={!!errors.vsTeamName}>
@@ -116,16 +115,6 @@ export default function TeamPage() {
                 />
               </FormControl>
               <FormControl orientation="horizontal">
-                <FormLabel>Gender ratio</FormLabel>
-                <Switch
-                  size="lg"
-                  checked={!formData.startFRatio}
-                  onChange={(e) => handleInputChange('startFRatio', !e.target.checked)}
-                  startDecorator="F"
-                  endDecorator="O"
-                />
-              </FormControl>
-              <FormControl orientation="horizontal">
                 <FormLabel>Side</FormLabel>
                 <Switch
                   size="lg"
@@ -135,6 +124,18 @@ export default function TeamPage() {
                   endDecorator="R"
                 />
               </FormControl>
+              {teamData.type == 'Mixed' && (
+                <FormControl orientation="horizontal">
+                  <FormLabel>Gender ratio</FormLabel>
+                  <Switch
+                    size="lg"
+                    checked={!formData.startFRatio}
+                    onChange={(e) => handleInputChange('startFRatio', !e.target.checked)}
+                    startDecorator="F"
+                    endDecorator="O"
+                  />
+                </FormControl>
+              )}
               <Button size="lg" sx={{ mt: 2 }} loading={isSaving} onClick={handleSubmitButtonClick}>
                 Start game
               </Button>
@@ -147,10 +148,10 @@ export default function TeamPage() {
         <Modal open={teamGroupsModalOpen} onClose={() => setTeamGroupsModalOpen(false)}>
           <ModalDialog layout="fullscreen">
             <ModalClose /> {/* TODO: guardrail for unsaved changes */}
-            <EditTeamGroupsModal {...{ teamGroups }} />
+            <EditTeamGroupsModal {...{ teamGroups: teamData.teamGroups }} />
           </ModalDialog>
         </Modal>
-        <GamesList {...{ games, router }} />
+        <GamesList {...{ games: teamData.games, router }} />
       </Stack>
     )
   );

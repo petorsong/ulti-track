@@ -1,14 +1,14 @@
 import type { NextApiRequest as Req, NextApiResponse as Res } from 'next';
 import { db } from '@/database/drizzle';
-import type { Game, PlayerWithLineCount, Point, TeamGroup } from '@/database/schema';
+import type { Game, PlayerWithLineCount, Point, TeamWithTeamGroups } from '@/database/schema';
 
 export default async function handler(
   req: Req,
-  res: Res<{ game: Game; lastPoint?: Point; teamGroups: TeamGroup[]; players: PlayerWithLineCount[] }>
+  res: Res<{ game: Game; team: TeamWithTeamGroups; lastPoint?: Point; players: PlayerWithLineCount[] }>
 ) {
   const gameId = req.query.gameId as string;
 
-  const { game, lastPoint, teamGroups, players } = await db.transaction(async (tx) => {
+  const { game, team, lastPoint, players } = await db.transaction(async (tx) => {
     const game = (await tx.query.games.findFirst({
       where: (games, { eq }) => eq(games.id, gameId),
     }))!;
@@ -16,9 +16,10 @@ export default async function handler(
       where: (points, { eq }) => eq(points.gameId, gameId),
       orderBy: (points, { desc }) => [desc(points.createdAt)],
     });
-    const teamGroups = await tx.query.teamGroups.findMany({
-      where: (teamGroups, { and, eq }) => and(eq(teamGroups.teamId, game.teamId), eq(teamGroups.isActive, true)),
-    });
+    const team = (await tx.query.teams.findFirst({
+      where: (teams, { eq }) => eq(teams.id, game.teamId),
+      with: { teamGroups: { where: (teamGroups, { eq }) => eq(teamGroups.isActive, true) } }, // TODO: consider removing isActive?
+    }))!;
     const players: PlayerWithLineCount[] = (
       await tx.query.players.findMany({
         where: (players, { inArray }) => inArray(players.id, game.activePlayerIds),
@@ -28,8 +29,8 @@ export default async function handler(
       lineCount: points.reduce((count, point) => count + (point.playerIds.includes(player.id) ? 1 : 0), 0),
     }));
 
-    return { game, lastPoint: points.length > 0 ? points[0] : undefined, teamGroups, players };
+    return { game, team, lastPoint: points.length > 0 ? points[0] : undefined, players };
   });
 
-  res.status(200).json({ game, lastPoint, teamGroups, players });
+  res.status(200).json({ game, team, lastPoint, players });
 }

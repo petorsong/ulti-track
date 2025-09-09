@@ -1,16 +1,21 @@
 import type { NextRouter } from 'next/router';
 import type { Dispatch, SetStateAction } from 'react';
-import type { Game, Player, PlayerWithLineCount } from './database/schema';
+import type { Game, Player, PlayerWithLineCount, TeamType } from './database/schema';
 
-export function splitPlayersByGenderMatch<PT extends Player | PlayerWithLineCount>(
-  playersData: PT[]
+export function splitPlayers<PT extends Player | PlayerWithLineCount>(
+  playersData: PT[],
+  type: TeamType
 ): { playersL: PT[]; playersR: PT[] } {
   return playersData
     .sort((a, b) => (a.isPR === b.isPR ? 0 : b.isPR ? -1 : 1))
     .sort((a, b) => (a.isHandler === b.isHandler ? 0 : b.isHandler ? 1 : -1))
     .reduce(
       (result, player) => {
-        (player.isFMP ? result.playersL : result.playersR).push(player);
+        const targetArray =
+          (type === 'Mixed' && player.isFMP) || (type !== 'Mixed' && player.isHandler)
+            ? result.playersL
+            : result.playersR;
+        targetArray.push(player);
         return result;
       },
       { playersL: [] as PT[], playersR: [] as PT[] }
@@ -30,9 +35,14 @@ export function calculatePointInfo({
   const isFirstHalf = halftimeAt == null;
 
   // deal with ABBA for gender ratios
-  const shouldBeFemale = totalPoints === 0 ? startFRatio : (totalPoints + 1) % 4 < 2 === startFRatio;
-  const genderRatio = `${shouldBeFemale ? 'Female' : 'Open'} ${totalPoints % 2 === 0 ? '2' : '1'}`;
-  const [playerLimitL, playerLimitR] = shouldBeFemale ? [4, 3] : [3, 4];
+  let genderRatio = null,
+    playerLimitL = null,
+    playerLimitR = null;
+  if (startFRatio) {
+    const shouldBeFemale = totalPoints === 0 ? startFRatio : (totalPoints + 1) % 4 < 2 === startFRatio;
+    genderRatio = `${shouldBeFemale ? 'Female' : 'Open'} ${totalPoints % 2 === 0 ? '2' : '1'}`;
+    [playerLimitL, playerLimitR] = shouldBeFemale ? [4, 3] : [3, 4];
+  }
 
   // flip oOrD for halftime, otherwise just flip last score
   const isOnO = halftimeAt === totalPoints ? !startOnO : !wasLastScoreUs;
@@ -81,9 +91,9 @@ export const POINT_INFO_DEFAULT = {
   teamScore: 0,
   vsTeamScore: 0,
   oOrD: '',
-  genderRatio: '',
   fieldSide: '',
+  genderRatio: null as string | null,
   isFirstHalf: true,
-  playerLimitL: 0,
-  playerLimitR: 0,
+  playerLimitL: 0 as number | null,
+  playerLimitR: 0 as number | null,
 };
