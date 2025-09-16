@@ -1,11 +1,13 @@
 import { Badge, Button } from '@mui/joy';
 import DirectionsRunOutlined from '@mui/icons-material/DirectionsRunOutlined';
 import FrontHandOutlined from '@mui/icons-material/FrontHandOutlined';
+import MultipleStopRounded from '@mui/icons-material/MultipleStopRounded';
+import { PlayerType } from '@/database/schema';
 
 export default function PlayerButton({
   firstName,
   nickname,
-  isHandler,
+  type,
   variant,
   disabled,
   lineCount,
@@ -16,7 +18,7 @@ export default function PlayerButton({
 }: {
   firstName: string;
   nickname: string | null;
-  isHandler: boolean;
+  type: PlayerType;
   variant: 'plain' | 'outlined' | 'soft' | 'solid';
   disabled?: boolean;
   lineCount?: number;
@@ -26,7 +28,8 @@ export default function PlayerButton({
   onClick: () => void;
 }) {
   const name = nickname ?? firstName;
-  const roleIcon = isHandler ? <FrontHandOutlined /> : <DirectionsRunOutlined />;
+  const roleIcon =
+    type == 'Handler' ? <FrontHandOutlined /> : type == 'Cutter' ? <DirectionsRunOutlined /> : <MultipleStopRounded />;
 
   return (
     <Badge

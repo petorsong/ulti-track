@@ -33,13 +33,17 @@ export type TeamWithPlayers = Team & { players: Player[] };
 export type TeamWithTeamGroups = Team & { teamGroups: TeamGroup[] };
 export type TeamWithGroupsAndGames = Team & { teamGroups: TeamGroup[]; games: Game[] };
 
+export const PlayerTypePG = ['Cutter', 'Handler', 'Hybrid'] as const;
+export const PlayerTypeEnum = pgEnum('playertype', PlayerTypePG);
+export type PlayerType = (typeof PlayerTypePG)[number];
+
 export const players = pgTable('players', {
   id: uuid('id').primaryKey().defaultRandom(),
   firstName: varchar('first_name', { length: 255 }).notNull(),
-  lastName: varchar('last_name', { length: 255 }).notNull(),
+  lastName: varchar('last_name', { length: 255 }),
   isFMP: boolean('is_fmp').notNull().default(false),
-  isHandler: boolean('is_handler').notNull().default(false),
   isPR: boolean('is_pr').notNull().default(false),
+  type: PlayerTypeEnum('type').notNull(),
   nickname: varchar('nickname', { length: 255 }),
   teamId: uuid('team_id')
     .references(() => teams.id, { onDelete: 'cascade', onUpdate: 'cascade' })

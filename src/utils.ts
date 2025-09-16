@@ -1,6 +1,12 @@
 import type { NextRouter } from 'next/router';
 import type { Dispatch, SetStateAction } from 'react';
-import type { Game, Player, PlayerWithLineCount, TeamType } from './database/schema';
+import type { Game, Player, PlayerType, PlayerWithLineCount, TeamType } from './database/schema';
+
+const playerTypeSortMap = new Map<PlayerType, number>([
+  ['Handler', 0],
+  ['Hybrid', 1],
+  ['Cutter', 2],
+]);
 
 export function splitPlayers<PT extends Player | PlayerWithLineCount>(
   playersData: PT[],
@@ -8,11 +14,11 @@ export function splitPlayers<PT extends Player | PlayerWithLineCount>(
 ): { playersL: PT[]; playersR: PT[] } {
   return playersData
     .sort((a, b) => (a.isPR === b.isPR ? 0 : b.isPR ? -1 : 1))
-    .sort((a, b) => (a.isHandler === b.isHandler ? 0 : b.isHandler ? 1 : -1))
+    .sort((a, b) => playerTypeSortMap.get(a.type)! - playerTypeSortMap.get(b.type)!)
     .reduce(
       (result, player) => {
         const targetArray =
-          (type === 'Mixed' && player.isFMP) || (type !== 'Mixed' && player.isHandler)
+          (type === 'Mixed' && player.isFMP) || (type !== 'Mixed' && player.type !== 'Cutter')
             ? result.playersL
             : result.playersR;
         targetArray.push(player);
