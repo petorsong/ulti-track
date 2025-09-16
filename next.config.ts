@@ -20,6 +20,16 @@ const nextConfig: NextConfig = {
         destination: '/teams/e54aed7e-92b8-4915-9cc1-47fdb3ca9636',
         permanent: false,
       },
+      {
+        source: '/westernm2025',
+        destination: '/teams/2f0a7ec8-b9b5-4223-b9e7-9938abffe949',
+        permanent: false,
+      },
+      {
+        source: '/tuba2025',
+        destination: '/teams/0ee681de-8dcb-4d0c-b5f8-3dc0e5896634',
+        permanent: false,
+      },
     ];
   },
 };
