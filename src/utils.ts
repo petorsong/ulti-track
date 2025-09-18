@@ -44,7 +44,7 @@ export function calculatePointInfo({
   let genderRatio = null,
     playerLimitL = null,
     playerLimitR = null;
-  if (startFRatio) {
+  if (startFRatio !== null) {
     const shouldBeFemale = totalPoints === 0 ? startFRatio : (totalPoints + 1) % 4 < 2 === startFRatio;
     genderRatio = `${shouldBeFemale ? 'Female' : 'Open'} ${totalPoints % 2 === 0 ? '2' : '1'}`;
     [playerLimitL, playerLimitR] = shouldBeFemale ? [4, 3] : [3, 4];

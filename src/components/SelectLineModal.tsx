@@ -74,10 +74,18 @@ export default function SelectLineModal({
                           const badgeColour = playerSelected ? colour : 'neutral';
                           const badgeVariant = lastLinePlayerIds.includes(player.id) ? 'solid' : 'outlined';
                           let lineCount = player.lineCount;
-                          if (playerSelected) {
+                          if (type === 'editLine') {
+                            if (split.selected.includes(player.id)) {
+                              if (!playerSelected) {
+                                lineCount = Math.max(lineCount - 1, 0);
+                              }
+                            } else {
+                              if (playerSelected) {
+                                lineCount += 1;
+                              }
+                            }
+                          } else if (type === 'nextLine' && playerSelected) {
                             lineCount += 1;
-                          } else if (type === 'editLine' && split.selected.includes(player.id)) {
-                            lineCount = Math.max(lineCount - 1, 0);
                           }
                           return (
                             <PlayerButton
@@ -104,7 +112,7 @@ export default function SelectLineModal({
           ))}
           <Divider />
           <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between', width: '95%' }}>
-            <Button
+            <Button // TODO: consider changing this to reset for editLine
               variant="soft"
               color="warning"
               sx={{ width: '47.5%' }}
