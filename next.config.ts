@@ -30,6 +30,11 @@ const nextConfig: NextConfig = {
         destination: '/teams/0ee681de-8dcb-4d0c-b5f8-3dc0e5896634',
         permanent: false,
       },
+      {
+        source: '/westernw2025',
+        destination: '/teams/1ce50736-9a9d-42ba-a386-6127d3e9f80e',
+        permanent: false,
+      },
     ];
   },
 };

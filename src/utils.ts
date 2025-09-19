@@ -12,20 +12,23 @@ export function splitPlayers<PT extends Player | PlayerWithLineCount>(
   playersData: PT[],
   type: TeamType
 ): { playersL: PT[]; playersR: PT[] } {
-  return playersData
-    .sort((a, b) => (a.isPR === b.isPR ? 0 : b.isPR ? -1 : 1))
-    .sort((a, b) => playerTypeSortMap.get(a.type)! - playerTypeSortMap.get(b.type)!)
-    .reduce(
-      (result, player) => {
-        const targetArray =
-          (type === 'Mixed' && player.isFMP) || (type !== 'Mixed' && player.type !== 'Cutter')
-            ? result.playersL
-            : result.playersR;
-        targetArray.push(player);
-        return result;
-      },
-      { playersL: [] as PT[], playersR: [] as PT[] }
-    );
+  let sortedPlayers = playersData.sort((a, b) => (a.isPR === b.isPR ? 0 : b.isPR ? -1 : 1));
+  if (type !== 'Women') {
+    sortedPlayers.sort((a, b) => playerTypeSortMap.get(a.type)! - playerTypeSortMap.get(b.type)!);
+  }
+  return sortedPlayers.reduce(
+    (result, player, i) => {
+      const targetArray =
+        (type === 'Mixed' && player.isFMP) ||
+        (type === 'Open' && player.type !== 'Cutter') ||
+        (type === 'Women' && i % 2 == 0)
+          ? result.playersL
+          : result.playersR;
+      targetArray.push(player);
+      return result;
+    },
+    { playersL: [] as PT[], playersR: [] as PT[] }
+  );
 }
 
 export function calculatePointInfo({
