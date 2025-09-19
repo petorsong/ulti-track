@@ -12,23 +12,21 @@ export function splitPlayers<PT extends Player | PlayerWithLineCount>(
   playersData: PT[],
   type: TeamType
 ): { playersL: PT[]; playersR: PT[] } {
-  let sortedPlayers = playersData.sort((a, b) => (a.isPR === b.isPR ? 0 : b.isPR ? -1 : 1));
-  if (type !== 'Women') {
-    sortedPlayers.sort((a, b) => playerTypeSortMap.get(a.type)! - playerTypeSortMap.get(b.type)!);
-  }
-  return sortedPlayers.reduce(
-    (result, player, i) => {
-      const targetArray =
-        (type === 'Mixed' && player.isFMP) ||
-        (type === 'Open' && player.type !== 'Cutter') ||
-        (type === 'Women' && i % 2 == 0)
-          ? result.playersL
-          : result.playersR;
-      targetArray.push(player);
-      return result;
-    },
-    { playersL: [] as PT[], playersR: [] as PT[] }
-  );
+  const sortedPlayers = [...playersData]
+    .sort((a, b) => Number(b.isPR) - Number(a.isPR))
+    .sort((a, b) => (type === 'Women' ? 0 : playerTypeSortMap.get(a.type)! - playerTypeSortMap.get(b.type)!));
+
+  const playersL: PT[] = [];
+  const playersR: PT[] = [];
+  sortedPlayers.forEach((player, i) => {
+    const goesToLeft =
+      (type === 'Mixed' && player.isFMP) ||
+      (type === 'Open' && player.type !== 'Cutter') ||
+      (type === 'Women' && i % 2 === 0);
+    (goesToLeft ? playersL : playersR).push(player);
+  });
+
+  return { playersL, playersR };
 }
 
 export function calculatePointInfo({
