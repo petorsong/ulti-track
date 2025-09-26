@@ -9,22 +9,20 @@ export default function PlayerButton({
   nickname,
   type,
   variant,
+  colour,
   disabled,
   lineCount,
-  colour,
-  badgeColour = 'neutral',
-  badgeVariant = 'solid',
+  sitCount,
   onClick,
 }: {
   firstName: string;
   nickname: string | null;
   type: PlayerType;
   variant: 'plain' | 'outlined' | 'soft' | 'solid';
+  colour: 'primary' | 'success';
   disabled?: boolean;
   lineCount?: number;
-  colour: 'primary' | 'success';
-  badgeColour?: 'neutral' | 'primary' | 'success';
-  badgeVariant?: 'solid' | 'outlined';
+  sitCount?: number;
   onClick: () => void;
 }) {
   const name = nickname ?? firstName;
@@ -34,25 +32,34 @@ export default function PlayerButton({
   return (
     <Badge
       size="md"
-      color={badgeColour}
-      variant={badgeVariant}
+      color="neutral"
+      variant="outlined"
       anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
       badgeInset="1.5%"
       invisible={!lineCount}
       badgeContent={lineCount}
       sx={{ width: '90%' }}
     >
-      <Button
-        size="lg"
-        fullWidth
-        endDecorator={roleIcon}
-        {...{ variant, disabled, color: colour, onClick }}
-        sx={{
-          justifyContent: 'space-between',
-        }}
+      <Badge
+        size="md"
+        color="warning"
+        variant="outlined"
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        badgeInset="1.5%"
+        invisible={!sitCount}
+        badgeContent={sitCount}
+        sx={{ width: '100%' }}
       >
-        {name}
-      </Button>
+        <Button
+          size="lg"
+          fullWidth
+          endDecorator={roleIcon}
+          {...{ variant, disabled, color: colour, onClick }}
+          sx={{ justifyContent: 'space-between' }}
+        >
+          {name}
+        </Button>
+      </Badge>
     </Badge>
   );
 }

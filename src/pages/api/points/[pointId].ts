@@ -1,6 +1,6 @@
 import type { NextApiRequest as Req, NextApiResponse as Res } from 'next';
 import { db } from '@/database/drizzle';
-import type { Point, Game, PlayerWithLineCount, TeamWithTeamGroups } from '@/database/schema';
+import type { Game, TeamWithTeamGroups, PlayerWithCounts } from '@/database/schema';
 
 export default async function handler(
   req: Req,
@@ -8,13 +8,12 @@ export default async function handler(
     game: Game;
     team: TeamWithTeamGroups;
     playerIds: string[];
-    lastPoint: Point;
-    players: PlayerWithLineCount[];
+    players: PlayerWithCounts[];
   }>
 ) {
   const pointId = req.query.pointId as string;
 
-  const { game, team, playerIds, lastPoint, players } = await db.transaction(async (tx) => {
+  const { game, team, playerIds, players } = await db.transaction(async (tx) => {
     const { game, playerIds } = (await tx.query.points.findFirst({
       where: (points, { eq }) => eq(points.id, pointId),
       with: {
@@ -27,17 +26,21 @@ export default async function handler(
       },
     }))!;
     const { points, team } = game;
-    const players: PlayerWithLineCount[] = (
+    const players: PlayerWithCounts[] = (
       await tx.query.players.findMany({
         where: (players, { inArray }) => inArray(players.id, game.activePlayerIds),
       })
-    ).map((player) => ({
-      ...player, // TODO: consider aggregating this directly in SQL
-      lineCount: points.reduce((count, point) => count + (point.playerIds.includes(player.id) ? 1 : 0), 0),
-    }));
+    ).map((player) => {
+      const lastPlayedPointIndex = points.findIndex((p) => p.playerIds.includes(player.id));
+      return {
+        ...player, // TODO: consider aggregating this directly in SQL
+        lineCount: points.reduce((count, point) => count + (point.playerIds.includes(player.id) ? 1 : 0), 0),
+        sitCount: lastPlayedPointIndex === -1 ? points.length : lastPlayedPointIndex,
+      };
+    });
 
-    return { game, team, playerIds, lastPoint: points[0], players };
+    return { game, team, playerIds, players };
   });
 
-  res.status(200).json({ game, team, playerIds, lastPoint, players });
+  res.status(200).json({ game, team, playerIds, players });
 }

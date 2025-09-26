@@ -25,13 +25,18 @@ export default function GameSummaryPage() {
     { dataIndex: 'throwAways', title: 'TA', align: 'right', sorter: (a, b) => a.throwAways - b.throwAways },
     { dataIndex: 'drops', title: 'Drop', align: 'right', sorter: (a, b) => a.drops - b.drops },
     { dataIndex: 'totalPasses', title: 'Pass', align: 'right', sorter: (a, b) => a.totalPasses - b.totalPasses },
-    { dataIndex: 'passesToF', title: 'Pass (F)', align: 'right', sorter: (a, b) => a.passesToF - b.passesToF },
-    { dataIndex: 'passesToO', title: 'Pass (O)', align: 'right', sorter: (a, b) => a.passesToO - b.passesToO },
     // for percentage passes:
     // render: (pF, pS) => (
     //   <div>{`${pF} (${((pF / (pS.totalPasses != 0 ? pS.totalPasses : 1)) * 100).toFixed(2)}%)`}</div>
     // ),
   ];
+
+  if (teamData.type === 'Mixed') {
+    columns.concat([
+      { dataIndex: 'passesToF', title: 'Pass (F)', align: 'right', sorter: (a, b) => a.passesToF - b.passesToF },
+      { dataIndex: 'passesToO', title: 'Pass (O)', align: 'right', sorter: (a, b) => a.passesToO - b.passesToO },
+    ]);
+  }
 
   useEffect(() => {
     if (!router.isReady) return;

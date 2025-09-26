@@ -59,7 +59,7 @@ export const playersRelations = relations(players, ({ one }) => ({
 }));
 
 export type Player = typeof players.$inferSelect;
-export type PlayerWithLineCount = Player & { lineCount: number };
+export type PlayerWithCounts = Player & { lineCount: number; sitCount: number };
 
 export const teamGroups = pgTable(
   'team_groups',

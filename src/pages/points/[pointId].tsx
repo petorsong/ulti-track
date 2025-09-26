@@ -6,8 +6,7 @@ import type {
   EventType,
   Game,
   InsertPointEvent,
-  PlayerWithLineCount,
-  Point,
+  PlayerWithCounts,
   TeamWithTeamGroups,
   TimeoutsJson,
 } from '@/database/schema';
@@ -48,9 +47,8 @@ export default function PointPage() {
   const [gameTeamData, setGameTeamData] = useState({
     game: {} as Game,
     teamWithGroups: {} as TeamWithTeamGroups,
-    players: { left: [] as PlayerWithLineCount[], right: [] as PlayerWithLineCount[] },
-    initialPlayers: { left: [] as PlayerWithLineCount[], right: [] as PlayerWithLineCount[] },
-    lastLinePlayerIds: [] as string[],
+    players: { left: [] as PlayerWithCounts[], right: [] as PlayerWithCounts[] },
+    initialPlayers: { left: [] as PlayerWithCounts[], right: [] as PlayerWithCounts[] },
   });
   const [nextPointInfo, setNextPointInfo] = useState({
     genderRatio: null as string | null,
@@ -67,10 +65,9 @@ export default function PointPage() {
       .then((res) => res.json())
       .then((data) => {
         const gameData = data.game as Game;
-        const playersData = data.players as PlayerWithLineCount[];
+        const playersData = data.players as PlayerWithCounts[];
         const teamData = data.team as TeamWithTeamGroups;
         const activePlayerIds = data.playerIds as string[];
-        const lastPointData = data.lastPoint as Point;
 
         setTimeouts(gameData.timeouts);
         setCurrentPointInfo({ ...gameData, ...calculatePointInfo(gameData) });
@@ -85,7 +82,6 @@ export default function PointPage() {
           teamWithGroups: teamData,
           players: { left: playersL, right: playersR },
           initialPlayers: { left: linePlayersL, right: linePlayersR },
-          lastLinePlayerIds: lastPointData.playerIds,
         });
         setIsLoading(false);
       });
@@ -219,6 +215,7 @@ export default function PointPage() {
                   colour={i == 0 ? 'primary' : 'success'}
                   onClick={() => handlePlayerClick(player.id)}
                   {...player}
+                  sitCount={0}
                 />
               ))}
             </Stack>
@@ -318,7 +315,6 @@ export default function PointPage() {
               </Stack>
             }
             teamWithGroups={gameTeamData.teamWithGroups}
-            lastLinePlayerIds={gameTeamData.lastLinePlayerIds}
             onSaveLineClick={handleNextLineSave}
             splitPlayers={{
               left: {
@@ -371,7 +367,7 @@ export default function PointPage() {
               >
                 Edit line
               </Button>
-              <SelectLineModal
+              <SelectLineModal // TODO: consider removing current point for sitCount here
                 type="editLine"
                 open={modalsOpen.editLine}
                 onClose={() => updateModals('editLine', false)}
@@ -384,7 +380,6 @@ export default function PointPage() {
                   </>
                 }
                 teamWithGroups={gameTeamData.teamWithGroups}
-                lastLinePlayerIds={gameTeamData.lastLinePlayerIds}
                 onSaveLineClick={handleEditLineSave}
                 splitPlayers={{
                   left: {

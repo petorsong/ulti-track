@@ -3,12 +3,12 @@ import GroupRemove from '@mui/icons-material/GroupRemove';
 import Save from '@mui/icons-material/Save';
 import Group from '@mui/icons-material/Group';
 import { Box, Button, Divider, Modal, ModalClose, ModalDialog, Stack, Typography } from '@mui/joy';
-import type { PlayerWithLineCount, TeamWithTeamGroups } from '@/database/schema';
+import type { PlayerWithCounts, TeamWithTeamGroups } from '@/database/schema';
 import { COL_STACK_STYLES } from '@/utils';
 import PlayerButton from './PlayerButton';
 
 type SplitPlayersListProps = {
-  players: PlayerWithLineCount[];
+  players: PlayerWithCounts[];
   selected: string[];
   limit: number | null;
 };
@@ -19,7 +19,6 @@ export default function SelectLineModal({
   onClose,
   InfoSection,
   teamWithGroups,
-  lastLinePlayerIds,
   onSaveLineClick,
   splitPlayers,
 }: {
@@ -28,7 +27,6 @@ export default function SelectLineModal({
   onClose: () => void;
   InfoSection: ReactNode;
   teamWithGroups: TeamWithTeamGroups;
-  lastLinePlayerIds: string[];
   onSaveLineClick: (players: { left: string[]; right: string[] }) => () => void;
   splitPlayers: { left: SplitPlayersListProps; right: SplitPlayersListProps };
 }) {
@@ -71,22 +69,14 @@ export default function SelectLineModal({
                         .filter((player) => player.teamGroupId == teamGroup.id)
                         .map((player) => {
                           const playerSelected = selectedPlayers.includes(player.id);
-                          const badgeColour = playerSelected ? colour : 'neutral';
-                          const badgeVariant = lastLinePlayerIds.includes(player.id) ? 'solid' : 'outlined';
                           let lineCount = player.lineCount;
                           if (type === 'editLine') {
                             if (split.selected.includes(player.id)) {
-                              if (!playerSelected) {
-                                lineCount = Math.max(lineCount - 1, 0);
-                              }
+                              if (!playerSelected) lineCount = Math.max(lineCount - 1, 0);
                             } else {
-                              if (playerSelected) {
-                                lineCount += 1;
-                              }
+                              if (playerSelected) lineCount += 1;
                             }
-                          } else if (type === 'nextLine' && playerSelected) {
-                            lineCount += 1;
-                          }
+                          } else if (type === 'nextLine' && playerSelected) lineCount += 1;
                           return (
                             <PlayerButton
                               key={player.id}
@@ -99,8 +89,7 @@ export default function SelectLineModal({
                                     : selectedPlayers.concat(player.id)
                                 )
                               }
-                              {...player}
-                              {...{ colour, badgeColour, badgeVariant, lineCount }}
+                              {...{ ...player, colour, lineCount }}
                             />
                           );
                         })}

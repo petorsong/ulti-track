@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import type { Game, PlayerWithLineCount, Point, TeamWithTeamGroups } from '@/database/schema';
+import type { Game, PlayerWithCounts, Point, TeamWithTeamGroups } from '@/database/schema';
 import { Box, Button, Stack, Typography } from '@mui/joy';
 import { PlayerButton, PointCard } from '@/components';
 import {
@@ -30,8 +30,7 @@ export default function GamePage() {
   const [gameTeamData, setGameTeamData] = useState({
     game: {} as Game,
     teamWithGroups: {} as TeamWithTeamGroups,
-    players: { left: [] as PlayerWithLineCount[], right: [] as PlayerWithLineCount[] },
-    lastLinePlayerIds: [] as string[],
+    players: { left: [] as PlayerWithCounts[], right: [] as PlayerWithCounts[] },
   });
 
   useEffect(() => {
@@ -43,7 +42,7 @@ export default function GamePage() {
         const gameData = data.game as Game;
         const teamData = data.team as TeamWithTeamGroups;
         const lastPointData = data.lastPoint as Point | undefined;
-        const playersData = data.players as PlayerWithLineCount[];
+        const playersData = data.players as PlayerWithCounts[];
 
         if (lastPointData && lastPointData.isActive) {
           router.push(`/points/${lastPointData.id}`);
@@ -56,7 +55,6 @@ export default function GamePage() {
             game: gameData,
             teamWithGroups: teamData,
             players: { left: playersL, right: playersR },
-            lastLinePlayerIds: lastPointData ? lastPointData.playerIds : [],
           });
 
           setIsLoading(false);
@@ -110,8 +108,6 @@ export default function GamePage() {
                       .map((player) => {
                         const playerSelected = selectedList.includes(player.id);
                         const lineCount = playerSelected ? player.lineCount + 1 : player.lineCount;
-                        const badgeColour = playerSelected ? colour : 'neutral';
-                        const badgeVariant = gameTeamData.lastLinePlayerIds.includes(player.id) ? 'solid' : 'outlined';
                         return (
                           <PlayerButton
                             key={player.id}
@@ -124,8 +120,7 @@ export default function GamePage() {
                                   : selectedList.concat(player.id)
                               )
                             }
-                            {...player}
-                            {...{ colour, badgeColour, badgeVariant, lineCount }}
+                            {...{ ...player, colour, lineCount }}
                           />
                         );
                       })}

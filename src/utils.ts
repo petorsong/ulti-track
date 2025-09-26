@@ -1,6 +1,6 @@
 import type { NextRouter } from 'next/router';
 import type { Dispatch, SetStateAction } from 'react';
-import type { Game, Player, PlayerType, PlayerWithLineCount, TeamType } from './database/schema';
+import type { Game, Player, PlayerType, PlayerWithCounts, TeamType } from './database/schema';
 
 const playerTypeSortMap = new Map<PlayerType, number>([
   ['Handler', 0],
@@ -8,7 +8,7 @@ const playerTypeSortMap = new Map<PlayerType, number>([
   ['Cutter', 2],
 ]);
 
-export function splitPlayers<PT extends Player | PlayerWithLineCount>(
+export function splitPlayers<PT extends Player | PlayerWithCounts>(
   playersData: PT[],
   type: TeamType
 ): { playersL: PT[]; playersR: PT[] } {
