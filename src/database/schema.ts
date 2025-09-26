@@ -45,6 +45,7 @@ export const players = pgTable('players', {
   isPR: boolean('is_pr').notNull().default(false),
   type: PlayerTypeEnum('type').notNull(),
   nickname: varchar('nickname', { length: 255 }),
+  order: integer('order'),
   teamId: uuid('team_id')
     .references(() => teams.id, { onDelete: 'cascade', onUpdate: 'cascade' })
     .notNull(),

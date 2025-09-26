@@ -1,6 +1,7 @@
 import type { NextApiRequest as Req, NextApiResponse as Res } from 'next';
 import { db } from '@/database/drizzle';
-import type { Game, TeamWithTeamGroups, PlayerWithCounts } from '@/database/schema';
+import { type Game, type TeamWithTeamGroups, type PlayerWithCounts, players as playersDb } from '@/database/schema';
+import { asc } from 'drizzle-orm';
 
 export default async function handler(
   req: Req,
@@ -29,6 +30,7 @@ export default async function handler(
     const players: PlayerWithCounts[] = (
       await tx.query.players.findMany({
         where: (players, { inArray }) => inArray(players.id, game.activePlayerIds),
+        orderBy: [asc(playersDb.order)],
       })
     ).map((player) => {
       const lastPlayedPointIndex = points.findIndex((p) => p.playerIds.includes(player.id));
