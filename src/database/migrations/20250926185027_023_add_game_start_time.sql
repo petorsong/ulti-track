@@ -1,0 +1,1 @@
+ALTER TABLE "games" ADD COLUMN IF NOT EXISTS "start_time" TIMESTAMP;

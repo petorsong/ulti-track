@@ -35,6 +35,7 @@ export default function TeamPage() {
     startOnO: false,
     startLeft: false,
     startFRatio: null as boolean | null,
+    startTime: '',
   });
   const [errors, setErrors] = useState({ vsTeamName: '' } as ErrorType);
 
@@ -136,6 +137,14 @@ export default function TeamPage() {
                   />
                 </FormControl>
               )}
+              <FormControl orientation="horizontal">
+                <FormLabel>Start time (optional):</FormLabel>
+                <Input
+                  type="datetime-local"
+                  value={formData.startTime}
+                  onChange={(e) => handleInputChange('startTime', e.target.value)}
+                />
+              </FormControl>
               <Button size="lg" sx={{ mt: 2 }} loading={isSaving} onClick={handleSubmitButtonClick}>
                 Start game
               </Button>

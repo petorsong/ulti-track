@@ -14,6 +14,12 @@ export default async function handler(req: Req, res: Res<{ gameId: string } | Ap
     });
   }
 
+  let startTime = null;
+  if (parsedBody.startTime) {
+    const localDateTime = new Date(parsedBody.startTime);
+    startTime = localDateTime.toISOString();
+  }
+
   const [result] = await db.transaction(async (tx) => {
     const activeTeamGroupPlayerIds = await tx
       .select({ id: players.id })
@@ -28,10 +34,11 @@ export default async function handler(req: Req, res: Res<{ gameId: string } | Ap
         activePlayerIds: activeTeamGroupPlayerIds.map(({ id }) => id),
         wasLastScoreUs: !parsedBody.startOnO,
         timeouts: {
-          perHalf: 2,
+          perHalf: 2, // TODO: not hardcoded timeouts/rulesets
           ourTimeouts: { firstHalf: 2, secondHalf: 2 },
           vsTimeouts: { firstHalf: 2, secondHalf: 2 },
         },
+        startTime,
       })
       .returning({ gameId: games.id });
   });

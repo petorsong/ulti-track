@@ -117,6 +117,7 @@ export const games = pgTable('games', {
     .$type<TimeoutsJson>()
     .default({} as TimeoutsJson)
     .notNull(),
+  startTime: timestamp('start_time', { mode: 'string' }),
   createdAt: timestamp('created_at', { mode: 'string' })
     .notNull()
     .default(sql`now()`),
