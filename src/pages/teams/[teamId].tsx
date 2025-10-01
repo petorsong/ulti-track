@@ -75,6 +75,7 @@ export default function TeamPage() {
     }
 
     const startTime = formData.startTime ?? new Date(formData.startTime).toISOString();
+    console.log(`${startTime} (${formData.startTime})`);
 
     setIsSaving(true);
     const res = await fetch(`/api/teams/${teamId}/game`, {

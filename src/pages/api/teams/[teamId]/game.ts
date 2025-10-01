@@ -14,6 +14,8 @@ export default async function handler(req: Req, res: Res<{ gameId: string } | Ap
     });
   }
 
+  console.log(parsedBody);
+
   const [result] = await db.transaction(async (tx) => {
     const activeTeamGroupPlayerIds = await tx
       .select({ id: players.id })
