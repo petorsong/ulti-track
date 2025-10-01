@@ -14,14 +14,6 @@ export default async function handler(req: Req, res: Res<{ gameId: string } | Ap
     });
   }
 
-  let startTime = null;
-  if (parsedBody.startTime) {
-    const localDateTime = new Date(parsedBody.startTime);
-    startTime = localDateTime.toISOString();
-    console.log(`input startTime: ${new Date(parsedBody.startTime)}`);
-    console.log(`startTime: ${new Date(startTime)} (${startTime})`);
-  }
-
   const [result] = await db.transaction(async (tx) => {
     const activeTeamGroupPlayerIds = await tx
       .select({ id: players.id })
@@ -40,7 +32,6 @@ export default async function handler(req: Req, res: Res<{ gameId: string } | Ap
           ourTimeouts: { firstHalf: 2, secondHalf: 2 },
           vsTimeouts: { firstHalf: 2, secondHalf: 2 },
         },
-        startTime,
       })
       .returning({ gameId: games.id });
   });
