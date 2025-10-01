@@ -78,7 +78,6 @@ export default function TeamPage() {
     if (formData.startTime) {
       const localStartTime = new Date(formData.startTime);
       startTime = localStartTime.toISOString();
-      console.log(`${startTime} (${formData.startTime})`);
     }
 
     setIsSaving(true);
