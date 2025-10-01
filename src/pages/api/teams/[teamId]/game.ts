@@ -18,6 +18,8 @@ export default async function handler(req: Req, res: Res<{ gameId: string } | Ap
   if (parsedBody.startTime) {
     const localDateTime = new Date(parsedBody.startTime);
     startTime = localDateTime.toISOString();
+    console.log(`input startTime: ${new Date(parsedBody.startTime)}`);
+    console.log(`startTime: ${new Date(startTime)} (${startTime})`);
   }
 
   const [result] = await db.transaction(async (tx) => {

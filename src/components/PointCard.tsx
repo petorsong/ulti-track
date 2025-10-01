@@ -76,6 +76,10 @@ export default function PointCard({
     if (localNow > localStartTime && localNow < localEndTime) {
       secondsUntilGameEnd = Math.trunc((localEndTime - localNow) / 1000);
     }
+    console.log(`startTime: ${new Date(startTime)} (${startTime})`);
+    console.log(`localStartTime: ${new Date(localStartTime)} (${localStartTime})`);
+    console.log(`localEndTime: ${new Date(localEndTime)} (${localEndTime})`);
+    console.log(`localNow: ${new Date(localNow)} (${localNow})`);
   }
   return (
     <Card size="sm" sx={{ height: 125, width: '65%' }}>
