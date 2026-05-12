@@ -35,6 +35,11 @@ const nextConfig: NextConfig = {
         destination: '/teams/1ce50736-9a9d-42ba-a386-6127d3e9f80e',
         permanent: false,
       },
+      {
+        source: '/devs2026',
+        destination: '/teams/6c9796c3-9330-4944-9f10-e5e62a0bca63',
+        permanent: false,
+      },
     ];
   },
 };
