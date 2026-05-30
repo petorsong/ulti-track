@@ -3,10 +3,15 @@ import { and, eq } from 'drizzle-orm';
 import { ApiError } from '@/types';
 import { db } from '@/database/drizzle';
 import { games, players, teamGroups } from '@/database/schema';
+import { parseJsonBody } from '@/lib/parseJsonBody';
 
 export default async function handler(req: Req, res: Res<{ gameId: string } | ApiError>) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
   const teamId = req.query.teamId as string;
-  const parsedBody: typeof games.$inferInsert = JSON.parse(req.body);
+  const parsedBody = parseJsonBody<typeof games.$inferInsert>(req.body);
 
   if (!parsedBody.vsTeamName) {
     return res.status(400).json({

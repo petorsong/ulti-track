@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import { fetchJson } from '@/lib/fetchJson';
 import { COL_STACK_STYLES, splitPlayers } from '@/utils';
 import { Box, Button, Divider, Stack, Typography } from '@mui/joy';
 import Save from '@mui/icons-material/Save';
@@ -34,15 +35,25 @@ export default function EditTeamGroupsModal({ teamGroups }: { teamGroups: TeamGr
   useEffect(() => {
     if (!router.isReady) return;
 
-    fetch(`/api/teams/${teamId}/players`)
-      .then((res) => res.json())
+    let cancelled = false;
+
+    fetchJson<{ team: TeamWithPlayers }>(`/api/teams/${teamId}/players`)
       .then((data) => {
-        const teamData = data.team as TeamWithPlayers;
-        setTeamData(teamData);
-        setCurrentPlayers(teamData.players);
-        setGroupedPlayers(splitTeamGroups(teamData.players, teamData.type, teamGroups));
-        setIsLoading(false);
+        if (cancelled) return;
+        setTeamData(data.team);
+        setCurrentPlayers(data.team.players);
+        setGroupedPlayers(splitTeamGroups(data.team.players, data.team.type, teamGroups));
+      })
+      .catch(() => {
+        /* keep loading state cleared in finally */
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [teamId, teamGroups, router.isReady]);
 
   const handleMovePlayers = (teamGroupId: string) => {

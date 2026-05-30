@@ -11,7 +11,7 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   {
-    ignores: ['scripts/migrate.js'],
+    ignores: ['scripts/migrate.js', '.next/**', 'node_modules/**', 'out/**'],
   },
   ...compat.extends('next/core-web-vitals', 'next/typescript', 'prettier'),
 ];

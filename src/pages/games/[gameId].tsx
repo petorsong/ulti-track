@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import type { Game, PlayerWithCounts, Point, TeamWithTeamGroups } from '@/database/schema';
 import { Box, Button, Stack, Typography } from '@mui/joy';
 import { PlayerButton, PointCard } from '@/components';
+import { fetchJson } from '@/lib/fetchJson';
 import {
   calculatePointInfo,
   COL_STACK_STYLES,
@@ -36,31 +37,41 @@ export default function GamePage() {
   useEffect(() => {
     if (!router.isReady) return;
 
-    fetch(`/api/games/${gameId}`)
-      .then((res) => res.json())
+    let cancelled = false;
+
+    fetchJson<{
+      game: Game;
+      team: TeamWithTeamGroups;
+      lastPoint?: Point;
+      players: PlayerWithCounts[];
+    }>(`/api/games/${gameId}`)
       .then((data) => {
-        const gameData = data.game as Game;
-        const teamData = data.team as TeamWithTeamGroups;
-        const lastPointData = data.lastPoint as Point | undefined;
-        const playersData = data.players as PlayerWithCounts[];
+        if (cancelled) return;
 
-        if (lastPointData && lastPointData.isActive) {
-          router.push(`/points/${lastPointData.id}`);
-        } else {
-          const pointInfo = calculatePointInfo(gameData);
-          setPointInfo({ ...gameData, ...pointInfo });
-
-          const { playersL, playersR } = splitPlayers(playersData, teamData.type);
-          setGameTeamData({
-            game: gameData,
-            teamWithGroups: teamData,
-            players: { left: playersL, right: playersR },
-          });
-
-          setIsLoading(false);
+        if (data.lastPoint?.isActive) {
+          router.push(`/points/${data.lastPoint.id}`);
+          return;
         }
+
+        const pointInfo = calculatePointInfo(data.game);
+        setPointInfo({ ...data.game, ...pointInfo });
+
+        const { playersL, playersR } = splitPlayers(data.players, data.team.type);
+        setGameTeamData({
+          game: data.game,
+          teamWithGroups: data.team,
+          players: { left: playersL, right: playersR },
+        });
+        setIsLoading(false);
+      })
+      .catch(() => {
+        if (!cancelled) setIsLoading(false);
       });
-  }, [gameId, router]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [gameId, router.isReady, router]);
 
   const handleClearButtonClick = () => {
     setSelectedPlayersL([]);

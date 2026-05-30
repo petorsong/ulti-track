@@ -27,6 +27,10 @@ function twoDigits(num: number) {
   return String(num).padStart(2, '0');
 }
 
+export function fieldSideChipColor(fieldSide: string): 'neutral' | 'warning' {
+  return fieldSide === 'Left' ? 'neutral' : 'warning';
+}
+
 function Countdown({ secondsLeft }: { secondsLeft: number }) {
   const [secondsRemaining, setSecondsRemaining] = useState(secondsLeft);
 
@@ -94,15 +98,15 @@ export default function PointCard({
             <Chip size="sm" variant="outlined" color={isFirstHalf ? 'neutral' : 'warning'}>
               {isFirstHalf ? '1st half' : '2nd half'}
             </Chip>
-            <Chip size="sm" color={oOrD == 'Offence' ? 'success' : 'danger'}>
+            <Chip size="sm" color={oOrD === 'Offence' ? 'success' : 'danger'}>
               {oOrD}
             </Chip>
             {genderRatio && (
-              <Chip size="sm" color={genderRatio[0] == 'F' ? 'primary' : 'warning'}>
+              <Chip size="sm" color={genderRatio[0] === 'F' ? 'primary' : 'warning'}>
                 {genderRatio}
               </Chip>
             )}
-            <Chip size="sm" variant="outlined" color={fieldSide == 'L' ? 'neutral' : 'warning'}>
+            <Chip size="sm" variant="outlined" color={fieldSideChipColor(fieldSide)}>
               {fieldSide}
             </Chip>
           </Stack>

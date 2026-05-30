@@ -18,6 +18,7 @@ import {
   PointCard,
   BottomDialog,
 } from '@/components';
+import { fetchJson } from '@/lib/fetchJson';
 import {
   calculatePointInfo,
   COL_STACK_STYLES,
@@ -57,34 +58,49 @@ export default function PointPage() {
     playerLimitR: 0 as number | null,
   });
   const [currentPointInfo, setCurrentPointInfo] = useState(POINT_INFO_DEFAULT);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!router.isReady) return;
 
-    fetch(`/api/points/${pointId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        const gameData = data.game as Game;
-        const playersData = data.players as PlayerWithCounts[];
-        const teamData = data.team as TeamWithTeamGroups;
-        const activePlayerIds = data.playerIds as string[];
+    let cancelled = false;
+    setLoadError(null);
+    setIsLoading(true);
 
-        setTimeouts(gameData.timeouts);
-        setCurrentPointInfo({ ...gameData, ...calculatePointInfo(gameData) });
-        setNextPointInfo({ ...calculatePointInfo({ ...gameData, teamScore: gameData.teamScore + 1 }) });
-        const { playersL, playersR } = splitPlayers(playersData, teamData.type);
-        const linePlayersL = playersL.filter((player) => activePlayerIds.includes(player.id));
-        const linePlayersR = playersR.filter((player) => activePlayerIds.includes(player.id));
+    fetchJson<{
+      game: Game;
+      team: TeamWithTeamGroups;
+      playerIds: string[];
+      players: PlayerWithCounts[];
+    }>(`/api/points/${pointId}`)
+      .then((data) => {
+        if (cancelled) return;
+
+        setTimeouts(data.game.timeouts);
+        setCurrentPointInfo({ ...data.game, ...calculatePointInfo(data.game) });
+        setNextPointInfo({ ...calculatePointInfo({ ...data.game, teamScore: data.game.teamScore + 1 }) });
+        const { playersL, playersR } = splitPlayers(data.players, data.team.type);
+        const linePlayersL = playersL.filter((player) => data.playerIds.includes(player.id));
+        const linePlayersR = playersR.filter((player) => data.playerIds.includes(player.id));
         setCurrentPlayersIdsL(linePlayersL.map((player) => player.id));
         setCurrentPlayersIdsR(linePlayersR.map((player) => player.id));
         setGameTeamData({
-          game: gameData,
-          teamWithGroups: teamData,
+          game: data.game,
+          teamWithGroups: data.team,
           players: { left: playersL, right: playersR },
           initialPlayers: { left: linePlayersL, right: linePlayersR },
         });
-        setIsLoading(false);
+      })
+      .catch((err: Error) => {
+        if (!cancelled) setLoadError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [pointId, router.isReady]);
 
   const updateModals = (name: 'nextLine' | 'editLine' | 'confirmScore', isOpen: boolean) => {
@@ -199,6 +215,10 @@ export default function PointPage() {
     const { redirectRoute } = await res.json();
     router.push(redirectRoute);
   };
+
+  if (loadError) {
+    return <p>{loadError}</p>;
+  }
 
   return (
     !isLoading && (

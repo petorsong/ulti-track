@@ -2,10 +2,16 @@ import { inArray } from 'drizzle-orm';
 import type { NextApiRequest as Req, NextApiResponse as Res } from 'next';
 import { db } from '@/database/drizzle';
 import { players } from '@/database/schema';
+import { parseJsonBody } from '@/lib/parseJsonBody';
 import { type PlayerIdToTeamGroupId } from '@/types';
+import type { ApiError } from '@/types';
 
-export default async function handler(req: Req, res: Res<{ ok: boolean }>) {
-  const playerTeamGroupIds: PlayerIdToTeamGroupId[] = JSON.parse(req.body);
+export default async function handler(req: Req, res: Res<{ ok: boolean } | ApiError>) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const playerTeamGroupIds = parseJsonBody<PlayerIdToTeamGroupId[]>(req.body);
   const playersToUpdate = playerTeamGroupIds.reduce((resultMap, { playerId, teamGroupId }) => {
     if (!resultMap.has(teamGroupId)) {
       resultMap.set(teamGroupId, []);

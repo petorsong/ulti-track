@@ -2,11 +2,16 @@ import type { NextApiRequest as Req, NextApiResponse as Res } from 'next';
 import { asc, desc } from 'drizzle-orm';
 import { db } from '@/database/drizzle';
 import { games, teamGroups, type Game, type Team, type TeamGroup } from '@/database/schema';
+import type { ApiError } from '@/types';
 
 export default async function handler(
   req: Req,
-  res: Res<{ teamData: Team & { teamGroups: TeamGroup[]; games: Game[] } }>
+  res: Res<{ teamData: Team & { teamGroups: TeamGroup[]; games: Game[] } } | ApiError>
 ) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
   const teamId = req.query.teamId as string;
   const result = await db.query.teams.findFirst({
     where: (teams, { eq }) => eq(teams.id, teamId),
@@ -15,5 +20,10 @@ export default async function handler(
       games: { orderBy: [desc(games.createdAt)] },
     },
   });
-  res.status(200).json({ teamData: result! });
+
+  if (!result) {
+    return res.status(404).json({ error: 'Team not found' });
+  }
+
+  res.status(200).json({ teamData: result });
 }

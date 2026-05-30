@@ -15,6 +15,7 @@ import {
 } from '@mui/joy';
 import { useRouter } from 'next/router';
 import type { TeamWithGroupsAndGames } from '@/database/schema';
+import { fetchJson } from '@/lib/fetchJson';
 import { COL_STACK_STYLES } from '@/utils';
 import { EditTeamGroupsModal, GamesList } from '@/components';
 
@@ -38,17 +39,34 @@ export default function TeamPage() {
     startTime: '',
   });
   const [errors, setErrors] = useState({ vsTeamName: '' } as ErrorType);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!router.isReady) return;
 
-    fetch(`/api/teams/${teamId}`)
-      .then((res) => res.json())
+    let cancelled = false;
+    setLoadError(null);
+    setIsLoading(true);
+
+    fetchJson<{ teamData: TeamWithGroupsAndGames }>(`/api/teams/${teamId}`)
       .then((data) => {
-        setTeamData(data.teamData as TeamWithGroupsAndGames);
-        setFormData((formData) => ({ ...formData, startFRatio: data.teamData.type == 'Mixed' ? false : null }));
-        setIsLoading(false);
+        if (cancelled) return;
+        setTeamData(data.teamData);
+        setFormData((formData) => ({
+          ...formData,
+          startFRatio: data.teamData.type === 'Mixed' ? false : null,
+        }));
+      })
+      .catch((err: Error) => {
+        if (!cancelled) setLoadError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [teamId, router.isReady]);
 
   const handleInputChange = (field: string, value: boolean | string) => {
@@ -88,6 +106,10 @@ export default function TeamPage() {
     const { gameId } = await res.json();
     router.push(`/games/${gameId}`);
   };
+
+  if (loadError) {
+    return <p>{loadError}</p>;
+  }
 
   return (
     !isLoading && (
