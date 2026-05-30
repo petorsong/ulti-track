@@ -1,3 +1,11 @@
+# TODOs
+- nicer team vanity urls
+- team management
+- tournament management
+- offline
+- stat track using existing game
+- bigger buttons (better UX)
+
 # Out of scope (unless explicitly requested)
 
 These items were considered for the agentic-dev setup and intentionally deferred:

@@ -20,6 +20,9 @@
 # production
 /build
 
+# IDE-local (agent instructions live in AGENTS.md)
+.cursor/
+
 # misc
 .DS_Store
 *.pem

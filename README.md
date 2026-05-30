@@ -65,9 +65,9 @@ npm run dev
 
 Other scripts: `npm run build`, `npm start`, `npm run lint`, `npm run format`, `npm run typecheck`, `npm test` / `npm run test:run`. New migration filenames: `npm run generate` (`scripts/generate-migration.sh`).
 
-### Agent quick start
+### Coding agents
 
-For AI-assisted development, see **[AGENTS.md](AGENTS.md)** (verify loop, layout, migration rules). After setup, open **http://localhost:3000/test** for the seeded Test Team. Out-of-scope items: **[TODO.md](TODO.md)**.
+**[AGENTS.md](AGENTS.md)** is the canonical, tool-agnostic guide (Cursor, Copilot, Claude Code, Codex, etc.) — verify loop, layout, migrations, API/domain rules, testing. **[CONTRIBUTING.md](CONTRIBUTING.md)** points here for humans and agents. After setup, open **http://localhost:3000/test** for the seeded Test Team. Backlog / out-of-scope: **[TODO.md](TODO.md)**.
 
 ---
 
