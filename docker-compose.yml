@@ -1,3 +1,5 @@
+# Postgres only. Schema is applied with: npm run migrate
+# (init SQL on first boot is not used — avoids drift from src/database/migrations)
 services:
   postgres:
     image: postgres:17-alpine
@@ -11,7 +13,6 @@ services:
       - $POSTGRES_LOCAL_PORT:$POSTGRES_DOCKER_PORT
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./server/src/database/migrations:/docker-entrypoint-initdb.d
 
 volumes:
   postgres_data:

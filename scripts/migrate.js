@@ -1,3 +1,4 @@
+// Migration runner only — add schema in src/database/migrations/*.sql and src/database/schema.ts
 "use strict";
 var __importDefault =
   (this && this.__importDefault) ||

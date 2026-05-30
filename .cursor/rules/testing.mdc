@@ -1,0 +1,13 @@
+---
+description: Vitest and Testing Library conventions
+globs: "**/*.test.ts,**/*.test.tsx"
+alwaysApply: false
+---
+
+# Testing
+
+- Runner: Vitest (`npm run test` / `npm run test:run`).
+- Components: `@testing-library/react` + jsdom; assert roles/labels/clicks, not full MUI trees.
+- Avoid large page snapshots; unit-test pure logic in `src/utils.ts` first.
+- Mock `next/router` via `src/test/mocks/next-router.ts` when testing pages.
+- Review snapshot diffs intentionally — do not bulk-update without cause.
