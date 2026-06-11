@@ -57,6 +57,8 @@ If you use Docker Compose for Postgres, set the `POSTGRES_*` vars from `.env.exa
 
 ### Install, migrate, dev
 
+This repo’s `.npmrc` pins the public npm registry so installs work on Netlify and GitHub Actions. Do not add employer-internal packages or registries — see [AGENTS.md](AGENTS.md#portable-repo-no-corporate-coupling).
+
 ```bash
 npm install
 npm run migrate   # reads .env via scripts/migrate.js

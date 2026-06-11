@@ -19,6 +19,28 @@ npm run build
 
 `npm run build` does not need a running database. Tests do not need Postgres.
 
+After dependency, config, or tooling changes:
+
+```bash
+./scripts/check-portable-repo.sh
+```
+
+## Portable repo (no corporate coupling)
+
+This is a **personal / public** project: Netlify, GitHub Actions, and other contributors must work without VPN, internal DNS, or employer infrastructure. That applies to **every change**, not only lockfile URLs.
+
+### npm dependencies
+
+- **Public registry only** — `.npmrc` pins `registry=https://registry.npmjs.org/`. Do not remove it or add scoped registry overrides (e.g. `@mycompany:registry=…`).
+- **No internal packages** — do not add employer-scoped dependencies (`@corp/*`), `file:` / `link:` paths into a monorepo, or `git`/`github:` URLs that require private org access.
+- **Lockfile hygiene** — run `npm install` from this repo after dependency changes. Every `resolved` URL in `package-lock.json` must be `https://registry.npmjs.org/…`. If a global `~/.npmrc` pollutes the lockfile, delete `node_modules` and `package-lock.json`, then reinstall before committing.
+
+### Code, config, and tooling
+
+- **No imports** of employer-internal modules in `src/` — only packages declared in `package.json` from the public registry.
+- **No internal hosts** in `.env.example`, Docker, or CI — avoid private artifact hosts, corp npm mirrors, internal DNS, or employer-specific GitHub Actions / container images.
+- **Stick to public equivalents** — e.g. `postgres:17-alpine`, `actions/checkout@v4`, packages on npmjs.org. If a task “usually” uses an internal library at your day job, pick or build a public alternative instead.
+
 ## Repository layout
 
 | Area | Path |
@@ -106,3 +128,4 @@ Applies when adding or changing tests.
 - Rely on Docker Compose to apply schema.
 - Change `/` splash or add auth without an explicit request.
 - Use Drizzle Kit push as a substitute for SQL migrations.
+- Introduce employer/corporate coupling: private npm registries, scoped internal packages, monorepo `file:`/`link:` deps, private git deps, corp Docker images, internal hostnames in config, or imports of internal SDKs — see [Portable repo](#portable-repo-no-corporate-coupling).
