@@ -2,13 +2,21 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { fetchJson } from '@/lib/fetchJson';
 import { COL_STACK_STYLES, splitPlayers } from '@/utils';
-import { Box, Button, Divider, Stack, Typography } from '@mui/joy';
-import Save from '@mui/icons-material/Save';
+import { Box, Button, Stack, Typography } from '@mui/joy';
 import Group from '@mui/icons-material/Group';
 import type { Player, TeamGroup, TeamType, TeamWithPlayers } from '@/database/schema';
-import type { PlayerGroup, PlayerIdToTeamGroupId } from '@/types';
+import type { PlayerGroup } from '@/types';
 import PlayerButton from './PlayerButton';
 import BottomDialog from './BottomDialog';
+import UndoButton from './UndoButton';
+import {
+  applyRosterMove,
+  createRosterCache,
+  loadRosterCache,
+  persistRosterCache,
+  undoRosterMove,
+  type RosterCache,
+} from '@/lib/rosterCache';
 
 function splitTeamGroups(players: Player[], type: TeamType, teamGroups: TeamGroup[]): PlayerGroup[] {
   return teamGroups.map((teamGroup) => {
@@ -18,34 +26,46 @@ function splitTeamGroups(players: Player[], type: TeamType, teamGroups: TeamGrou
   });
 }
 
-export default function EditTeamGroupsModal({ teamGroups }: { teamGroups: TeamGroup[] }) {
+export default function EditTeamGroupsModal({
+  teamGroups,
+  onDone,
+}: {
+  teamGroups: TeamGroup[];
+  onDone: () => void;
+}) {
   const router = useRouter();
   const teamId = router.query.teamId as string;
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [moveModalOpen, setMoveModalOpen] = useState(false);
-
-  const [teamData, setTeamData] = useState({} as TeamWithPlayers);
-  const [currentPlayers, setCurrentPlayers] = useState([] as Player[]);
-  const [groupedPlayers, setGroupedPlayers] = useState([] as PlayerGroup[]);
+  const [rosterCache, setRosterCache] = useState<RosterCache | null>(null);
   const [selectedPlayers, setSelectedPlayers] = useState([] as string[]);
-  const [updatedPlayers, setUpdatedPlayers] = useState([] as PlayerIdToTeamGroupId[]);
+  const [groupedPlayers, setGroupedPlayers] = useState([] as PlayerGroup[]);
 
   useEffect(() => {
     if (!router.isReady) return;
 
     let cancelled = false;
 
+    const cached = loadRosterCache(teamId);
+    if (cached) {
+      setRosterCache(cached);
+      setGroupedPlayers(splitTeamGroups(cached.players, cached.team.type, teamGroups));
+      setIsLoading(false);
+      return;
+    }
+
     fetchJson<{ team: TeamWithPlayers }>(`/api/teams/${teamId}/players`)
       .then((data) => {
         if (cancelled) return;
-        setTeamData(data.team);
-        setCurrentPlayers(data.team.players);
-        setGroupedPlayers(splitTeamGroups(data.team.players, data.team.type, teamGroups));
-      })
-      .catch(() => {
-        /* keep loading state cleared in finally */
+        const cache = createRosterCache({
+          team: data.team,
+          teamGroups,
+          players: data.team.players,
+        });
+        persistRosterCache(cache);
+        setRosterCache(cache);
+        setGroupedPlayers(splitTeamGroups(cache.players, data.team.type, teamGroups));
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -56,37 +76,43 @@ export default function EditTeamGroupsModal({ teamGroups }: { teamGroups: TeamGr
     };
   }, [teamId, teamGroups, router.isReady]);
 
-  const handleMovePlayers = (teamGroupId: string) => {
-    const newUpdatedPlayers = [] as PlayerIdToTeamGroupId[];
-    const newCurrentPlayers = currentPlayers.map((player) => {
-      const originalPlayer = teamData.players.find((p) => p.id == player.id)!;
-      const isSelected = selectedPlayers.includes(player.id);
-      const finalTeamGroupId = isSelected ? teamGroupId : player.teamGroupId;
-
-      if (finalTeamGroupId != originalPlayer.teamGroupId) {
-        newUpdatedPlayers.push({ playerId: player.id, teamGroupId: finalTeamGroupId });
-      }
-      return isSelected ? { ...player, teamGroupId: finalTeamGroupId } : player;
+  useEffect(() => {
+    if (!rosterCache) {
+      return;
+    }
+    const merged = rosterCache.players.map((player) => {
+      const update = rosterCache.pendingGroupUpdates.find((u) => u.playerId === player.id);
+      return update ? { ...player, teamGroupId: update.teamGroupId } : player;
     });
-    setCurrentPlayers(newCurrentPlayers);
-    setUpdatedPlayers(newUpdatedPlayers);
-    setGroupedPlayers(splitTeamGroups(newCurrentPlayers, teamData.type, teamGroups));
+    setGroupedPlayers(splitTeamGroups(merged, rosterCache.team.type, teamGroups));
+  }, [rosterCache, teamGroups]);
 
+  const handleMovePlayers = (teamGroupId: string) => {
+    if (!rosterCache) {
+      return;
+    }
+    const updates = selectedPlayers.map((playerId) => ({ playerId, teamGroupId }));
+    const next = applyRosterMove(rosterCache, updates);
+    persistRosterCache(next);
+    setRosterCache(next);
     setSelectedPlayers([]);
     setMoveModalOpen(false);
   };
 
-  const handleSavePods = (e: React.MouseEvent<HTMLElement>) => {
-    e.preventDefault();
-
-    setIsSaving(true);
-    fetch(`/api/teams/${teamId}/groups`, { method: 'POST', body: JSON.stringify(updatedPlayers) }).then(() =>
-      router.reload()
-    );
+  const handleUndoPod = () => {
+    if (!rosterCache) {
+      return;
+    }
+    const next = undoRosterMove(rosterCache);
+    persistRosterCache(next);
+    setRosterCache(next);
   };
 
+  const pendingPlayerIds = new Set(rosterCache?.pendingGroupUpdates.map((u) => u.playerId) ?? []);
+
   return (
-    !isLoading && (
+    !isLoading &&
+    rosterCache && (
       <Box sx={{ overflow: 'scroll', width: '100%' }}>
         <Stack direction="column" spacing={1} sx={{ ...COL_STACK_STYLES, marginBottom: '36px' }}>
           {groupedPlayers.map((playerGroup) => (
@@ -103,11 +129,7 @@ export default function EditTeamGroupsModal({ teamGroups }: { teamGroups: TeamGr
                         <PlayerButton
                           key={player.id}
                           variant={
-                            playerSelected
-                              ? 'solid'
-                              : updatedPlayers.find(({ playerId }) => playerId == player.id)
-                                ? 'outlined'
-                                : 'soft'
+                            playerSelected ? 'solid' : pendingPlayerIds.has(player.id) ? 'outlined' : 'soft'
                           }
                           colour={i == 0 ? 'primary' : 'success'}
                           onClick={() =>
@@ -137,13 +159,23 @@ export default function EditTeamGroupsModal({ teamGroups }: { teamGroups: TeamGr
               justifyContent: 'space-between',
               width: '95%',
               height: '36px',
+              zIndex: 1200,
+              bgcolor: 'background.surface',
+              pb: 'env(safe-area-inset-bottom)',
             }}
           >
-            <Divider />
+            <UndoButton
+              canUndo={(rosterCache.podActionLog.length ?? 0) > 0}
+              label={
+                rosterCache.podActionLog.length > 0 ? 'Undo: Pod change' : 'Undo'
+              }
+              onUndo={handleUndoPod}
+              fullWidth={false}
+            />
             <Button
               variant="soft"
               color="warning"
-              sx={{ width: '47.5%' }}
+              sx={{ flex: 1 }}
               disabled={selectedPlayers.length == 0}
               onClick={() => setMoveModalOpen(true)}
             >
@@ -175,16 +207,8 @@ export default function EditTeamGroupsModal({ teamGroups }: { teamGroups: TeamGr
                 </>
               }
             />
-            <Button
-              variant="solid"
-              color="primary"
-              sx={{ width: '47.5%' }}
-              startDecorator={<Save />}
-              disabled={updatedPlayers.length == 0}
-              loading={isSaving}
-              onClick={handleSavePods}
-            >
-              Save pods
+            <Button variant="solid" color="primary" sx={{ flex: 1 }} onClick={onDone}>
+              Done
             </Button>
           </Stack>
         </Stack>

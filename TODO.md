@@ -3,6 +3,7 @@
 - team management
 - tournament management
 - offline
+- **offline / pods:** when should pod editing be allowed? (currently: only between games — disabled during active draft, with popup explaining why)
 - stat track using existing game
 - bigger buttons (better UX)
 
@@ -16,11 +17,21 @@
 
 **Note:** Joy + antd Table only on summary; `eslint .` must ignore `.next/` (see `eslint.config.mjs`).
 
+## App Router (Pages Router today)
+
+Stay on Pages Router unless there is a concrete win. Next 16 still supports `pages/` + `pages/api`; migration is a large refactor (`use client`, route moves, caching model), not required for current features.
+
+**Potential wins:** nested `layout.tsx` (team → game → point), server-rendered read-only pages (e.g. completed **summary** instead of client `fetch`), streaming/`loading.tsx`, colocation with Server Components, better alignment with Next docs long-term.
+
+**Low value here:** live line/point tracking stays client-heavy anyway; existing API routes are fine; complexity goes up for operators who need simple, fast UI.
+
+**If migrating:** slice, don’t big-bang — e.g. summary (read-only) first; keep game/point flows on Pages or client islands until stable.
+
 # Out of scope (unless explicitly requested)
 
 These items were considered for the agentic-dev setup and intentionally deferred:
 
-- **App Router migration** — stay on Pages Router
+- **App Router migration** — see section above; default stay on Pages Router
 - **Drizzle Kit push/generate** — schema changes use hand-written SQL migrations + Drizzle schema sync
 - **Broad API error-handler refactor** — match existing per-route style unless fixing a specific route
 - **Full-page snapshot suites** — prefer unit tests on `src/utils.ts` and small component behavior tests

@@ -1,4 +1,6 @@
 export { default as DiscActionsButtons } from './DiscActionsButtons';
+export { default as FixedActionFooter, useFixedFooterPadding } from './FixedActionFooter';
+export { default as UndoButton } from './UndoButton';
 export { default as GamesList } from './GamesList';
 export { default as LastEventAccordion } from './LastEventAccordion';
 export { default as PlayerButton } from './PlayerButton';

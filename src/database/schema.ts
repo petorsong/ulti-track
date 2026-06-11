@@ -118,10 +118,16 @@ export const games = pgTable('games', {
     .default({} as TimeoutsJson)
     .notNull(),
   startTime: timestamp('start_time', { mode: 'string' }),
+  clientDraftId: uuid('client_draft_id'),
   createdAt: timestamp('created_at', { mode: 'string' })
     .notNull()
     .default(sql`now()`),
-});
+},
+(table) => [
+  uniqueIndex('games_client_draft_id_unique_idx')
+    .on(table.clientDraftId)
+    .where(sql`${table.clientDraftId} IS NOT NULL`),
+]);
 
 export const gamesRelations = relations(games, ({ many, one }) => ({
   team: one(teams, { fields: [games.teamId], references: [teams.id] }),
