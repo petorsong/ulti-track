@@ -48,6 +48,12 @@ export type GameAction =
       priorTimeouts?: TimeoutsJson;
     }
   | { type: 'EDIT_LINE'; priorPlayerIds: string[] }
+  | {
+      type: 'SUBSTITUTE';
+      priorPlayerIds: string[];
+      priorSelectedPlayerId: string;
+      event: DraftPointEvent;
+    }
   | { type: 'SET_NEXT_LINE'; priorSelection: LineupSelection }
   | { type: 'START_POINT'; playerIds: string[]; priorLineupSelection: LineupSelection }
   | {
@@ -96,6 +102,7 @@ export type DraftDispatchAction =
   | { type: 'LOG_EVENT'; eventType: EventType; playerOneId?: string; playerTwoId?: string }
   | { type: 'TIMEOUT'; isOurTimeout: boolean }
   | { type: 'EDIT_LINE'; playerIds: string[] }
+  | { type: 'SUBSTITUTE'; playerOffId: string; playerOnId: string }
   | { type: 'SET_NEXT_LINE'; selection: LineupSelection }
   | { type: 'START_POINT'; playerIds: string[] }
   | { type: 'END_POINT'; scoreType: 'SCORE' | 'VS_SCORE'; scorerId?: string }

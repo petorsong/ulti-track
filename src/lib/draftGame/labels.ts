@@ -45,6 +45,10 @@ export function getUndoLabel(
           return verbose ? 'Undo our timeout' : 'Undo: Our timeout';
         case 'VS_TIMEOUT':
           return verbose ? 'Undo their timeout' : 'Undo: Their timeout';
+        case 'SUBSTITUTION':
+          return verbose
+            ? `Undo substitution: ${playerName(players, event.playerOneId)} out for ${playerName(players, event.playerTwoId)}`
+            : 'Undo: Substitution';
         default:
           return verbose ? `Undo ${event.type}` : `Undo: ${event.type}`;
       }
@@ -61,6 +65,10 @@ export function getUndoLabel(
           : 'Undo: THEY scored';
     case 'EDIT_LINE':
       return verbose ? 'Undo edit line' : 'Undo: Edit line';
+    case 'SUBSTITUTE':
+      return verbose
+        ? `Undo substitution: ${playerName(players, action.event.playerOneId)} out for ${playerName(players, action.event.playerTwoId)}`
+        : 'Undo: Substitution';
     case 'SET_NEXT_LINE':
       return verbose ? 'Undo next line' : 'Undo: Next line';
     case 'HALFTIME':

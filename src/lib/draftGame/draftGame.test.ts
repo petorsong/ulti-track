@@ -132,6 +132,52 @@ describe('draft reducer', () => {
     draft = applyDispatch(draft, { type: 'HALFTIME' });
     expect(draft.halftimeAt).toBe(5);
   });
+
+  it('substitutes a player and appends them to point playerIds', () => {
+    const bench = mkPlayer('bench', groupA.id);
+    const roster = [...players, bench];
+    const playerIds = players.map((p) => p.id);
+    let draft = createDraft({
+      teamId: team.id,
+      setup: baseDraft().setup,
+      rosterSnapshot: { team, teamGroups: [groupA], players: roster },
+      activePlayerIds: roster.map((p) => p.id),
+    });
+    draft = applyDispatch(draft, { type: 'START_POINT', playerIds });
+    draft = applyDispatch(draft, { type: 'SELECT_DISC_HOLDER', playerId: 'p0' });
+    draft = applyDispatch(draft, { type: 'SUBSTITUTE', playerOffId: 'p0', playerOnId: 'bench' });
+
+    expect(draft.currentPoint?.playerIds).toHaveLength(8);
+    expect(draft.currentPoint?.playerIds).toContain('bench');
+    expect(draft.currentPoint?.events).toHaveLength(1);
+    expect(draft.currentPoint?.events[0]).toMatchObject({
+      type: 'SUBSTITUTION',
+      playerOneId: 'p0',
+      playerTwoId: 'bench',
+    });
+    expect(draft.currentPoint?.selectedPlayerId).toBe('bench');
+
+    draft = undoAction(draft);
+    expect(draft.currentPoint?.playerIds).toHaveLength(7);
+    expect(draft.currentPoint?.events).toHaveLength(0);
+    expect(draft.currentPoint?.selectedPlayerId).toBe('p0');
+  });
+
+  it('keeps disc holder unchanged when subbed player does not have the disc', () => {
+    const bench = mkPlayer('bench', groupA.id);
+    const roster = [...players, bench];
+    const playerIds = players.map((p) => p.id);
+    let draft = createDraft({
+      teamId: team.id,
+      setup: baseDraft().setup,
+      rosterSnapshot: { team, teamGroups: [groupA], players: roster },
+      activePlayerIds: roster.map((p) => p.id),
+    });
+    draft = applyDispatch(draft, { type: 'START_POINT', playerIds });
+    draft = applyDispatch(draft, { type: 'SELECT_DISC_HOLDER', playerId: 'p1' });
+    draft = applyDispatch(draft, { type: 'SUBSTITUTE', playerOffId: 'p0', playerOnId: 'bench' });
+    expect(draft.currentPoint?.selectedPlayerId).toBe('p1');
+  });
 });
 
 describe('buildCompleteGamePayload', () => {

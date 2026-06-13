@@ -141,7 +141,7 @@ export const points = pgTable('points', {
   gameId: uuid('game_id')
     .references(() => games.id, { onDelete: 'cascade', onUpdate: 'cascade' })
     .notNull(),
-  playerIds: uuid('player_ids').array(7).notNull(), // TODO: consider making this 1 to many relation
+  playerIds: uuid('player_ids').array().notNull(), // TODO: consider making this 1 to many relation
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at', { mode: 'string' })
     .notNull()

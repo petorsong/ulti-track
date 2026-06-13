@@ -1,4 +1,5 @@
 import type { TimeoutsJson } from '@/database/schema';
+import { canSubstitute } from '@/lib/substitution';
 import type {
   ActivePoint,
   CompletedPoint,
@@ -127,6 +128,56 @@ export function applyDispatch(draft: DraftGame, action: DraftDispatchAction): Dr
         ...draft,
         actionLog: [...draft.actionLog, logAction],
         currentPoint: { ...draft.currentPoint, playerIds: action.playerIds },
+      });
+    }
+
+    case 'SUBSTITUTE': {
+      if (!draft.currentPoint) {
+        return draft;
+      }
+      const point = draft.currentPoint;
+      const { playerOffId, playerOnId } = action;
+      const roster = draft.rosterSnapshot.players;
+      if (
+        !canSubstitute({
+          teamType: draft.rosterSnapshot.team.type,
+          roster,
+          pointPlayerIds: point.playerIds,
+          events: point.events,
+          playerOffId,
+          playerOnId,
+        })
+      ) {
+        return draft;
+      }
+
+      const event: DraftPointEvent = {
+        pointId: point.clientPointId,
+        type: 'SUBSTITUTION',
+        playerOneId: playerOffId,
+        playerTwoId: playerOnId,
+      };
+      const playerIds = point.playerIds.includes(playerOnId)
+        ? point.playerIds
+        : [...point.playerIds, playerOnId];
+      const selectedPlayerId =
+        point.selectedPlayerId === playerOffId ? playerOnId : point.selectedPlayerId;
+      const logAction: GameAction = {
+        type: 'SUBSTITUTE',
+        priorPlayerIds: [...point.playerIds],
+        priorSelectedPlayerId: point.selectedPlayerId,
+        event,
+      };
+
+      return touch({
+        ...draft,
+        actionLog: [...draft.actionLog, logAction],
+        currentPoint: {
+          ...point,
+          playerIds,
+          events: [...point.events, event],
+          selectedPlayerId,
+        },
       });
     }
 
@@ -309,6 +360,23 @@ export function undoAction(draft: DraftGame): DraftGame {
         ...draft,
         actionLog,
         currentPoint: { ...draft.currentPoint, playerIds: action.priorPlayerIds },
+      });
+    }
+
+    case 'SUBSTITUTE': {
+      if (!draft.currentPoint) {
+        return touch({ ...draft, actionLog });
+      }
+      const events = draft.currentPoint.events.slice(0, -1);
+      return touch({
+        ...draft,
+        actionLog,
+        currentPoint: {
+          ...draft.currentPoint,
+          playerIds: action.priorPlayerIds,
+          events,
+          selectedPlayerId: action.priorSelectedPlayerId,
+        },
       });
     }
 

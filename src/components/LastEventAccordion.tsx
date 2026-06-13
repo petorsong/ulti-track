@@ -38,7 +38,12 @@ export default function LastEventAccordion({ events, players }: { events: Insert
             {index}. {type == 'TIMEOUT' ? 'TIMEOUT (US)' : 'TIMEOUT (THEM)'}
           </Chip>
         );
-      case 'SUBSTITUTION': // TODO: eventTypes completion
+      case 'SUBSTITUTION':
+        return (
+          <Chip>
+            {index}. {playerOneName} ↔️ {playerTwoName}
+          </Chip>
+        );
       default:
         return <Chip>N/A</Chip>;
     }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import SwapHoriz from '@mui/icons-material/SwapHoriz';
 import Edit from '@mui/icons-material/Edit';
 import {
   Accordion,
@@ -23,11 +24,13 @@ import {
 import { useDraftGame } from '@/hooks/useDraftGame';
 import { getUndoLabel } from '@/lib/draftGame';
 import {
+  activeLinePlayers,
+  benchPlayersForSubstitution,
   draftNextPointInfo,
   draftPlayerColumns,
   draftPointInfo,
   draftTeamWithGroups,
-  linePlayersFromIds,
+  draftTeamWithAllGroups,
 } from '@/lib/liveGameData';
 import { COL_STACK_STYLES } from '@/utils';
 
@@ -36,7 +39,12 @@ export default function LivePointPage() {
   const teamId = router.query.teamId as string;
   const { isHydrated, draft, dispatch, undo, lastAction, canUndo } = useDraftGame(teamId);
 
-  const [modalsOpen, setModalsOpen] = useState({ nextLine: false, editLine: false, confirmScore: false });
+  const [modalsOpen, setModalsOpen] = useState({
+    nextLine: false,
+    editLine: false,
+    confirmScore: false,
+    substitute: false,
+  });
   const [saveFrom, setSaveFrom] = useState('');
 
   useEffect(() => {
@@ -63,8 +71,9 @@ export default function LivePointPage() {
   const nextPointInfo = draftNextPointInfo(draft);
   const teamWithGroups = draftTeamWithGroups(draft);
   const { playersL, playersR } = draftPlayerColumns(draft);
-  const linePlayers = linePlayersFromIds(draft, point.playerIds);
-  const allLinePlayers = linePlayers.left.concat(linePlayers.right);
+  const linePlayers = activeLinePlayers(draft);
+  const benchPlayers = benchPlayersForSubstitution(draft);
+  const allLinePlayers = linePlayers.left.concat(linePlayers.right, benchPlayers.left, benchPlayers.right);
 
   const { left: nextL, right: nextR } = point.nextLineSelection;
   const undoLabel = lastAction
@@ -74,7 +83,7 @@ export default function LivePointPage() {
     ? getUndoLabel(lastAction, draft.rosterSnapshot.players, { variant: 'aria' })
     : undefined;
 
-  const updateModals = (name: 'nextLine' | 'editLine' | 'confirmScore', isOpen: boolean) => {
+  const updateModals = (name: 'nextLine' | 'editLine' | 'confirmScore' | 'substitute', isOpen: boolean) => {
     setModalsOpen((prev) => ({ ...prev, [name]: isOpen }));
   };
 
@@ -143,7 +152,6 @@ export default function LivePointPage() {
                 colour={i === 0 ? 'primary' : 'success'}
                 onClick={() => handlePlayerClick(player.id)}
                 {...player}
-                sitCount={0}
               />
             ))}
           </Stack>
@@ -309,6 +317,32 @@ export default function LivePointPage() {
               })}
             </Stack>
             <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between', width: '100%', mt: 1 }}>
+              <Button
+                variant="outlined"
+                size="lg"
+                color="primary"
+                fullWidth
+                startDecorator={<SwapHoriz />}
+                onClick={() => updateModals('substitute', true)}
+              >
+                Substitute
+              </Button>
+              <SelectLineModal
+                type="substitute"
+                open={modalsOpen.substitute}
+                onClose={() => updateModals('substitute', false)}
+                InfoSection={<Typography level="h4">Substitute player</Typography>}
+                teamWithGroups={draftTeamWithAllGroups(draft)}
+                activeLine={linePlayers}
+                onSubstituteClick={(playerOffId, playerOnId) => () => {
+                  dispatch({ type: 'SUBSTITUTE', playerOffId, playerOnId });
+                  updateModals('substitute', false);
+                }}
+                splitPlayers={{
+                  left: { players: benchPlayers.left, selected: [], limit: null },
+                  right: { players: benchPlayers.right, selected: [], limit: null },
+                }}
+              />
               <Button
                 variant="outlined"
                 size="lg"

@@ -2,10 +2,19 @@
 - nicer team vanity urls
 - team management
 - tournament management
-- offline
-- **offline / pods:** when should pod editing be allowed? (currently: only between games — disabled during active draft, with popup explaining why)
 - stat track using existing game
 - bigger buttons (better UX)
+
+## Offline draft follow-ups
+
+Shipped: live games use client-side drafts (`/teams/[teamId]/live/*`) in `localStorage`, roster cache + pod moves offline, bulk sync on completion (`POST /api/teams/[teamId]/game/complete`), mid-point substitutions (same-gender, `SUBSTITUTION` events, disc handoff). Legacy `/games/[gameId]` and `/points/[pointId]` redirect or stall.
+
+- update `README.md` user flows — still describes old `/games/[gameId]` and `/points/[pointId]` paths; document `/teams/[teamId]/live/*` offline draft + sync
+- hybrid browser back (`popstate`) on live pages
+- multi-tab `storage` event warning when another tab edits the same draft
+- incompatible `schemaVersion` dialog on team page (`useDraftGame` already exposes `loadStatus`)
+
+**Decided:** pod editing only between games — disabled during active draft, with popup explaining why.
 
 ## Dependency updates
 
