@@ -1,6 +1,6 @@
 import type { PlayerWithCounts, Point, TeamWithTeamGroups } from '@/database/schema';
 import type { DraftGame } from '@/lib/draftGame';
-import { draftToGame } from '@/lib/draftGame';
+import { activeTeamGroups, draftToGame, playersForActiveGame } from '@/lib/draftGame';
 import { playersWithLineCounts } from '@/lib/playerCounts';
 import { calculatePointInfo, splitPlayers } from '@/utils';
 
@@ -18,14 +18,15 @@ export function draftPlayerColumns(draft: DraftGame): {
   playersL: PlayerWithCounts[];
   playersR: PlayerWithCounts[];
 } {
-  const withCounts = playersWithLineCounts(draft.rosterSnapshot.players, completedPointsAsPointRows(draft));
+  const players = playersForActiveGame(draft.rosterSnapshot.players, draft.activePlayerIds);
+  const withCounts = playersWithLineCounts(players, completedPointsAsPointRows(draft));
   return splitPlayers(withCounts, draft.rosterSnapshot.team.type);
 }
 
 export function draftTeamWithGroups(draft: DraftGame): TeamWithTeamGroups {
   return {
     ...draft.rosterSnapshot.team,
-    teamGroups: draft.rosterSnapshot.teamGroups,
+    teamGroups: activeTeamGroups(draft.rosterSnapshot.teamGroups),
   };
 }
 

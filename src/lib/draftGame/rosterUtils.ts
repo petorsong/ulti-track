@@ -12,12 +12,24 @@ export function mergePendingGroupUpdates(players: Player[], pendingGroupUpdates:
   });
 }
 
+export function activeTeamGroups(teamGroups: TeamGroup[]): TeamGroup[] {
+  return teamGroups.filter((g) => g.isActive);
+}
+
+export function playersForActiveGame(players: Player[], activePlayerIds: string[]): Player[] {
+  if (activePlayerIds.length === 0) {
+    return [];
+  }
+  const activeIds = new Set(activePlayerIds);
+  return players.filter((p) => activeIds.has(p.id));
+}
+
 export function computeActivePlayerIds(
   players: Player[],
   teamGroups: TeamGroup[],
   pendingGroupUpdates: PlayerIdToTeamGroupId[]
 ): string[] {
-  const activeGroupIds = new Set(teamGroups.filter((g) => g.isActive).map((g) => g.id));
+  const activeGroupIds = new Set(activeTeamGroups(teamGroups).map((g) => g.id));
   return mergePendingGroupUpdates(players, pendingGroupUpdates)
     .filter((player) => activeGroupIds.has(player.teamGroupId))
     .map((player) => player.id);

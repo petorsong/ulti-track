@@ -3,7 +3,7 @@ import type { Player, Team, TeamGroup } from '@/database/schema';
 import { createDraft } from './createDraft';
 import { applyDispatch, undoAction } from './reducer';
 import { buildCompleteGamePayload } from './syncPayload';
-import { computeActivePlayerIds } from './rosterUtils';
+import { computeActivePlayerIds, activeTeamGroups, playersForActiveGame } from './rosterUtils';
 
 const team: Team = { id: 'team-1', name: 'Test', type: 'Open' };
 const groupA: TeamGroup = {
@@ -62,6 +62,22 @@ describe('computeActivePlayerIds', () => {
     ]);
     expect(ids).toHaveLength(6);
     expect(ids).not.toContain('p0');
+  });
+});
+
+describe('activeTeamGroups', () => {
+  it('excludes inactive groups', () => {
+    expect(activeTeamGroups([groupA, groupB])).toEqual([groupA]);
+  });
+});
+
+describe('playersForActiveGame', () => {
+  it('keeps only players in activePlayerIds', () => {
+    const inactive = mkPlayer('bench', groupB.id);
+    const roster = [...players, inactive];
+    const activeIds = players.map((p) => p.id);
+    expect(playersForActiveGame(roster, activeIds)).toHaveLength(7);
+    expect(playersForActiveGame(roster, activeIds).map((p) => p.id)).not.toContain('bench');
   });
 });
 

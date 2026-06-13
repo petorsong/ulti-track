@@ -17,7 +17,12 @@ import { useRouter } from 'next/router';
 import type { TeamWithGroupsAndGames, TeamWithPlayers } from '@/database/schema';
 import { EditTeamGroupsModal, GamesList } from '@/components';
 import { useDraftGame } from '@/hooks/useDraftGame';
-import { createDraft, computeActivePlayerIds } from '@/lib/draftGame';
+import {
+  activeTeamGroups,
+  computeActivePlayerIds,
+  createDraft,
+  playersForActiveGame,
+} from '@/lib/draftGame';
 import { fetchJson } from '@/lib/fetchJson';
 import { createRosterCache, loadRosterCache, persistRosterCache } from '@/lib/rosterCache';
 import { COL_STACK_STYLES } from '@/utils';
@@ -145,8 +150,8 @@ export default function TeamPage() {
       setup: { ...formData, startTime },
       rosterSnapshot: {
         team: cache.team,
-        teamGroups: cache.teamGroups,
-        players: mergedPlayers,
+        teamGroups: activeTeamGroups(cache.teamGroups),
+        players: playersForActiveGame(mergedPlayers, activePlayerIds),
       },
       activePlayerIds,
     });
