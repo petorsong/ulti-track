@@ -4,7 +4,6 @@ import { Button, Card, CardContent, Stack, Typography } from '@mui/joy';
 import { UndoButton } from '@/components';
 import { useDraftGame } from '@/hooks/useDraftGame';
 import { buildCompleteGamePayload, getUndoLabel } from '@/lib/draftGame';
-import { clearRosterPendingUpdates, loadRosterCache } from '@/lib/rosterCache';
 import { COL_STACK_STYLES } from '@/utils';
 
 export default function LiveCompletePage() {
@@ -48,8 +47,7 @@ export default function LiveCompletePage() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setSubmitError(null);
-    const rosterCache = loadRosterCache(teamId);
-    const payload = buildCompleteGamePayload(draft, rosterCache?.pendingGroupUpdates);
+    const payload = buildCompleteGamePayload(draft);
     try {
       const res = await fetch(`/api/teams/${teamId}/game/complete`, {
         method: 'POST',
@@ -65,7 +63,6 @@ export default function LiveCompletePage() {
         return;
       }
       discardDraft();
-      clearRosterPendingUpdates(teamId);
       router.push(`/games/${data.gameId}/summary`);
     } catch {
       setSubmitError('Network error — try again');

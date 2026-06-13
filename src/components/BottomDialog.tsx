@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
-import { Modal, ModalDialog } from '@mui/joy';
+import { Box, Modal, ModalDialog } from '@mui/joy';
 
-export default function SelectLineModal({
+export default function BottomDialog({
   open,
   onClose,
   content,
@@ -26,7 +26,7 @@ export default function SelectLineModal({
           },
         })}
       >
-        {content}
+        <Box>{content}</Box>
       </ModalDialog>
     </Modal>
   );

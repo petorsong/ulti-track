@@ -1,13 +1,13 @@
 # TODOs
 - nicer team vanity urls
-- team management
+- team management (partial: Edit Pods add player + batch type edit; still no full roster CRUD UI)
 - tournament management
 - stat track using existing game
 - bigger buttons (better UX)
 
 ## Offline draft follow-ups
 
-Shipped: live games use client-side drafts (`/teams/[teamId]/live/*`) in `localStorage`, roster cache + pod moves offline, bulk sync on completion (`POST /api/teams/[teamId]/game/complete`), mid-point substitutions (same-gender, `SUBSTITUTION` events, disc handoff). Legacy `/games/[gameId]` and `/points/[pointId]` redirect or stall.
+Shipped: live games use client-side drafts (`/teams/[teamId]/live/*`) in `localStorage`, roster cache for offline game start, Edit Pods roster changes (pod moves, add player, batch type edit) synced on Save (`POST /api/teams/[teamId]/roster/sync`), game stats bulk sync on completion (`POST /api/teams/[teamId]/game/complete`), mid-point substitutions (same-gender, `SUBSTITUTION` events, disc handoff). Legacy `/games/[gameId]` and `/points/[pointId]` redirect or stall.
 
 - update `README.md` user flows — still describes old `/games/[gameId]` and `/points/[pointId]` paths; document `/teams/[teamId]/live/*` offline draft + sync
 - hybrid browser back (`popstate`) on live pages

@@ -8,3 +8,4 @@ export { default as PointCard } from './PointCard';
 export { default as SelectLineModal } from './SelectLineModal';
 export { default as EditTeamGroupsModal } from './EditTeamGroupsModal';
 export { default as BottomDialog } from './BottomDialog';
+export { AddPlayerModal, EditPlayerTypeModal } from './PlayerRosterModals';

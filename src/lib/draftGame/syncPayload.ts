@@ -1,11 +1,9 @@
 import type { InsertPointEvent } from '@/database/schema';
-import type { PlayerIdToTeamGroupId } from '@/types';
 import type { DraftGame } from './types';
 import { draftToGame } from './draftToGame';
 
 export type CompleteGamePayload = {
   draftId: string;
-  rosterUpdates?: PlayerIdToTeamGroupId[];
   activePlayerIds: string[];
   game: ReturnType<typeof draftToGame>;
   points: {
@@ -15,13 +13,9 @@ export type CompleteGamePayload = {
   }[];
 };
 
-export function buildCompleteGamePayload(
-  draft: DraftGame,
-  rosterUpdates?: PlayerIdToTeamGroupId[]
-): CompleteGamePayload {
+export function buildCompleteGamePayload(draft: DraftGame): CompleteGamePayload {
   return {
     draftId: draft.draftId,
-    rosterUpdates: rosterUpdates?.length ? rosterUpdates : undefined,
     activePlayerIds: draft.activePlayerIds,
     game: draftToGame(draft),
     points: draft.completedPoints.map((point) => ({

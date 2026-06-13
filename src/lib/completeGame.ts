@@ -52,25 +52,6 @@ export async function insertCompleteGame(
   teamId: string,
   payload: CompleteGamePayload
 ): Promise<string> {
-  if (payload.rosterUpdates?.length) {
-    const playersToUpdate = payload.rosterUpdates.reduce((resultMap, { playerId, teamGroupId }) => {
-      if (!resultMap.has(teamGroupId)) {
-        resultMap.set(teamGroupId, []);
-      }
-      resultMap.get(teamGroupId)!.push(playerId);
-      return resultMap;
-    }, new Map<string, string[]>());
-
-    await Promise.all(
-      Array.from(playersToUpdate.keys()).map((teamGroupId) =>
-        tx
-          .update(players)
-          .set({ teamGroupId })
-          .where(inArray(players.id, playersToUpdate.get(teamGroupId)!))
-      )
-    );
-  }
-
   const { game: gameData } = payload;
   const [insertedGame] = await tx
     .insert(games)

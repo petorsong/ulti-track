@@ -78,11 +78,6 @@ export default function TeamPage() {
             teamGroups: teamRes.teamData.teamGroups,
             players: playersRes.team.players,
           });
-          const existing = loadRosterCache(teamId);
-          if (existing?.pendingGroupUpdates.length) {
-            cache.pendingGroupUpdates = existing.pendingGroupUpdates;
-            cache.podActionLog = existing.podActionLog;
-          }
           persistRosterCache(cache);
           setRosterReady(true);
         } else {
@@ -134,16 +129,7 @@ export default function TeamPage() {
       startTime = new Date(formData.startTime).toISOString();
     }
 
-    const mergedPlayers = cache.players.map((player) => {
-      const update = cache.pendingGroupUpdates.find((u) => u.playerId === player.id);
-      return update ? { ...player, teamGroupId: update.teamGroupId } : player;
-    });
-
-    const activePlayerIds = computeActivePlayerIds(
-      cache.players,
-      cache.teamGroups,
-      cache.pendingGroupUpdates
-    );
+    const activePlayerIds = computeActivePlayerIds(cache.players, cache.teamGroups, []);
 
     const newDraft = createDraft({
       teamId,
@@ -151,7 +137,7 @@ export default function TeamPage() {
       rosterSnapshot: {
         team: cache.team,
         teamGroups: activeTeamGroups(cache.teamGroups),
-        players: playersForActiveGame(mergedPlayers, activePlayerIds),
+        players: playersForActiveGame(cache.players, activePlayerIds),
       },
       activePlayerIds,
     });
@@ -295,7 +281,7 @@ export default function TeamPage() {
         </Button>
 
         <Modal open={teamGroupsModalOpen} onClose={() => setTeamGroupsModalOpen(false)}>
-          <ModalDialog layout="fullscreen">
+          <ModalDialog layout="fullscreen" sx={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <ModalClose />
             <EditTeamGroupsModal teamGroups={teamData.teamGroups} onDone={() => setTeamGroupsModalOpen(false)} />
           </ModalDialog>
