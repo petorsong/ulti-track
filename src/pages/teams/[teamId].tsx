@@ -3,6 +3,7 @@ import {
   Button,
   Card,
   CardContent,
+  Checkbox,
   FormControl,
   FormLabel,
   Input,
@@ -46,6 +47,7 @@ export default function TeamPage() {
     startOnO: false,
     startLeft: false,
     startFRatio: null as boolean | null,
+    enforceAbba: null as boolean | null,
     startTime: '',
   });
   const [errors, setErrors] = useState({ vsTeamName: '' } as ErrorType);
@@ -70,6 +72,7 @@ export default function TeamPage() {
         setFormData((prev) => ({
           ...prev,
           startFRatio: teamRes.teamData.type === 'Mixed' ? false : null,
+          enforceAbba: teamRes.teamData.type === 'Mixed' ? true : null,
         }));
 
         if (playersRes) {
@@ -249,16 +252,28 @@ export default function TeamPage() {
                   />
                 </FormControl>
                 {teamData.type == 'Mixed' && (
-                  <FormControl orientation="horizontal">
-                    <FormLabel>Gender ratio</FormLabel>
-                    <Switch
-                      size="lg"
-                      checked={!formData.startFRatio}
-                      onChange={(e) => handleInputChange('startFRatio', !e.target.checked)}
-                      startDecorator="F"
-                      endDecorator="O"
-                    />
-                  </FormControl>
+                  <>
+                    <FormControl orientation="horizontal">
+                      <Checkbox
+                        size="lg"
+                        label="Enforce ABBA"
+                        checked={formData.enforceAbba !== false}
+                        onChange={(e) => handleInputChange('enforceAbba', e.target.checked)}
+                      />
+                    </FormControl>
+                    {formData.enforceAbba !== false && (
+                      <FormControl orientation="horizontal">
+                        <FormLabel>Gender ratio</FormLabel>
+                        <Switch
+                          size="lg"
+                          checked={!formData.startFRatio}
+                          onChange={(e) => handleInputChange('startFRatio', !e.target.checked)}
+                          startDecorator="F"
+                          endDecorator="O"
+                        />
+                      </FormControl>
+                    )}
+                  </>
                 )}
                 <FormControl orientation="horizontal">
                   <FormLabel>Start time (optional):</FormLabel>

@@ -83,6 +83,8 @@ export default function LivePointPage() {
     ? getUndoLabel(lastAction, draft.rosterSnapshot.players, { variant: 'aria' })
     : undefined;
 
+  const enforceAbba = draft.setup.enforceAbba ?? true;
+
   const updateModals = (name: 'nextLine' | 'editLine' | 'confirmScore' | 'substitute', isOpen: boolean) => {
     setModalsOpen((prev) => ({ ...prev, [name]: isOpen }));
   };
@@ -289,6 +291,7 @@ export default function LivePointPage() {
             left: { players: playersL, selected: nextL, limit: nextPointInfo.playerLimitL },
             right: { players: playersR, selected: nextR, limit: nextPointInfo.playerLimitR },
           }}
+          enforceAbba={enforceAbba}
         />
       </Stack>
       <Accordion sx={{ width: '95%' }}>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Game, Player } from '@/database/schema';
-import { calculatePointInfo, splitPlayers } from './utils';
+import { calculatePointInfo, isMixedLinePlayerDisabled, splitPlayers } from './utils';
 
 function game(overrides: Partial<Game>): Game {
   return {
@@ -9,6 +9,7 @@ function game(overrides: Partial<Game>): Game {
     vsTeamName: 'Opponent',
     startOnO: false,
     startFRatio: null,
+    enforceAbba: null,
     startLeft: false,
     teamScore: 0,
     vsTeamScore: 0,
@@ -58,10 +59,17 @@ describe('calculatePointInfo', () => {
   });
 
   it('sets mixed gender ratio at 0-0 when starting on female ratio', () => {
-    const info = calculatePointInfo(game({ startFRatio: true }));
+    const info = calculatePointInfo(game({ startFRatio: true, enforceAbba: true }));
     expect(info.genderRatio).toBe('Female 2');
     expect(info.playerLimitL).toBe(4);
     expect(info.playerLimitR).toBe(3);
+  });
+
+  it('omits gender ratio when mixed but ABBA not enforced', () => {
+    const info = calculatePointInfo(game({ startFRatio: true, enforceAbba: false }));
+    expect(info.genderRatio).toBeNull();
+    expect(info.playerLimitL).toBeNull();
+    expect(info.playerLimitR).toBeNull();
   });
 
   it('omits gender ratio when not a mixed game', () => {
@@ -76,6 +84,51 @@ describe('calculatePointInfo', () => {
     const afterOne = calculatePointInfo(game({ startLeft: true, teamScore: 1, vsTeamScore: 0 }));
     expect(start.fieldSide).toBe('Left');
     expect(afterOne.fieldSide).toBe('Right');
+  });
+});
+
+describe('isMixedLinePlayerDisabled', () => {
+  it('does not cap at 3 FMP and 3 open when ABBA is off', () => {
+    const selectedLeft = ['a', 'b', 'c'];
+    const selectedRight = ['d', 'e', 'f'];
+    expect(isMixedLinePlayerDisabled(true, selectedLeft, selectedRight, false, null, false)).toBe(false);
+    expect(isMixedLinePlayerDisabled(false, selectedLeft, selectedRight, false, null, false)).toBe(false);
+  });
+
+  it('caps FMP at 4 when ABBA is off', () => {
+    const selectedLeft = ['a', 'b', 'c', 'd'];
+    expect(isMixedLinePlayerDisabled(true, selectedLeft, [], false, null, false)).toBe(true);
+    expect(isMixedLinePlayerDisabled(false, selectedLeft, [], false, null, false)).toBe(false);
+  });
+
+  it('caps open at 4 when ABBA is off', () => {
+    const selectedRight = ['a', 'b', 'c', 'd'];
+    expect(isMixedLinePlayerDisabled(false, [], selectedRight, false, null, false)).toBe(true);
+    expect(isMixedLinePlayerDisabled(true, [], selectedRight, false, null, false)).toBe(false);
+  });
+
+  it('caps the other gender at 3 once 4 of one gender are selected', () => {
+    const selectedLeft = ['a', 'b', 'c', 'd'];
+    const selectedRight = ['e', 'f', 'g'];
+    expect(isMixedLinePlayerDisabled(true, selectedLeft, selectedRight, false, null, false)).toBe(true);
+    expect(isMixedLinePlayerDisabled(false, selectedLeft, selectedRight, false, null, false)).toBe(true);
+  });
+
+  it('still allows a third FMP when four open are selected', () => {
+    const selectedLeft = ['a', 'b'];
+    const selectedRight = ['c', 'd', 'e', 'f'];
+    expect(isMixedLinePlayerDisabled(true, selectedLeft, selectedRight, false, null, false)).toBe(false);
+    expect(isMixedLinePlayerDisabled(false, selectedLeft, selectedRight, false, null, false)).toBe(true);
+  });
+
+  it('uses per-column ABBA limit when ABBA is on', () => {
+    expect(isMixedLinePlayerDisabled(true, ['a', 'b', 'c'], [], true, 3, false)).toBe(true);
+    expect(isMixedLinePlayerDisabled(true, ['a', 'b'], [], true, 3, false)).toBe(false);
+  });
+
+  it('allows deselecting a capped player', () => {
+    const selectedLeft = ['a', 'b', 'c', 'd'];
+    expect(isMixedLinePlayerDisabled(true, selectedLeft, [], false, null, true)).toBe(false);
   });
 });
 

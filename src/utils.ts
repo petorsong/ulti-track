@@ -33,6 +33,7 @@ export function calculatePointInfo({
   teamScore,
   vsTeamScore,
   startFRatio,
+  enforceAbba,
   startLeft,
   halftimeAt,
   wasLastScoreUs,
@@ -45,7 +46,7 @@ export function calculatePointInfo({
   let genderRatio = null,
     playerLimitL = null,
     playerLimitR = null;
-  if (startFRatio !== null) {
+  if (startFRatio !== null && enforceAbba !== false) {
     const shouldBeFemale = totalPoints === 0 ? startFRatio : (totalPoints + 1) % 4 < 2 === startFRatio;
     genderRatio = `${shouldBeFemale ? 'Female' : 'Open'} ${totalPoints % 2 === 0 ? '2' : '1'}`;
     [playerLimitL, playerLimitR] = shouldBeFemale ? [4, 3] : [3, 4];
@@ -68,6 +69,35 @@ export function calculatePointInfo({
     playerLimitL,
     playerLimitR,
   };
+}
+
+export function isMixedLinePlayerDisabled(
+  isFMP: boolean,
+  selectedLeft: string[],
+  selectedRight: string[],
+  enforceAbba: boolean,
+  abbaColumnLimit: number | null,
+  playerSelected: boolean
+): boolean {
+  if (playerSelected) return false;
+
+  if (enforceAbba) {
+    const selectedInColumn = isFMP ? selectedLeft : selectedRight;
+    return abbaColumnLimit !== null && selectedInColumn.length >= abbaColumnLimit;
+  }
+
+  const fmpCount = selectedLeft.length;
+  const openCount = selectedRight.length;
+
+  if (isFMP) {
+    if (fmpCount >= 4) return true;
+    if (openCount >= 4 && fmpCount >= 3) return true;
+    return false;
+  }
+
+  if (openCount >= 4) return true;
+  if (fmpCount >= 4 && openCount >= 3) return true;
+  return false;
 }
 
 export function handleEndHalfButtonClick(

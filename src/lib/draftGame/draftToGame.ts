@@ -9,6 +9,7 @@ export function draftToGame(draft: DraftGame): Game {
     vsTeamName: draft.setup.vsTeamName,
     startOnO: draft.setup.startOnO,
     startFRatio: draft.setup.startFRatio,
+    enforceAbba: draft.setup.startFRatio !== null ? (draft.setup.enforceAbba ?? true) : null,
     startLeft: draft.setup.startLeft,
     teamScore: draft.teamScore,
     vsTeamScore: draft.vsTeamScore,

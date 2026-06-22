@@ -48,6 +48,7 @@ function baseDraft() {
       startOnO: false,
       startLeft: false,
       startFRatio: null,
+      enforceAbba: null,
       startTime: null,
     },
     rosterSnapshot: { team, teamGroups: [groupA], players },
@@ -116,15 +117,15 @@ describe('draft reducer', () => {
     expect(draft.currentPoint?.selectedPlayerId).toBe('p0');
   });
 
-  it('ends point with score cap at 15', () => {
+  it('stays on lineup after scoring with no auto game end', () => {
     let draft = baseDraft();
     draft = { ...draft, teamScore: 14, vsTeamScore: 0 };
     const playerIds = players.map((p) => p.id);
     draft = applyDispatch(draft, { type: 'START_POINT', playerIds });
     draft = applyDispatch(draft, { type: 'END_POINT', scoreType: 'SCORE', scorerId: 'p0' });
     expect(draft.teamScore).toBe(15);
-    expect(draft.phase).toBe('complete');
-    expect(draft.isComplete).toBe(true);
+    expect(draft.phase).toBe('lineup');
+    expect(draft.isComplete).toBe(false);
   });
 
   it('sets halftime at total points played', () => {

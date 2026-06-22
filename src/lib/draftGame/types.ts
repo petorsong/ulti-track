@@ -12,7 +12,7 @@ export const DRAFT_SCHEMA_VERSION = 1 as const;
 
 export type DraftPhase = 'lineup' | 'point' | 'complete';
 
-export type DraftSetup = Pick<Game, 'vsTeamName' | 'startOnO' | 'startLeft' | 'startFRatio' | 'startTime'>;
+export type DraftSetup = Pick<Game, 'vsTeamName' | 'startOnO' | 'startLeft' | 'startFRatio' | 'enforceAbba' | 'startTime'>;
 
 export type RosterSnapshot = {
   team: Team;

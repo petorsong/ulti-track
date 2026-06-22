@@ -28,10 +28,6 @@ function createActivePoint(playerIds: string[]): ActivePoint {
   };
 }
 
-function scoreCapReached(teamScore: number, vsTeamScore: number): boolean {
-  return teamScore >= 15 || vsTeamScore >= 15;
-}
-
 export function applyDispatch(draft: DraftGame, action: DraftDispatchAction): DraftGame {
   switch (action.type) {
     case 'SET_LINEUP_SELECTION':
@@ -271,10 +267,6 @@ export function applyDispatch(draft: DraftGame, action: DraftDispatchAction): Dr
         lineupSelection: nextSelection,
         phase: 'lineup',
       });
-
-      if (scoreCapReached(teamScore, vsTeamScore)) {
-        return { ...base, isComplete: true, phase: 'complete' };
-      }
 
       const nextIds = [...nextSelection.left, ...nextSelection.right];
       if (nextIds.length === 7) {

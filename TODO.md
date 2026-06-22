@@ -18,6 +18,24 @@ Shipped: live games use client-side drafts (`/teams/[teamId]/live/*`) in `localS
 
 **Decided:** pod editing only between games — disabled during active draft, with popup explaining why.
 
+**Decided:** ending a game never writes to Postgres by itself. **End game** only updates the local draft and routes to `/teams/[teamId]/live/complete`. The operator must then **Submit** (explicit confirm) or **Undo** (revert and keep playing). No confirmation dialog on the End game button today — the complete screen is the gate.
+
+- revisit allowing **End game** / Submit without marking halftime first (`END_GAME` currently requires `halftimeAt`; auto-finish at 15 was removed so all games end manually)
+
+## Dead / legacy paths (no UI; safe to remove in a cleanup pass)
+
+Replaced by offline draft (`/teams/[teamId]/live/*`) + bulk sync on Submit (`POST /api/teams/[teamId]/game/complete`). Nothing in the app calls these anymore.
+
+| Path | Was | Now |
+|------|-----|-----|
+| `POST /api/games/[gameId]/end-half` | Halftime / end game during online tracker | Orphaned API — immediate DB write if called |
+| `handleEndHalfButtonClick` (`src/utils.ts`) | Wired Halftime/End game on old game + point pages | Unreferenced helper |
+| `/games/[gameId]` | Full lineup UI | Redirect / stall stub → team page |
+| `/points/[pointId]` | Full point tracker | Stall message → team page |
+| `POST /api/points/[pointId]/end-point` | Score point + redirect at 15 | No page calls it; does not set `isComplete` |
+
+README user flows still describe the old `/games` + `/points` paths — see follow-up below.
+
 ## Dependency updates
 
 **Safe minor bumps (run verify loop after):** `react` / `react-dom` 19.1 → 19.2.x, `@types/react`, `pg`, `prettier`; check `drizzle-orm` release notes when convenient.

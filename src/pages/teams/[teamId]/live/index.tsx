@@ -8,7 +8,7 @@ import { PlayerButton, PointCard, UndoButton } from '@/components';
 import { useDraftGame } from '@/hooks/useDraftGame';
 import { getUndoLabel } from '@/lib/draftGame';
 import { draftPlayerColumns, draftPointInfo, draftTeamWithGroups } from '@/lib/liveGameData';
-import { COL_STACK_STYLES } from '@/utils';
+import { COL_STACK_STYLES, isMixedLinePlayerDisabled } from '@/utils';
 
 export default function LiveLineupPage() {
   const router = useRouter();
@@ -73,6 +73,8 @@ export default function LiveLineupPage() {
     }
   };
 
+  const enforceAbba = draft.setup.enforceAbba ?? true;
+
   return (
     <Stack direction="column" spacing={1} sx={{ ...COL_STACK_STYLES, mt: 1 }}>
       <PointCard {...pointInfo} />
@@ -89,10 +91,7 @@ export default function LiveLineupPage() {
               { list: playersL, selected: selectedPlayersL, isLeft: true },
               { list: playersR, selected: selectedPlayersR, isLeft: false },
             ].map(({ list, selected, isLeft }, i) => {
-              const playerLimit =
-                teamWithGroups.type === 'Mixed'
-                  ? (isLeft ? pointInfo.playerLimitL! : pointInfo.playerLimitR!) <= selected.length
-                  : selectedPlayersL.length + selectedPlayersR.length >= 7;
+              const abbaColumnLimit = isLeft ? pointInfo.playerLimitL : pointInfo.playerLimitR;
               const colour = isLeft ? 'primary' : 'success';
               return (
                 <Stack key={`playerList${i}`} direction="column" spacing={1} sx={COL_STACK_STYLES}>
@@ -101,11 +100,22 @@ export default function LiveLineupPage() {
                     .map((player) => {
                       const playerSelected = selected.includes(player.id);
                       const lineCount = playerSelected ? player.lineCount + 1 : player.lineCount;
+                      const disabled =
+                        teamWithGroups.type === 'Mixed'
+                          ? isMixedLinePlayerDisabled(
+                              isLeft,
+                              selectedPlayersL,
+                              selectedPlayersR,
+                              enforceAbba,
+                              abbaColumnLimit,
+                              playerSelected
+                            )
+                          : selectedPlayersL.length + selectedPlayersR.length >= 7 && !playerSelected;
                       return (
                         <PlayerButton
                           key={player.id}
                           variant={playerSelected ? 'solid' : 'soft'}
-                          disabled={playerLimit && !playerSelected}
+                          disabled={disabled}
                           onClick={() => {
                             const nextSelected = playerSelected
                               ? selected.filter((id) => id !== player.id)

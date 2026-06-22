@@ -6,7 +6,7 @@ import Group from '@mui/icons-material/Group';
 import { Box, Button, Divider, Modal, ModalClose, ModalDialog, Stack, Typography } from '@mui/joy';
 import type { PlayerWithCounts, TeamWithTeamGroups } from '@/database/schema';
 import { playersSameGender } from '@/lib/substitution';
-import { COL_STACK_STYLES } from '@/utils';
+import { COL_STACK_STYLES, isMixedLinePlayerDisabled } from '@/utils';
 import PlayerButton from './PlayerButton';
 
 type SplitPlayersListProps = {
@@ -27,6 +27,7 @@ export default function SelectLineModal({
   onSubstituteClick,
   activeLine,
   splitPlayers,
+  enforceAbba = true,
 }: {
   type: 'editLine' | 'nextLine' | 'substitute';
   open: boolean;
@@ -37,6 +38,7 @@ export default function SelectLineModal({
   onSubstituteClick?: (playerOffId: string, playerOnId: string) => () => void;
   activeLine?: SplitPlayers;
   splitPlayers: { left: SplitPlayersListProps; right: SplitPlayersListProps };
+  enforceAbba?: boolean;
 }) {
   const [selectedPlayersL, setSelectedPlayersL] = useState(splitPlayers.left.selected);
   const [selectedPlayersR, setSelectedPlayersR] = useState(splitPlayers.right.selected);
@@ -158,9 +160,19 @@ export default function SelectLineModal({
                     const playerLimit =
                       type === 'substitute'
                         ? false
-                        : teamWithGroups.type === 'Mixed'
-                          ? selectedPlayers.length >= split.limit!
-                          : selectedPlayersL.length + selectedPlayersR.length >= 7;
+                        : teamWithGroups.type === 'Mixed' && type === 'nextLine'
+                          ? (player: PlayerWithCounts, playerSelected: boolean) =>
+                              isMixedLinePlayerDisabled(
+                                isLeftSide,
+                                selectedPlayersL,
+                                selectedPlayersR,
+                                enforceAbba,
+                                split.limit,
+                                playerSelected
+                              )
+                          : teamWithGroups.type === 'Mixed'
+                            ? selectedPlayers.length >= split.limit!
+                            : selectedPlayersL.length + selectedPlayersR.length >= 7;
                     const colour = isLeftSide ? 'primary' : 'success';
                     return (
                       <Stack key={`playerList${i}`} direction="column" spacing={1} sx={COL_STACK_STYLES}>
@@ -185,7 +197,11 @@ export default function SelectLineModal({
                                 key={player.id}
                                 variant={playerSelected ? 'solid' : 'soft'}
                                 disabled={
-                                  type === 'substitute' ? substituteDisabled : playerLimit && !playerSelected
+                                  type === 'substitute'
+                                    ? substituteDisabled
+                                    : typeof playerLimit === 'function'
+                                      ? playerLimit(player, playerSelected)
+                                      : playerLimit && !playerSelected
                                 }
                                 onClick={() => selectPlayer(isLeftSide, player.id, playerSelected)}
                                 {...{ ...player, colour, lineCount }}

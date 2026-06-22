@@ -60,6 +60,7 @@ export async function insertCompleteGame(
       vsTeamName: gameData.vsTeamName,
       startOnO: gameData.startOnO,
       startFRatio: gameData.startFRatio,
+      enforceAbba: gameData.enforceAbba,
       startLeft: gameData.startLeft,
       teamScore: gameData.teamScore,
       vsTeamScore: gameData.vsTeamScore,

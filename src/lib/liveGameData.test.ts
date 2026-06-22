@@ -54,6 +54,7 @@ describe('liveGameData', () => {
         startOnO: false,
         startLeft: false,
         startFRatio: null,
+        enforceAbba: null,
         startTime: null,
       },
       rosterSnapshot: {
@@ -82,6 +83,7 @@ describe('liveGameData', () => {
         startOnO: false,
         startLeft: false,
         startFRatio: null,
+        enforceAbba: null,
         startTime: null,
       },
       rosterSnapshot: {
@@ -115,6 +117,7 @@ describe('liveGameData', () => {
         startOnO: false,
         startLeft: false,
         startFRatio: null,
+        enforceAbba: null,
         startTime: null,
       },
       rosterSnapshot: {

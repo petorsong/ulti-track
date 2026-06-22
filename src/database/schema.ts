@@ -106,6 +106,7 @@ export const games = pgTable('games', {
   vsTeamName: varchar('vs_team_name', { length: 255 }).notNull(),
   startOnO: boolean('start_on_o').default(false).notNull(),
   startFRatio: boolean('start_f_ratio'),
+  enforceAbba: boolean('enforce_abba'),
   startLeft: boolean('start_left').default(false).notNull(),
   teamScore: integer('team_score').default(0).notNull(),
   vsTeamScore: integer('vs_team_score').default(0).notNull(),
