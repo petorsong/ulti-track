@@ -4,6 +4,8 @@
 - tournament management
 - stat track using existing game
 - bigger buttons (better UX)
+- consider Firebase migration — evaluate costs compared to Netlify
+- Lambda for post-game processing
 
 ## Offline draft follow-ups
 
@@ -28,13 +30,31 @@ Shipped: live games use client-side drafts (`/teams/[teamId]/live/*`) in `localS
 
 ## App Router (Pages Router today)
 
-Stay on Pages Router unless there is a concrete win. Next 16 still supports `pages/` + `pages/api`; migration is a large refactor (`use client`, route moves, caching model), not required for current features.
+**Re-evaluated (post offline draft):** still defer. Offline work moved the hot path to client-only `localStorage` drafts under `/teams/[teamId]/live/*`; that strengthens the “client island” model rather than creating new SSR wins.
 
-**Potential wins:** nested `layout.tsx` (team → game → point), server-rendered read-only pages (e.g. completed **summary** instead of client `fetch`), streaming/`loading.tsx`, colocation with Server Components, better alignment with Next docs long-term.
+**Verdict:** stay on Pages Router unless a concrete slice (summary SSR) is worth the churn.
 
-**Low value here:** live line/point tracking stays client-heavy anyway; existing API routes are fine; complexity goes up for operators who need simple, fast UI.
+**What offline changed**
 
-**If migrating:** slice, don’t big-bang — e.g. summary (read-only) first; keep game/point flows on Pages or client islands until stable.
+- **Live flow is fully client-side** — `useDraftGame`, roster cache, bulk sync on complete (`POST …/game/complete`). App Router Server Components / RSC do not help lineup, point, or undo; those routes would be `'use client'` end-to-end, same as today.
+- **Clearer route tree** — team hub → `live` → `live/point` → `live/complete` maps to nested `layout.tsx`, but the win is mostly DRYing shared hydration guards, redirect-on-phase, and persist-error UI. Same can be done on Pages Router with a shared layout component — no migration required.
+- **Legacy online tracker de-emphasized** — `/games/[gameId]` and `/points/[pointId]` redirect or stall; less pressure to migrate old per-point API-driven pages. A future App Router pass can ignore legacy routes or leave them on `pages/`.
+- **Migration cost rose slightly** — more live sub-routes, phase redirects, and localStorage schema versioning to preserve; all client-hydration sensitive.
+
+**Unchanged wins (still valid)**
+
+- **Summary** (`/games/[gameId]/summary`) — read-only, client `fetch` today; best first slice for server-rendered stats if we migrate at all.
+- **Team page games list** — could SSR team metadata + past games; secondary to offline roster cache on first load.
+- **`pages/api`** — coexists with App Router; bulk sync and roster endpoints need no route-tree move.
+
+**Still low value**
+
+- Server rendering / streaming on live tracking — operators need instant local state, not SSR.
+- Full big-bang migration — live subtree + Joy UI + antd summary table + existing API style = large refactor for little UX gain on the path people actually use.
+
+**If migrating:** slice, don’t big-bang — summary first; live subtree as a single client layout (App or Pages); keep `pages/api` until/unless moving to Route Handlers deliberately.
+
+**Before any App Router work:** fix `eslint-config-next` 16 / flat ESLint (see Dependency updates).
 
 # Out of scope (unless explicitly requested)
 

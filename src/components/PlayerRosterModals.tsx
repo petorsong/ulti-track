@@ -95,8 +95,8 @@ export function AddPlayerModal({
                 <FormLabel>Gender</FormLabel>
                 <Switch
                   size="lg"
-                  checked={isFMP}
-                  onChange={(e) => setIsFMP(e.target.checked)}
+                  checked={!isFMP}
+                  onChange={(e) => setIsFMP(!e.target.checked)}
                   startDecorator="F"
                   endDecorator="O"
                 />
