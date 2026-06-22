@@ -40,6 +40,11 @@ const nextConfig: NextConfig = {
         destination: '/teams/6c9796c3-9330-4944-9f10-e5e62a0bca63',
         permanent: false,
       },
+      {
+        source: '/gbps26',
+        destination: '/teams/310a0e94-dbcf-45a9-be43-acfaa42765fb',
+        permanent: false,
+      },
     ];
   },
 };
