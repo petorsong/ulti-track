@@ -45,6 +45,11 @@ const nextConfig: NextConfig = {
         destination: '/teams/310a0e94-dbcf-45a9-be43-acfaa42765fb',
         permanent: false,
       },
+      {
+        source: '/rosess26',
+        destination: '/teams/7b2d1083-e20a-4d0c-a5c2-ba4cf1ac04f5',
+        permanent: false,
+      },
     ];
   },
 };
